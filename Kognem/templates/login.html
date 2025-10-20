@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kognem — Login</title>
+<link rel="stylesheet" href="{% static 'css/register.css' %}">
+</head>
+<body>
+
+<div class="register-container">
+    <h1 class="brand">Kognem</h1>
+    <p class="tagline">Բարի վերադարձ! Շարունակելու համար մուտք գործեք</p>
+
+    <form method="POST" action="">
+        {% csrf_token %}
+        <div class="input-group">
+            <label for="username">Էլ. հասցե</label>
+            <input type="text" name="username" id="username" placeholder="Email" required>
+            {% if form.non_field_errors %}
+                <div class="error-msg">{{ form.non_field_errors }}</div>
+            {% endif %}
+        </div>
+
+        <div class="input-group">
+            <label for="password">Գաղտնաբառ</label>
+            <input type="password" name="password" id="password" placeholder="Password" required>
+        </div>
+            <div class="guest-login">
+    <a href="{% url 'home' %}" class="btn-guest">Շարունակել առանց մուտք գործելու</a>
+        </div>
+        <button type="submit" class="btn-primary">Մուտք</button>
+        <p class="login-link">Չունեք անձնական էջ? <a href="{% url 'register' %}">Գրանցվել</a></p>
+    </form>
+</div>
+
+</body>
+</html>

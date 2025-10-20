@@ -1,0 +1,200 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kognem — Պրոֆիլ</title>
+<link rel="stylesheet" href="{% static 'css/Account.css' %}">
+<style>
+.edit-input{display:none;width:100%;padding:5px;margin-top:3px;border:1px solid #ccc;border-radius:4px;}
+.error-msg{color:red;font-size:12px;margin-top:2px;display:none;}
+.controls button{margin-top:5px;margin-right:5px;}
+.invalid{border-color:red;}
+.controls button.save{background:linear-gradient(90deg,#2ecc71,#27ae60);color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;}
+.controls button.cancel{background:#ff4d4d;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;}
+#logout-btn{display:block;width:100%;margin-top:20px;padding:10px;background:#ff4d4d;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-container">
+    <div class="brand">Kognem</div>
+    <nav class="main-nav">
+      <a href="{% url 'home' %}">Գլխավոր էջ</a>
+      <a href="{% url 'ashxatanq' %}">Առաջադրանքներ</a>
+    </nav>
+    <div class="auth-buttons">
+      {% if user.is_authenticated %}
+        <a href="{% url 'Account' %}" class="btn-profile">{{ user.username }}</a>
+      {% else %}
+        <a href="{% url 'login' %}" class="btn-login">Login</a>
+        <a href="{% url 'register' %}" class="btn-register">Register</a>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+<main class="page-main">
+  <section class="profile-container">
+    <h1 class="profile-title">Իմ անձնական էջը</h1>
+
+    <form id="accountForm" method="POST" action="{% url 'Account' %}">
+      {% csrf_token %}
+      <div id="globalSuccess" style="color:green;display:none;margin-bottom:10px;">✔ Պահպանված է</div>
+
+      <!-- Username -->
+      <div class="profile-field" data-field="username">
+        <label>Անուն Ազգանուն</label>
+        <div class="values">
+          <div class="current-value">{{ user.username }}</div>
+          <input class="edit-input" name="username" type="text" value="{{ user.username }}">
+          <div class="error-msg"></div>
+        </div>
+        <div class="controls">
+          <button type="button" class="edit-btn">✏️</button>
+        </div>
+      </div>
+
+      <!-- Email -->
+      <div class="profile-field" data-field="email">
+        <label>Էլ. հասցե</label>
+        <div class="values">
+          <div class="current-value">{{ user.email }}</div>
+          <input class="edit-input" name="email" type="email" value="{{ user.email }}">
+          <div class="error-msg"></div>
+        </div>
+        <div class="controls">
+          <button type="button" class="edit-btn">✏️</button>
+        </div>
+      </div>
+
+      <!-- Phone -->
+      <div class="profile-field" data-field="phone">
+        <label>Հեռախոսահամար</label>
+        <div class="values">
+          <div class="current-value">{{ user.profile.phone }}</div>
+          <input class="edit-input" name="phone" type="text" value="{{ user.profile.phone }}" placeholder="0XXXXXXXX">
+          <div class="error-msg"></div>
+        </div>
+        <div class="controls">
+          <button type="button" class="edit-btn">✏️</button>
+        </div>
+      </div>
+
+      <!-- Verification ID -->
+      <div class="profile-field" data-field="verification_id">
+        <label>Հաստատման ID</label>
+        <div class="values">
+          <div class="current-value">{{ user.profile.verification_id }}</div>
+          <input class="edit-input" name="verification_id" type="text" value="{{ user.profile.verification_id }}" placeholder="ALO123">
+          <div class="error-msg"></div>
+        </div>
+        <div class="controls">
+          <button type="button" class="edit-btn">✏️</button>
+        </div>
+      </div>
+    </form>
+
+    <!-- ✅ Logout form (не вложен внутрь другого <form>) -->
+    <form id="logout-form" action="{% url 'logout' %}" method="post" style="margin-top: 30px;">
+      {% csrf_token %}
+      <button id="logout-btn" type="submit">Դուրս գալ</button>
+    </form>
+
+  </section>
+</main>
+
+<script>
+const phoneRe = /^0\d{8}$/;
+const verificationRe = /^[A-Z0-9]{1,20}$/;
+const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+let editingField = null;
+
+function showError(fieldEl, message){
+  const err = fieldEl.querySelector('.error-msg');
+  err.textContent = message;
+  err.style.display = 'block';
+  fieldEl.querySelector('.edit-input').classList.add('invalid');
+}
+
+function hideError(fieldEl){
+  const err = fieldEl.querySelector('.error-msg');
+  err.style.display = 'none';
+  fieldEl.querySelector('.edit-input').classList.remove('invalid');
+}
+
+function showGlobalSuccess(){
+  const msg = document.getElementById('globalSuccess');
+  msg.style.display = 'block';
+  setTimeout(()=> msg.style.display='none', 2000);
+}
+
+function validateField(name, value){
+  value = value.trim();
+  if(name==='username' && value.length<3) return 'Անունը պարտադիր է';
+  if(name==='email' && !emailRe.test(value)) return 'Սխալ էլ. հասցե';
+  if(name==='phone' && !phoneRe.test(value)) return 'Հեռախոսը պետք է սկսվի 0-ով և ունենա 9 թվանշան';
+  if(name==='verification_id' && !verificationRe.test(value)) return 'Մեծատառ և նիշ, մինչև 20';
+  return '';
+}
+
+function enterEditMode(fieldEl){
+  if(editingField) return;
+  editingField = fieldEl;
+  document.querySelectorAll('.edit-btn').forEach(b=>b.style.display='none');
+
+  const span = fieldEl.querySelector('.current-value');
+  const input = fieldEl.querySelector('.edit-input');
+  span.style.display='none';
+  input.style.display='block';
+  input.focus();
+
+  const controls = fieldEl.querySelector('.controls');
+
+  const saveBtn = document.createElement('button');
+  saveBtn.type='submit';
+  saveBtn.textContent='💾';
+  saveBtn.classList.add('save');
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type='button';
+  cancelBtn.textContent='❌';
+  cancelBtn.classList.add('cancel');
+
+  controls.appendChild(saveBtn);
+  controls.appendChild(cancelBtn);
+
+  cancelBtn.addEventListener('click', ()=>{
+    input.value = span.textContent;
+    span.style.display='block';
+    input.style.display='none';
+    saveBtn.remove();
+    cancelBtn.remove();
+    editingField = null;
+    document.querySelectorAll('.edit-btn').forEach(b=>b.style.display='');
+    hideError(fieldEl);
+  });
+
+  saveBtn.addEventListener('click', (e)=>{
+    const value = input.value.trim();
+    const error = validateField(fieldEl.dataset.field, value);
+    if(error){
+      e.preventDefault();
+      showError(fieldEl, error);
+    }
+  });
+}
+
+// Enable editing
+document.querySelectorAll('.edit-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const fieldEl = btn.closest('.profile-field');
+    enterEditMode(fieldEl);
+  });
+});
+</script>
+
+</body>
+</html>

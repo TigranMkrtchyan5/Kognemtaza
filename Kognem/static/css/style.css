@@ -1,0 +1,353 @@
+/* ------------------------ GLOBAL ------------------------ */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #faf8f5; /* soft elegant background */
+    color: #333;
+    line-height: 1.6;
+}
+
+/* ------------------------ HEADER ------------------------ */
+header {
+    background: linear-gradient(90deg, #1b3a1a, #2ecc71); /* luxurious green gradient */
+    color: #fff;
+    padding: 20px 50px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    position: relative;
+}
+
+header .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header .brand {
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #ffd700; /* gold accent */
+}
+
+.main-nav {
+    display: flex;
+    gap: 25px;
+}
+
+.main-nav a {
+    color: #eaeaea;
+    font-weight: 600;
+    text-decoration: none;
+    position: relative;
+}
+
+.main-nav a::after {
+    content: '';
+    display: block;
+    height: 2px;
+    width: 0%;
+    background: #ffd700;
+    transition: width 0.3s;
+    margin-top: 4px;
+}
+
+.main-nav a:hover::after {
+    width: 100%;
+}
+
+.main-nav a:hover {
+    color: #ffd700;
+}
+
+/* ------------------------ AUTH BUTTONS ------------------------ */
+.auth-buttons a,
+.btn-profile,
+.btn-logout {
+    margin-left: 12px;
+    padding: 12px 28px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 16px;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Login */
+.btn-login {
+    background: linear-gradient(145deg, #27ae60, #2ecc71);
+    border: 1px solid #1e8449;
+    color: #fff;
+}
+
+.btn-login:hover {
+    background: linear-gradient(145deg, #2ecc71, #27ae60);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(46,204,113,0.4);
+}
+
+/* Register */
+.btn-register {
+    background: linear-gradient(135deg, #ffd700, #e6c200);
+    border: 1px solid #b38b00;
+    color: #1b1b1b;
+}
+
+.btn-register:hover {
+    background: linear-gradient(135deg, #e6c200, #ffd700);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255,215,0,0.5);
+}
+
+/* Profile */
+.btn-profile {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(46,204,113,0.25);
+    color: #e0f0dc;
+}
+
+.btn-profile:hover {
+    background: #2ecc71;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* Logout */
+.btn-logout {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(46,204,113,0.3);
+    color: #e0f0dc;
+}
+
+.btn-logout:hover {
+    background: #27ae60;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+/* ------------------------ DROPDOWN ------------------------ */
+.user-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.user-dropdown .dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background-color: #2a2a2a;
+    min-width: 200px;
+    border-radius: 10px;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.5);
+    z-index: 10;
+}
+
+.user-dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown-content a {
+    color: #fff;
+    padding: 14px 20px;
+    display: block;
+    transition: all 0.2s ease;
+}
+
+.dropdown-content a:hover {
+    background-color: #ffd700;
+    color: #1b1b1b;
+    transform: scale(1.02);
+}
+
+/* ------------------------ MAIN ------------------------ */
+main {
+    min-height: 80vh;
+    padding: 60px 50px;
+}
+
+/* ------------------------ TASK CARDS ------------------------ */
+.tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+}
+
+.task-card {
+    border: 1px solid #27ae60;
+    border-radius: 15px;
+    padding: 25px;
+    background-color: #f9f9f9;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.task-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+}
+
+.task-card h3 {
+    color: #27ae60;
+    margin-bottom: 12px;
+}
+
+.task-card p {
+    color: #555;
+    margin-bottom: 15px;
+}
+
+.task-card .task-meta {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 15px;
+}
+
+.task-card button {
+    padding: 12px 24px;
+    background-color: #2ecc71;
+    color: #fff;
+    border: none;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.task-card button:hover {
+    background-color: #27ae60;
+    transform: translateY(-2px);
+}
+
+/* ------------------------ FORMS ------------------------ */
+form {
+    max-width: 450px;
+    margin: 30px auto;
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+form input, form select {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    border: 1px solid #27ae60;
+    border-radius: 10px;
+    font-size: 16px;
+}
+
+form input:focus, form select:focus {
+    border-color: #2ecc71;
+    outline: none;
+    box-shadow: 0 0 8px rgba(46,204,113,0.3);
+}
+
+form button {
+    padding: 12px 25px;
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    border: none;
+    border-radius: 30px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+form button:hover {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    transform: translateY(-2px);
+}
+
+/* ------------------------ FOOTER ------------------------ */
+footer {
+    text-align: center;
+    padding: 25px 50px;
+    background-color: #1b3a1a;
+    color: #ffd700;
+    font-weight: 500;
+    margin-top: 50px;
+}
+
+/* ------------------------ MEDIA QUERIES ------------------------ */
+@media screen and (max-width: 768px) {
+    .main-nav {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    header .header-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .tasks-grid {
+        grid-template-columns: 1fr;
+    }
+
+    main {
+        padding: 40px 20px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    header {
+        padding: 15px 20px;
+    }
+
+    .auth-buttons a, .btn-profile, .btn-logout {
+        padding: 10px 18px;
+        font-size: 14px;
+    }
+
+    form {
+        padding: 20px;
+    }
+}
+.auth-buttons a{
+    margin-left:12px;
+    padding:8px 18px;
+    border-radius:12px;
+    font-weight:700;
+    text-decoration:none;
+    transition:0.2s;
+}
+
+.btn-profile{
+    background: rgba(255,255,255,0.2);
+    border:1px solid rgba(46,204,113,0.25);
+    color:#e0f0dc;
+}
+
+.btn-profile:hover{
+    background: #2ecc71;
+    color:#fff;
+}
+
+.btn-login{
+    background: rgba(255,255,255,0.15);
+    border:1px solid rgba(46,204,113,0.25);
+    color:#e0f0dc;
+}
+
+.btn-login:hover{
+    background: #2ecc71;
+    color:#fff;
+}
+
+.btn-register{
+    background: linear-gradient(90deg, #2ecc71, #27ae60);
+    color:#fff;
+}
+
+.btn-register:hover{
+    transform: translateY(-2px);
+    box-shadow:0 12px 28px rgba(39,174,96,0.3);
+}

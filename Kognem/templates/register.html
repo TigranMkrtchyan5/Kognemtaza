@@ -1,0 +1,243 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="hy">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kognem — Register</title>
+    <link rel="stylesheet" href="{% static 'css/register.css' %}">
+    <script src="{% static 'js/main.js' %}" defer></script>
+</head>
+<body>
+
+<div class="register-container">
+    <h1 class="brand">Kognem</h1>
+    <p class="tagline">Օգնիր բոլորին, կերտիր ապագադ</p>
+        {% csrf_token %}
+    {% if messages %}
+        {% for m in messages %}
+            <div class="message {{ m.tags }}">{{ m }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <form id="registerForm" method="POST" action="{% url 'register' %}" novalidate>
+        {% csrf_token %}
+        
+        <!-- Full name (username) -->
+        <div class="input-group">
+            <label for="full_name">Անուն Ազգանուն</label>
+            <input type="text" name="full_name" id="full_name" placeholder="Անուն Ազգանուն" required value="{{ form.full_name.value|default:'' }}">
+            {% if form.full_name.errors %}
+                <div class="error-msg">{{ form.full_name.errors.0 }}</div>
+            {% endif %}
+            <div class="error-msg" id="fullNameError"></div>
+        </div>
+
+        <!-- Email -->
+        <div class="input-group">
+            <label for="email">Էլ. հասցե</label>
+            <input type="email" name="email" id="email" placeholder="you@example.com" required value="{{ form.email.value|default:'' }}">
+            {% if form.email.errors %}
+                <div class="error-msg">{{ form.email.errors.0 }}</div>
+            {% endif %}
+            <div class="error-msg" id="emailError"></div>
+        </div>
+
+        <!-- Phone -->
+        <div class="input-group">
+            <label for="phone">Հեռախոսահամար</label>
+            <input type="text" name="phone" id="phone" placeholder="0XXXXXXXX" pattern="0\d{8}">
+            {% if form.phone.errors %}
+                <div class="error-msg">{{ form.phone.errors }}</div>
+            {% endif %}
+            <div class="error-msg" id="phoneError"></div>
+        </div>
+
+        <!-- Verification ID -->
+        <div class="input-group">
+            <label for="verification_id">Վկայագրի կամ ID համարը</label>
+            <input type="text" name="verification_id" id="verification_id" placeholder="Վկայագրի ID" required value="{{ form.verification_id.value|default:'' }}">
+            {% if form.verification_id.errors %}
+                <div class="error-msg">{{ form.verification_id.errors.0 }}</div>
+            {% endif %}
+            <div class="error-msg" id="vidError"></div>
+        </div>
+
+        <!-- Password -->
+        <div class="input-group">
+            <label for="password">Գաղտնաբառ</label>
+            <input type="password" name="password1" id="password" placeholder="••••••••" required>
+            {% if form.password1.errors %}
+                <div class="error-msg">{{ form.password1.errors.0 }}</div>
+            {% endif %}
+            <div class="error-msg" id="passwordError"></div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="input-group">
+            <label for="password2">Հաստատել Գաղտնաբառը</label>
+            <input type="password" name="password2" id="password2" placeholder="••••••••" required>
+            {% if form.password2.errors %}
+                <div class="error-msg">{{ form.password2.errors.0 }}</div>
+            {% endif %}
+            <div class="error-msg" id="confirmError"></div>
+        </div>
+
+        <div class="guest-login">
+            <a href="{% url 'home' %}" class="btn-guest">Շարունակել առանց մուտք գործելու</a>
+        </div>
+        
+        <button type="submit" id="submitBtn" class="btn-primary" disabled>Գրանցվել</button>
+        <p class="login-link">Ունեք անձնական էջ? <a href="{% url 'login' %}">Մուտք</a></p>
+    </form>
+</div>
+
+<script>
+
+
+// ognox validatorner
+
+
+
+const emailInput = document.getElementById('email');
+const fullNameInput = document.getElementById('full_name');
+const phoneInput = document.getElementById('phone');
+const vidInput = document.getElementById('verification_id');
+const passwordInput = document.getElementById('password');
+const confirmInput = document.getElementById('password2');
+
+const emailError = document.getElementById('emailError');
+const fullNameError = document.getElementById('fullNameError');
+const phoneError = document.getElementById('phoneError');
+const vidError = document.getElementById('vidError');
+const passwordError = document.getElementById('passwordError');
+const confirmError = document.getElementById('confirmError');
+
+const submitBtn = document.getElementById('submitBtn');
+
+function validateEmail(){
+    const v = emailInput.value.trim();
+    const ok = v.includes('@') && v.includes('.');
+    if(!ok && v.length>0){
+        emailInput.style.borderColor = '#ff6b6b';
+        emailError.textContent = 'Սխալ էլեկտրոնային հասցե';
+        return false;
+    } else {
+        emailInput.style.borderColor = '';
+        emailError.textContent = '';
+        return !!v;
+    }
+}
+
+function validateFullName(){
+    const v = fullNameInput.value.trim();
+    const parts = v.split(/\s+/).filter(Boolean);
+    if(parts.length < 2){
+        fullNameInput.style.borderColor = '#ff6b6b';
+        fullNameError.textContent = 'Մուտքագրեք անունն ու ազգանունը';
+        return false;
+    } else {
+        fullNameInput.style.borderColor = '';
+        fullNameError.textContent = '';
+        return true;
+    }
+}
+
+
+
+function validatePhone() {
+    const v = phoneInput.value.trim();
+    const re = /^0\d{8}$/;  // sksuma 0 ov hetevuma 8 nish
+    if (!re.test(v)) {
+        phoneInput.style.borderColor = '#ff6b6b';
+        phoneError.textContent = 'Հեռախոսահամարը պետք է սկսվի 0-ով և ունենա 9 թիվ';
+        return false;
+    } else {
+        phoneInput.style.borderColor = '';
+        phoneError.textContent = '';
+        return true;
+    }
+}
+
+
+
+function validateVID(){
+    const v = vidInput.value.trim();
+    if(v.length < 4){
+        vidInput.style.borderColor = '#ff6b6b';
+        vidError.textContent = 'Վկայագրի ID-ը չափազանց կարճ է';
+        return false;
+    } else {
+        vidInput.style.borderColor = '';
+        vidError.textContent = '';
+        return true;
+    }
+}
+
+function validatePassword(){
+    const v = passwordInput.value;
+    const lengthCheck = v.length >= 5;
+    const capitalCheck = /[A-ZԱՊՐՅՒԻՕԵՎԹԽԾՂ]/.test(v); // Metsatarera tuyl talis
+    let ok = true;
+    let msg = '';
+    if(!lengthCheck) { msg += 'Գաղտնաբառը պետք է լինի ≥ 5 նիշ, '; ok = false; }
+    if(!capitalCheck) { msg += 'մի մեծատառ՝ A-Z, '; ok = false; }
+    if(!ok){
+        passwordInput.style.borderColor = '#ff6b6b';
+        passwordError.textContent = msg.replace(/, $/, '');
+        return false;
+    } else {
+        passwordInput.style.borderColor = '';
+        passwordError.textContent = '';
+        return true;
+    }
+}
+
+function validateConfirm(){
+    if(confirmInput.value !== passwordInput.value){
+        confirmInput.style.borderColor = '#ff6b6b';
+        confirmError.textContent = 'Գաղտնաբառերը չեն համընկնում';
+        return false;
+    } else {
+        confirmInput.style.borderColor = '';
+        confirmError.textContent = '';
+        return true;
+    }
+}
+
+function updateSubmitState(){
+    const ok = validateFullName() && validateEmail() && validatePhone() && validateVID() && validatePassword() && validateConfirm();
+    submitBtn.disabled = !ok;
+}
+
+// Attach listeners
+[emailInput, fullNameInput, phoneInput, vidInput, passwordInput, confirmInput].forEach(el=>{
+    el.addEventListener('input', updateSubmitState);
+});
+
+// Prevent form submission if client-side invalid (extra safety)
+document.getElementById('registerForm').addEventListener('submit', function(e){
+    if(submitBtn.disabled){
+        e.preventDefault();
+        updateSubmitState();
+    }
+});
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

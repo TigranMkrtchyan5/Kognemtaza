@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<main>
+    <div class="welcome">
+        {% if user.is_authenticated %}
+            <h1>Hi, {{ user.username }}</h1>
+        {% else %}
+            <h1>Welcome to Kognem!</h1>
+        {% endif %}
+        <p>Find local helpers or post a task instantly.</p>
+    </div>
+
+    <h2>Available Tasks</h2>
+    <div class="tasks-grid">
+        <div class="task-card">
+            <h3>Grocery Delivery</h3>
+            <p>Deliver groceries from the nearby store.</p>
+            <button>Apply</button>
+        </div>
+        <div class="task-card">
+            <h3>Pet Walking</h3>
+            <p>Walk my dog for 30 minutes in the evening.</p>
+            <button>Apply</button>
+        </div>
+        <div class="task-card">
+            <h3>Furniture Assembly</h3>
+            <p>Assemble IKEA table and chairs at home.</p>
+            <button>Apply</button>
+        </div>
+        <div class="task-card">
+            <h3>Tech Help</h3>
+            <p>Install Wi-Fi router and setup smart devices.</p>
+            <button>Apply</button>
+        </div>
+    </div>
+</main>
+{% endblock %}
