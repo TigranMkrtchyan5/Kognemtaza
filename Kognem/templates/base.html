@@ -6,23 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kognem</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <!-- Premium fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-
 <header>
     <div class="header-container">
         <div class="brand">Kognem</div>
-
         <nav class="main-nav">
             <a href="{% url 'home' %}">Գլխավոր էջ</a>
             <a href="{% url 'ashxatanq' %}">Առաջադրանքներ</a>
         </nav>
-
         <div class="auth-buttons">
             {% if user.is_authenticated %}
-                <a href="{% url 'Account' %}" class="btn-profile">{{ user.username }}</a>
+                <a href="{% url 'Account' %}" class="btn-profile">{{ user.profile.full_name }}</a>
             {% else %}
                 <a href="{% url 'login' %}" class="btn-login">Login</a>
                 <a href="{% url 'register' %}" class="btn-register">Register</a>
@@ -32,8 +27,7 @@
 </header>
 
 <main>
-    {% block body %}
-    {% endblock %}
+    {% block body %}{% endblock %}
 </main>
 
 <footer>
@@ -41,6 +35,5 @@
         © 2025 Kognem. All rights reserved.
     </div>
 </footer>
-
 </body>
 </html>

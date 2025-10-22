@@ -14,6 +14,7 @@ urlpatterns = [
     path('ashxatanq/', views.ashxatanq, name='ashxatanq'),
     path('Account/', views.Account, name='Account'),
     path('logout/', views.logout_view, name='logout'),
+   path("check-username/", views.check_username, name="check_username"),
 
 
 ]

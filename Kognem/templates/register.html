@@ -14,7 +14,7 @@
 <div class="register-container">
     <h1 class="brand">Kognem</h1>
     <p class="tagline">Օգնիր բոլորին, կերտիր ապագադ</p>
-        {% csrf_token %}
+
     {% if messages %}
         {% for m in messages %}
             <div class="message {{ m.tags }}">{{ m }}</div>
@@ -23,8 +23,8 @@
 
     <form id="registerForm" method="POST" action="{% url 'register' %}" novalidate>
         {% csrf_token %}
-        
-        <!-- Full name (username) -->
+
+        <!-- Full name -->
         <div class="input-group">
             <label for="full_name">Անուն Ազգանուն</label>
             <input type="text" name="full_name" id="full_name" placeholder="Անուն Ազգանուն" required value="{{ form.full_name.value|default:'' }}">
@@ -32,6 +32,16 @@
                 <div class="error-msg">{{ form.full_name.errors.0 }}</div>
             {% endif %}
             <div class="error-msg" id="fullNameError"></div>
+        </div>
+
+        <!-- Username -->
+        <div class="input-group">
+            <label for="username">Username</label>
+            <input type="text" name="username" id="username" placeholder="username" required value="{{ form.username.value|default:'' }}">
+            {% if form.username.errors %}
+                <div class="error-msg">{{ form.username.errors.0 }}</div>
+            {% endif %}
+            <div class="error-msg" id="usernameError"></div>
         </div>
 
         <!-- Email -->
@@ -87,21 +97,16 @@
         <div class="guest-login">
             <a href="{% url 'home' %}" class="btn-guest">Շարունակել առանց մուտք գործելու</a>
         </div>
-        
+
         <button type="submit" id="submitBtn" class="btn-primary" disabled>Գրանցվել</button>
         <p class="login-link">Ունեք անձնական էջ? <a href="{% url 'login' %}">Մուտք</a></p>
     </form>
 </div>
 
 <script>
-
-
-// ognox validatorner
-
-
-
 const emailInput = document.getElementById('email');
 const fullNameInput = document.getElementById('full_name');
+const usernameInput = document.getElementById('username');
 const phoneInput = document.getElementById('phone');
 const vidInput = document.getElementById('verification_id');
 const passwordInput = document.getElementById('password');
@@ -109,6 +114,7 @@ const confirmInput = document.getElementById('password2');
 
 const emailError = document.getElementById('emailError');
 const fullNameError = document.getElementById('fullNameError');
+const usernameError = document.getElementById('usernameError');
 const phoneError = document.getElementById('phoneError');
 const vidError = document.getElementById('vidError');
 const passwordError = document.getElementById('passwordError');
@@ -144,11 +150,44 @@ function validateFullName(){
     }
 }
 
+// Username validation (format + uniqueness)
+async function validateUsername() {
+    const v = usernameInput.value.trim();
+    const re = /^[A-Za-z0-9._-]+$/;
 
+    if (!re.test(v)) {
+        usernameInput.style.borderColor = '#ff6b6b';
+        usernameError.textContent = 'Թույլատրելի են միայն A-Z, a-z, 0-9, -, _ և .';
+        return false;
+    }
+
+    const taken = await checkUsernameExists();
+    if (taken) return false;
+
+    usernameInput.style.borderColor = '';
+    usernameError.textContent = '';
+    return true;
+}
+
+async function checkUsernameExists() {
+    const username = usernameInput.value.trim();
+    if (!username) return false;
+
+    const response = await fetch(`/check-username/?username=${username}`);
+    const data = await response.json();
+
+    if (data.exists) {
+        usernameInput.style.borderColor = '#ff6b6b';
+        usernameError.textContent = 'Այս օգտագործանունը արդեն զբաղված է';
+        return true;
+    } else {
+        return false;
+    }
+}
 
 function validatePhone() {
     const v = phoneInput.value.trim();
-    const re = /^0\d{8}$/;  // sksuma 0 ov hetevuma 8 nish
+    const re = /^0\d{8}$/;
     if (!re.test(v)) {
         phoneInput.style.borderColor = '#ff6b6b';
         phoneError.textContent = 'Հեռախոսահամարը պետք է սկսվի 0-ով և ունենա 9 թիվ';
@@ -159,8 +198,6 @@ function validatePhone() {
         return true;
     }
 }
-
-
 
 function validateVID(){
     const v = vidInput.value.trim();
@@ -178,7 +215,7 @@ function validateVID(){
 function validatePassword(){
     const v = passwordInput.value;
     const lengthCheck = v.length >= 5;
-    const capitalCheck = /[A-ZԱՊՐՅՒԻՕԵՎԹԽԾՂ]/.test(v); // Metsatarera tuyl talis
+    const capitalCheck = /[A-ZԱՊՐՅՒԻՕԵՎԹԽԾՂ]/.test(v);
     let ok = true;
     let msg = '';
     if(!lengthCheck) { msg += 'Գաղտնաբառը պետք է լինի ≥ 5 նիշ, '; ok = false; }
@@ -206,38 +243,30 @@ function validateConfirm(){
     }
 }
 
-function updateSubmitState(){
-    const ok = validateFullName() && validateEmail() && validatePhone() && validateVID() && validatePassword() && validateConfirm();
+// Async submit state update
+async function updateSubmitState(){
+    const ok = validateFullName()
+        && await validateUsername()
+        && validateEmail()
+        && validatePhone()
+        && validateVID()
+        && validatePassword()
+        && validateConfirm();
+
     submitBtn.disabled = !ok;
+    return ok;
 }
 
-// Attach listeners
-[emailInput, fullNameInput, phoneInput, vidInput, passwordInput, confirmInput].forEach(el=>{
-    el.addEventListener('input', updateSubmitState);
+[emailInput, fullNameInput, usernameInput, phoneInput, vidInput, passwordInput, confirmInput].forEach(el=>{
+    el.addEventListener('input', () => updateSubmitState());
 });
 
-// Prevent form submission if client-side invalid (extra safety)
-document.getElementById('registerForm').addEventListener('submit', function(e){
-    if(submitBtn.disabled){
-        e.preventDefault();
-        updateSubmitState();
-    }
+// Submit handler waits for async validation
+document.getElementById('registerForm').addEventListener('submit', async function(e){
+    const ok = await updateSubmitState();
+    if (!ok) e.preventDefault();
 });
 </script>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -4,7 +4,7 @@
 <main>
     <div class="welcome">
         {% if user.is_authenticated %}
-            <h1>Hi, {{ user.username }}</h1>
+            <h1>Hi, {{ full_name }}</h1>
         {% else %}
             <h1>Welcome to Kognem!</h1>
         {% endif %}

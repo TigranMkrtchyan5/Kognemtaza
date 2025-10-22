@@ -9,6 +9,7 @@
 <style>
 .edit-input{display:none;width:100%;padding:5px;margin-top:3px;border:1px solid #ccc;border-radius:4px;}
 .error-msg{color:red;font-size:12px;margin-top:2px;display:none;}
+.success-msg{color:green;font-size:12px;margin-top:2px;display:none;}
 .controls button{margin-top:5px;margin-right:5px;}
 .invalid{border-color:red;}
 .controls button.save{background:linear-gradient(90deg,#2ecc71,#27ae60);color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;}
@@ -27,7 +28,7 @@
     </nav>
     <div class="auth-buttons">
       {% if user.is_authenticated %}
-        <a href="{% url 'Account' %}" class="btn-profile">{{ user.username }}</a>
+        <a href="{% url 'Account' %}" class="btn-profile">{{ user.first_name }} {{ user.last_name }}</a>
       {% else %}
         <a href="{% url 'login' %}" class="btn-login">Login</a>
         <a href="{% url 'register' %}" class="btn-register">Register</a>
@@ -42,15 +43,29 @@
 
     <form id="accountForm" method="POST" action="{% url 'Account' %}">
       {% csrf_token %}
-      <div id="globalSuccess" style="color:green;display:none;margin-bottom:10px;">✔ Պահպանված է</div>
+      <div id="globalSuccess" class="success-msg">✔ Պահպանված է</div>
+
+      <!-- Full Name -->
+      <div class="profile-field" data-field="full_name">
+        <label>Անուն Ազգանուն</label>
+        <div class="values">
+          <div class="current-value">{{ user.first_name }} {{ user.last_name }}</div>
+          <input class="edit-input" name="full_name" type="text" value="{{ user.first_name }} {{ user.last_name }}">
+          <div class="error-msg"></div>
+        </div>
+        <div class="controls">
+          <button type="button" class="edit-btn">✏️</button>
+        </div>
+      </div>
 
       <!-- Username -->
       <div class="profile-field" data-field="username">
-        <label>Անուն Ազգանուն</label>
+        <label>Օգտագործանուն</label>
         <div class="values">
           <div class="current-value">{{ user.username }}</div>
           <input class="edit-input" name="username" type="text" value="{{ user.username }}">
           <div class="error-msg"></div>
+          <div class="success-msg">✔ Օգտագործանունը ազատ է</div>
         </div>
         <div class="controls">
           <button type="button" class="edit-btn">✏️</button>
@@ -74,8 +89,8 @@
       <div class="profile-field" data-field="phone">
         <label>Հեռախոսահամար</label>
         <div class="values">
-          <div class="current-value">{{ user.profile.phone }}</div>
-          <input class="edit-input" name="phone" type="text" value="{{ user.profile.phone }}" placeholder="0XXXXXXXX">
+          <div class="current-value">{{ profile.phone }}</div>
+          <input class="edit-input" name="phone" type="text" value="{{ profile.phone }}" placeholder="0XXXXXXXX">
           <div class="error-msg"></div>
         </div>
         <div class="controls">
@@ -87,8 +102,8 @@
       <div class="profile-field" data-field="verification_id">
         <label>Հաստատման ID</label>
         <div class="values">
-          <div class="current-value">{{ user.profile.verification_id }}</div>
-          <input class="edit-input" name="verification_id" type="text" value="{{ user.profile.verification_id }}" placeholder="ALO123">
+          <div class="current-value">{{ profile.verification_id }}</div>
+          <input class="edit-input" name="verification_id" type="text" value="{{ profile.verification_id }}">
           <div class="error-msg"></div>
         </div>
         <div class="controls">
@@ -97,49 +112,37 @@
       </div>
     </form>
 
-    <!-- ✅ Logout form (не вложен внутрь другого <form>) -->
+    <!-- Logout form -->
     <form id="logout-form" action="{% url 'logout' %}" method="post" style="margin-top: 30px;">
       {% csrf_token %}
       <button id="logout-btn" type="submit">Դուրս գալ</button>
     </form>
-
   </section>
 </main>
 
 <script>
-const phoneRe = /^0\d{8}$/;
-const verificationRe = /^[A-Z0-9]{1,20}$/;
-const emailRe = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const accountForm = document.getElementById('accountForm');
+const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 let editingField = null;
 
-function showError(fieldEl, message){
+function showError(fieldEl, msg){
   const err = fieldEl.querySelector('.error-msg');
-  err.textContent = message;
-  err.style.display = 'block';
+  err.textContent = msg;
+  err.style.display='block';
   fieldEl.querySelector('.edit-input').classList.add('invalid');
 }
-
 function hideError(fieldEl){
   const err = fieldEl.querySelector('.error-msg');
-  err.style.display = 'none';
+  err.style.display='none';
   fieldEl.querySelector('.edit-input').classList.remove('invalid');
 }
-
-function showGlobalSuccess(){
-  const msg = document.getElementById('globalSuccess');
-  msg.style.display = 'block';
+function showSuccess(fieldEl){
+  const msg = fieldEl.querySelector('.success-msg');
+  msg.style.display='block';
   setTimeout(()=> msg.style.display='none', 2000);
 }
 
-function validateField(name, value){
-  value = value.trim();
-  if(name==='username' && value.length<3) return 'Անունը պարտադիր է';
-  if(name==='email' && !emailRe.test(value)) return 'Սխալ էլ. հասցե';
-  if(name==='phone' && !phoneRe.test(value)) return 'Հեռախոսը պետք է սկսվի 0-ով և ունենա 9 թվանշան';
-  if(name==='verification_id' && !verificationRe.test(value)) return 'Մեծատառ և նիշ, մինչև 20';
-  return '';
-}
-
+// ---------------- Edit Mode ----------------
 function enterEditMode(fieldEl){
   if(editingField) return;
   editingField = fieldEl;
@@ -154,7 +157,7 @@ function enterEditMode(fieldEl){
   const controls = fieldEl.querySelector('.controls');
 
   const saveBtn = document.createElement('button');
-  saveBtn.type='submit';
+  saveBtn.type='button';
   saveBtn.textContent='💾';
   saveBtn.classList.add('save');
 
@@ -177,17 +180,64 @@ function enterEditMode(fieldEl){
     hideError(fieldEl);
   });
 
-  saveBtn.addEventListener('click', (e)=>{
+  saveBtn.addEventListener('click', async ()=>{
     const value = input.value.trim();
-    const error = validateField(fieldEl.dataset.field, value);
-    if(error){
-      e.preventDefault();
-      showError(fieldEl, error);
+    const field = fieldEl.dataset.field;
+
+    // CLIENT-SIDE VALIDATION
+    if(field === 'username'){
+      if(value.length<3){
+        showError(fieldEl,'Օգտագործանունը պետք է լինի ≥3 նիշ');
+        return;
+      }
+      const resp = await fetch(`/check-username/?username=${value}`);
+      const data = await resp.json();
+      if(data.exists && value !== "{{ user.username }}"){
+        showError(fieldEl,'Օգտագործանունը արդեն զբաղված է');
+        return;
+      } else {
+        hideError(fieldEl);
+        showSuccess(fieldEl);
+      }
+    }
+    if(field==='full_name' && value.length<3){
+      showError(fieldEl,'Անունը պարտադիր է');
+      return;
+    }
+    if(field==='email' && !value.includes('@')){
+      showError(fieldEl,'Սխալ էլ. հասցե');
+      return;
+    }
+    if(field==='phone' && (!value.startsWith('0') || value.length!==9)){
+      showError(fieldEl,'Հեռախոսը պետք է սկսվի 0-ով և ունենա 9 թվանշան');
+      return;
+    }
+    if(field==='verification_id' && !/^[A-Z0-9]+$/.test(value)){
+      showError(fieldEl,'Մեծատառ և նիշ, օրինակ ALO123');
+      return;
+    }
+
+    // Save via normal form submit
+    const formData = new FormData();
+    formData.append(field,value);
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    const res = await fetch(accountForm.action,{
+      method:'POST',
+      body: formData
+    });
+    if(res.ok){
+      fieldEl.querySelector('.current-value').textContent=value;
+      span.style.display='block';
+      input.style.display='none';
+      saveBtn.remove();
+      cancelBtn.remove();
+      editingField = null;
+      document.querySelectorAll('.edit-btn').forEach(b=>b.style.display='');
+      showSuccess(fieldEl);
     }
   });
 }
 
-// Enable editing
 document.querySelectorAll('.edit-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     const fieldEl = btn.closest('.profile-field');
