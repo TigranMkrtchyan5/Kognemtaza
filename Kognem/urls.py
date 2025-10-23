@@ -14,7 +14,10 @@ urlpatterns = [
     path('ashxatanq/', views.ashxatanq, name='ashxatanq'),
     path('Account/', views.Account, name='Account'),
     path('logout/', views.logout_view, name='logout'),
-   path("check-username/", views.check_username, name="check_username"),
+    path("check-username/", views.check_username, name="check_username"),
+    path("check-email/", views.check_email, name="check_email"),
+    path("check-phone/", views.check_phone, name="check_phone"),
+    path("check-id/", views.check_id, name="check_id"),
 
 
 ]

@@ -190,6 +190,33 @@ function enterEditMode(fieldEl){
         return;
       } 
     }
+    
+if(field === 'email'){
+    const resp = await fetch(`/check-email/?email=${value}`);
+    const data = await resp.json();
+    if(data.exists && value !== "{{ user.email }}"){
+        showError(fieldEl,'Էլ. հասցեն արդեն օգտագործվում է');
+        return;
+    }
+}
+
+if(field === 'phone'){
+    const resp = await fetch(`/check-phone/?phone=${value}`);
+    const data = await resp.json();
+    if(data.exists && value !== "{{ profile.phone }}"){
+        showError(fieldEl,'Այս հեռախոսահամարը օգտագործվում է այլ օգտատիրոջ կողմից');
+        return;
+    }
+}
+
+if(field === 'verification_id'){
+    const resp = await fetch(`/check-id/?verification_id=${value}`);
+    const data = await resp.json();
+    if(data.exists && value !== "{{ profile.verification_id }}"){
+        showError(fieldEl,'Այս ID-ն օգտագործվում է այլ օգտատիրոջ կողմից');
+        return;
+    }
+}
     if(field==='full_name' && value.length<3){ showError(fieldEl,'Անունը պարտադիր է'); return; }
     if(field==='email' && !value.includes('@')){ showError(fieldEl,'Սխալ էլ. հասցե'); return; }
     if(field==='phone' && (!value.startsWith('0') || value.length!==9)){ showError(fieldEl,'Հեռախոսը պետք է սկսվի 0-ով և ունենա 9 թվանշան'); return; }
