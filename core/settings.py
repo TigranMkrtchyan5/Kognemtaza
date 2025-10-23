@@ -30,6 +30,11 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'core.backends.EmailOrUsernameBackend',        #es avelacrel em vor mailov log in lini   
+]
+
 
 # Application definition
 

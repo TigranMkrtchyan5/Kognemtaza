@@ -59,7 +59,13 @@ def register_view(request):
                 verification_id=form.cleaned_data.get('verification_id')
             )
 
-            login(request, user)
+            # --- Fix: authenticate user to set backend ---
+            authenticated_user = authenticate(username=user.username, password=form.cleaned_data.get('password1'))
+            if authenticated_user is not None:
+                login(request, authenticated_user)  # Now backend is set
+            else:
+                messages.error(request, "Սխալ ստեղծման ժամանակ: Խնդրում ենք փորձել կրկին.")
+                return redirect('register')
 
             # JSON log for all registered users with full info
             json_path = os.path.join(settings.BASE_DIR, 'user_data.json')

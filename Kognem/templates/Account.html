@@ -53,9 +53,7 @@
           <input class="edit-input" name="full_name" type="text" value="{{ user.first_name }} {{ user.last_name }}">
           <div class="error-msg"></div>
         </div>
-        <div class="controls">
-          <button type="button" class="edit-btn">✏️</button>
-        </div>
+        <div class="controls"><button type="button" class="edit-btn">✏️</button></div>
       </div>
 
       <!-- Username -->
@@ -67,9 +65,7 @@
           <div class="error-msg"></div>
           <div class="success-msg">✔ Օգտագործանունը ազատ է</div>
         </div>
-        <div class="controls">
-          <button type="button" class="edit-btn">✏️</button>
-        </div>
+        <div class="controls"><button type="button" class="edit-btn">✏️</button></div>
       </div>
 
       <!-- Email -->
@@ -80,9 +76,7 @@
           <input class="edit-input" name="email" type="email" value="{{ user.email }}">
           <div class="error-msg"></div>
         </div>
-        <div class="controls">
-          <button type="button" class="edit-btn">✏️</button>
-        </div>
+        <div class="controls"><button type="button" class="edit-btn">✏️</button></div>
       </div>
 
       <!-- Phone -->
@@ -93,9 +87,7 @@
           <input class="edit-input" name="phone" type="text" value="{{ profile.phone }}" placeholder="0XXXXXXXX">
           <div class="error-msg"></div>
         </div>
-        <div class="controls">
-          <button type="button" class="edit-btn">✏️</button>
-        </div>
+        <div class="controls"><button type="button" class="edit-btn">✏️</button></div>
       </div>
 
       <!-- Verification ID -->
@@ -106,9 +98,7 @@
           <input class="edit-input" name="verification_id" type="text" value="{{ profile.verification_id }}">
           <div class="error-msg"></div>
         </div>
-        <div class="controls">
-          <button type="button" class="edit-btn">✏️</button>
-        </div>
+        <div class="controls"><button type="button" class="edit-btn">✏️</button></div>
       </div>
     </form>
 
@@ -154,6 +144,9 @@ function enterEditMode(fieldEl){
   input.style.display='block';
   input.focus();
 
+  // hide error as soon as user types
+  input.addEventListener('input', ()=> hideError(fieldEl));
+
   const controls = fieldEl.querySelector('.controls');
 
   const saveBtn = document.createElement('button');
@@ -195,36 +188,25 @@ function enterEditMode(fieldEl){
       if(data.exists && value !== "{{ user.username }}"){
         showError(fieldEl,'Օգտագործանունը արդեն զբաղված է');
         return;
-      } else {
-        hideError(fieldEl);
-        showSuccess(fieldEl);
-      }
+      } 
     }
-    if(field==='full_name' && value.length<3){
-      showError(fieldEl,'Անունը պարտադիր է');
-      return;
-    }
-    if(field==='email' && !value.includes('@')){
-      showError(fieldEl,'Սխալ էլ. հասցե');
-      return;
-    }
-    if(field==='phone' && (!value.startsWith('0') || value.length!==9)){
-      showError(fieldEl,'Հեռախոսը պետք է սկսվի 0-ով և ունենա 9 թվանշան');
-      return;
-    }
-    if(field==='verification_id' && !/^[A-Z0-9]+$/.test(value)){
-      showError(fieldEl,'Մեծատառ և նիշ, օրինակ ALO123');
-      return;
-    }
+    if(field==='full_name' && value.length<3){ showError(fieldEl,'Անունը պարտադիր է'); return; }
+    if(field==='email' && !value.includes('@')){ showError(fieldEl,'Սխալ էլ. հասցե'); return; }
+    if(field==='phone' && (!value.startsWith('0') || value.length!==9)){ showError(fieldEl,'Հեռախոսը պետք է սկսվի 0-ով և ունենա 9 թվանշան'); return; }
+    if(field==='verification_id' && !/^[A-Z0-9]+$/.test(value)){ showError(fieldEl,'Մեծատառ և նիշ, օրինակ ALO123'); return; }
 
-    // Save via normal form submit
+    // Save via AJAX
     const formData = new FormData();
-    formData.append(field,value);
+    formData.append('field', field);
+    formData.append('value', value);
     formData.append('csrfmiddlewaretoken', csrfToken);
+
     const res = await fetch(accountForm.action,{
       method:'POST',
-      body: formData
+      body: formData,
+      headers: {'X-Requested-With': 'XMLHttpRequest'}
     });
+
     if(res.ok){
       fieldEl.querySelector('.current-value').textContent=value;
       span.style.display='block';
