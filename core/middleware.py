@@ -32,3 +32,12 @@ class AdminSessionMiddleware(MiddlewareMixin):
         original = getattr(request, "_original_session_cookie_name", USER_SESSION_COOKIE)
         settings.SESSION_COOKIE_NAME = original
         return response
+
+
+
+# middleware/ban_middleware.py
+from django.shortcuts import redirect
+from django.contrib.auth import logout
+
+
+

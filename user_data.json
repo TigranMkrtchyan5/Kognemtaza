@@ -56,13 +56,13 @@
   },
   {
     "username": "aper",
-    "email": "tigran.mkrtchyan333@mail.ru",
-    "date_joined": "2025-10-24 18:34",
-    "first_name": "Xujan",
-    "last_name": "Pupul",
-    "phone": "011223325",
-    "verification_id": "ALO121312121",
-    "last_updated": "2025-10-23 20:43"
+    "email": "tigran.mkrtchyan33@mail.ru",
+    "date_joined": "2025-10-24 21:17",
+    "first_name": "Tigran",
+    "last_name": "Mkrtchyan",
+    "phone": "077073185",
+    "verification_id": "ALO1213121",
+    "last_updated": "2025-10-24 21:17"
   },
   {
     "id": 45,
@@ -87,8 +87,13 @@
   },
   {
     "username": "Tika",
-    "email": "bbarmin704@outlook.com",
-    "date_joined": "2025-10-22 11:51"
+    "email": "tigran.mkrtchyan333@mail.ru",
+    "date_joined": "2025-10-22 11:51",
+    "first_name": "Harut",
+    "last_name": "Narguzyan",
+    "phone": "036565652",
+    "verification_id": "ALO1213121122",
+    "last_updated": "2025-10-24 20:14"
   },
   {
     "username": "Kognemas",
@@ -227,6 +232,7 @@
     "email": "tigran.mkrtchyan333@mail.ru",
     "phone": "036565652",
     "verification_id": "ALO1213121122",
-    "date_joined": "2025-10-24 18:47"
+    "date_joined": "2025-10-24 18:47",
+    "last_updated": "2025-10-24 19:24"
   }
 ]

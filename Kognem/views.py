@@ -14,6 +14,29 @@ from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from datetime import timedelta
+from .models import Post
+from .forms import PostForm 
+from django.contrib.sessions.models import Session # <-- НОВЫЙ ИМПОРТ ДЛЯ РАЗЛОГИНИВАНИЯ
+from django.utils.timezone import now
+from django.conf import settings
+from django.utils import timezone # <--- Отсюда вы берете timezone.utc
+from datetime import timedelta,datetime
+
+
+@login_required(login_url='login')
+def create_post(request):
+    if request.method == 'POST':
+        form = PostForm(request.POST, request.FILES)
+        if form.is_valid():
+            post = form.save(commit=False)
+            post.user = request.user
+            post.status = 'pending'  # All new posts start as pending
+            post.save()
+            messages.success(request, 'Your post has been submitted and is pending approval.')
+            return redirect('admin_dashboard')  # Redirect to admin dashboard
+    else:
+        form = PostForm()
+    return render(request, 'create_post.html', {'form': form})
 
 # ---------------- Admin Decorators ----------------
 def admin_required(view_func):
@@ -33,23 +56,28 @@ def superadmin_required(view_func):
     return wrapper
 
 # ---------------- Admin Dashboard ----------------
-@login_required(login_url='/admin-dashboard/login/')
+@admin_required
 def admin_dashboard(request):
-    """Dashboard content, only for Admins/SuperAdmins."""
-    if request.user.profile.role not in ['admin', 'superadmin']:
-        return render(request, "admin/login.html", {
-            "form": EmailOrUsernameAuthenticationForm(),
-            "error": "You are not authorized to view the admin dashboard."
-        })
-
-    users = User.objects.select_related('profile').all()
-    posts = Post.objects.all().order_by('-created_at')
+    if not request.user.is_authenticated or request.user.profile.role not in ['admin', 'superadmin']:
+        form = EmailOrUsernameAuthenticationForm()
+        return render(request, "admin/login.html", {"form": form})
+    
+    # ИЗМЕНЕНИЕ: Фильтруем пользователей, чтобы показывать ТОЛЬКО НЕЗАБАНЕННЫХ
+    # Если вы используете BanLog, то проверяем, что нет активных банов
+    active_users = User.objects.select_related("profile").exclude(
+        bans__active=True, 
+        bans__end_date__gt=timezone.now()
+    ).distinct()
+    
+    pending_posts = Post.objects.filter(status='pending').order_by("-created_at")
+    
+    
     return render(request, "admin/dashboard.html", {
-        "users": users,
-        "posts": posts,
+        "users": active_users, # <-- ИСПОЛЬЗУЕМ ОТФИЛЬТРОВАННЫХ ПОЛЬЗОВАТЕЛЕЙ
+        "posts": pending_posts,
         "current_user": request.user,
+        "admin_roles": ["admin", "superadmin", "support"],  # optional for template
     })
-
 
 def admin_dashboard_login(request):
     """Login view for the admin dashboard."""
@@ -96,25 +124,22 @@ def user_detail(request, user_id):
         return redirect('admin_dashboard')
 
 
-
-
-
-
-
-
-
-
-
-
-
 # ---------------- Admin User Actions ----------------
 @admin_required
 def banned_users(request):
-    # Get all users with active bans
+    # ИЗМЕНЕНИЕ: Используем 'bans__active' и 'bans__end_date'
     banned_users_list = User.objects.filter(
-        bans__active=True,  # `bans` is related_name from BanLog
-        bans__end_date__gt=timezone.now()  # only current bans
-    ).distinct().select_related('profile')
+        bans__active=True,  # <-- ИСПРАВЛЕНО
+        bans__end_date__gt=timezone.now()
+    ).distinct().select_related('profile').prefetch_related('bans') # <-- ИСПРАВЛЕНО
+    
+    # Создаем объект active_ban для шаблона
+    for user in banned_users_list:
+        try:
+            # ИСПОЛЬЗУЕМ user.bans.filter()
+            user.active_ban = user.bans.filter(active=True).order_by('-end_date').first()
+        except AttributeError:
+             user.active_ban = None 
     
     return render(request, 'admin/banned_users.html', {'banned_users': banned_users_list})
 
@@ -122,47 +147,70 @@ def banned_users(request):
 @csrf_exempt
 @admin_required
 def ban_user(request, user_id):
-    if request.method == "POST":
-        try:
-            user = User.objects.get(pk=user_id)
-            if user.profile.role == 'superadmin':
-                return JsonResponse({"success": False, "error": "Cannot ban a superadmin"})
-            
-            data = json.loads(request.body)
-            reason = data.get("reason")
-            end_date = data.get("end_date")
-            if not reason or not end_date:
-                return JsonResponse({"success": False, "error": "Reason and end date required"})
-            
-            end_date = timezone.datetime.fromisoformat(end_date)
-            
-            BanLog.objects.create(
-                user=user,
-                admin=request.user,
-                reason=reason,
-                end_date=end_date,
-                active=True
-            )
-            return JsonResponse({"success": True})
-        except User.DoesNotExist:
-            return JsonResponse({"success": False, "error": "User not found"})
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Invalid method"}, status=405)
+    
+    try:
+        user = User.objects.get(pk=user_id)
+        if user.profile.role == 'superadmin':
+            return JsonResponse({"success": False, "error": "Cannot ban a superadmin"}, status=403)
 
+        data = json.loads(request.body)
+        reason = data.get("reason")
+        end_date_str = data.get("end_date")
+        if not reason or not end_date_str:
+            return JsonResponse({"success": False, "error": "Reason and end date required"}, status=400)
 
+        end_date = timezone.datetime.fromisoformat(end_date_str)
+        if timezone.is_naive(end_date):
+            end_date = timezone.make_aware(end_date)
 
+        # Logout user from all sessions
+        for session in Session.objects.all():
+            session_data = session.get_decoded()
+            if str(session_data.get('_auth_user_id')) == str(user.id):
+                session.delete()
+
+        # Create BanLog
+        BanLog.objects.create(
+            user=user,
+            admin=request.user,
+            reason=reason,
+            end_date=end_date
+        )
+
+        return JsonResponse({"success": True, "message": "User banned and logged out."})
+
+    except User.DoesNotExist:
+        return JsonResponse({"success": False, "error": "User not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": f"Internal server error: {str(e)}"}, status=500)
+    
 
 @csrf_exempt
 @admin_required
 def unban_user(request, user_id):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Invalid request method. Must be POST."}, status=405)
+
     try:
         user = User.objects.get(pk=user_id)
-        active_bans = BanLog.objects.filter(user=user, active=True)
-        for ban in active_bans:
-            ban.active = False
-            ban.save()
-        return JsonResponse({"success": True})
+        
+        # 1. Деактивация всех активных записей о бане (Этого достаточно!)
+        user.bans.filter(active=True).update(active=False)
+        
+        # 2. Обновление статуса в Profile для разрешения входа
+        # УДАЛИТЕ СЛЕДУЮЩИЕ ДВЕ СТРОКИ:
+        # if hasattr(user, 'profile'):
+        #     user.profile.is_banned = False 
+        #     user.profile.save() 
+            
+        return JsonResponse({"success": True, "message": f"User {user.username} successfully unbanned."})
+        
     except User.DoesNotExist:
-        return JsonResponse({"success": False, "error": "User not found"})
-
+        return JsonResponse({"success": False, "error": "User not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": f"Internal server error: {str(e)}"}, status=500)
 
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -172,11 +220,13 @@ def delete_user(request, user_id):
     try:
         user_to_delete = User.objects.get(pk=user_id)
         if request.user.profile.role == 'admin' and user_to_delete.profile.role in ['admin', 'superadmin', 'support']:
-            return JsonResponse({"success": False, "error": "Cannot delete this user"})
+            return JsonResponse({"success": False, "error": "Cannot delete this user"}, status=403)
         user_to_delete.delete()
         return JsonResponse({"success": True})
     except User.DoesNotExist:
-        return JsonResponse({"success": False, "error": "User not found"})
+        return JsonResponse({"success": False, "error": "User not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": f"Internal server error: {str(e)}"}, status=500)
 
 
 @csrf_exempt
@@ -185,13 +235,15 @@ def reset_password(request, user_id):
     try:
         user_to_reset = User.objects.get(pk=user_id)
         if request.user.profile.role == 'admin' and user_to_reset.profile.role in ['admin', 'superadmin', 'support']:
-            return JsonResponse({"success": False, "error": "Cannot reset this user password"})
+            return JsonResponse({"success": False, "error": "Cannot reset this user password"}, status=403)
         new_password = "Temp1234"  # Or generate randomly
         user_to_reset.set_password(new_password)
         user_to_reset.save()
         return JsonResponse({"success": True, "new_password": new_password})
     except User.DoesNotExist:
-        return JsonResponse({"success": False, "error": "User not found"})
+        return JsonResponse({"success": False, "error": "User not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": f"Internal server error: {str(e)}"}, status=500)
 
 
 # ---------------- Admin Post Actions ----------------
@@ -204,19 +256,57 @@ def approve_post(request, post_id):
         post.save()
         return JsonResponse({"success": True})
     except Post.DoesNotExist:
-        return JsonResponse({"success": False, "error": "Post not found"})
-
+        return JsonResponse({"success": False, "error": "Post not found"}, status=404)
 @csrf_exempt
 @admin_required
 def reject_post(request, post_id):
+    if request.method != 'POST':
+        return JsonResponse({"success": False, "error": "Invalid method"}, status=405)
+        
     try:
+        # 1. Находим пост
         post = Post.objects.get(pk=post_id)
+        
+        # 2. Читаем тело JSON для получения причины
+        try:
+            data = json.loads(request.body)
+            rejection_reason = data.get('reason', '').strip()
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "error": "Invalid JSON format"}, status=400)
+
+        # 3. Проверяем наличие причины (требуется для админа)
+        if not rejection_reason:
+            return JsonResponse({"success": False, "error": "Rejection reason is required"}, status=400)
+            
+        # 4. Обновляем статус и сохраняем причину
         post.status = 'rejected'
+        post.rejection_reason = rejection_reason # <-- ДОБАВЛЕНО/ИСПРАВЛЕНО
         post.save()
+        
         return JsonResponse({"success": True})
+        
     except Post.DoesNotExist:
-        return JsonResponse({"success": False, "error": "Post not found"})
-    
+        return JsonResponse({"success": False, "error": "Post not found"}, status=404)
+    except Exception as e:
+        # Общая ошибка, если что-то пошло не так
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+@admin_required
+def approved_posts_view(request):
+    posts = Post.objects.filter(status='approved').order_by('-created_at')
+    return render(request, 'admin/approved_posts.html', {'posts': posts})
+
+@admin_required
+def rejected_posts_view(request):
+    posts = Post.objects.filter(status='rejected').order_by('-created_at')
+    return render(request, 'admin/rejected_posts.html', {'posts': posts})
+
+
+@admin_required
+def pending_posts_view(request):
+    posts = Post.objects.filter(status='pending').order_by('-created_at')
+
+    return render(request, 'admin/pending_posts.html', {'posts': posts})
 
 # ---------------- Role Decorators ----------------
 
@@ -242,10 +332,22 @@ def home(request):
     if request.user.is_authenticated:
         profile, _ = Profile.objects.get_or_create(user=request.user)
         full_name = profile.full_name or request.user.username
-    return render(request, 'home.html', {'full_name': full_name})
+
+    # Get all approved posts, newest first
+    approved_posts = Post.objects.filter(status='approved').order_by('-created_at')
+
+    return render(request, 'home.html', {
+        'full_name': full_name,
+        'posts': approved_posts,  # send posts to template
+    })
+
 
 def ashxatanq(request):
-    return render(request, 'ashxatanq.html')
+    approved_posts = Post.objects.filter(status='approved').order_by('-created_at')
+
+    return render(request, 'ashxatanq.html', {
+        'posts': approved_posts,
+    })
 
 # ---------------- Registration / Login / Logout ----------------
 def register_view(request):
@@ -314,24 +416,47 @@ def register_view(request):
         form = CustomUserCreationForm()
     return render(request, 'register.html', {'form': form})
 
+
 def login_view(request):
-    if request.method == "POST":
-        form = EmailOrUsernameAuthenticationForm(request.POST)
-        if form.is_valid():
-            user = form.get_user()
-            # Check banned status
-            if hasattr(user, 'profile') and user.profile.is_banned:
-                messages.error(request, "Ձեր հաշիվը արգելված է։")
-                return redirect('login')
-            login(request, user)
+    """
+    Custom login view that prevents banned users from logging in.
+    Supports login via username or email.
+    """
+    if request.user.is_authenticated:
+        return redirect('home')
+
+    form = EmailOrUsernameAuthenticationForm(request.POST or None)
+
+    if request.method == "POST" and form.is_valid():
+        user = form.get_user()
+
+        # Check for active ban
+        now = timezone.now()
+        active_ban = user.bans.filter(active=True, end_date__gt=now).first()
+        if active_ban:
+            messages.error(
+                request,
+                f"Ձեր հաշիվը արգելված է մինչեւ {active_ban.end_date.strftime('%Y-%m-%d %H:%M')}"
+            )
+            return redirect('login')
+
+        # Log in the user
+        login(request, user)
+
+        # Get or create profile to display full name
+        profile, _ = user.profile, None
+        if not hasattr(user, 'profile'):
+            from .models import Profile
             profile, _ = Profile.objects.get_or_create(user=user)
-            messages.success(request, f"Բարի վերադարձ, {profile.full_name or user.username}!")
-            return redirect('home')
-        else:
-            messages.error(request, "Սխալ էլ. հասցե/օգտագործանուն կամ գաղտնաբառ")
-    else:
-        form = EmailOrUsernameAuthenticationForm()
+
+        messages.success(
+            request,
+            f"Բարի վերադարձ, {profile.full_name or user.username}!"
+        )
+        return redirect('home')
+
     return render(request, 'login.html', {'form': form})
+
 
 def logout_view(request):
     logout(request)
@@ -441,12 +566,33 @@ def check_id(request):
     return JsonResponse({"exists": exists})
 
 # ---------------- Admin / Moderator Views ----------------
-@admin_required
-def admin_dashboard(request):
-    users = User.objects.all().select_related('profile')
-    return render(request, 'admin/dashboard.html', {'users': users})
 
 @moderator_required
 def review_posts(request):
     # Example placeholder for post approval logic
     return render(request, 'admin/review_posts.html')
+
+
+@csrf_exempt
+@admin_required
+def delete_post(request, post_id):
+    """
+    Удаляет пост по его ID (используется на страницах Rejected/Approved/Pending).
+    """
+    if request.method == 'POST':
+        try:
+            # Находим пост. Используем get_object_or_404, если он не был импортирован.
+            post_to_delete = Post.objects.get(pk=post_id)
+            
+            # В отличие от пользователей, здесь обычно не нужны сложные проверки ролей
+            # Просто удаляем, если админ имеет доступ к этой функции.
+            post_to_delete.delete()
+            
+            return JsonResponse({"success": True, "message": "Post deleted successfully."})
+            
+        except Post.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Post not found."}, status=404)
+        except Exception as e:
+            return JsonResponse({"success": False, "error": f"Internal error: {str(e)}"}, status=500)
+
+    return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)

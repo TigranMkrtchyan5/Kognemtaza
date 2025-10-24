@@ -2,35 +2,28 @@
 
 {% block body %}
 
+    <h2>Available Tasks</h2>
+    {% if posts %}
     <div class="tasks-grid">
-        <div class="task-card">
-            <h3>Grocery Delivery</h3>
-            <p>Deliver groceries from nearby store to my house.</p>
-            <div class="task-meta">Posted by: Anna | Price: $15 | Location: Yerevan</div>
-            <button>Apply</button>
-        </div>
-
-        <div class="task-card">
-            <h3>Walk the Dog</h3>
-            <p>Walk my dog for 30 minutes in the evening.</p>
-            <div class="task-meta">Posted by: Aram | Price: $10 | Location: Yerevan</div>
-            <button>Apply</button>
-        </div>
-
-        <div class="task-card">
-            <h3>Assemble Furniture</h3>
-            <p>Assemble IKEA table and chairs at home.</p>
-            <div class="task-meta">Posted by: Lilit | Price: $25 | Location: Yerevan</div>
-            <button>Apply</button>
-        </div>
-
-        <div class="task-card">
-            <h3>Wi-Fi Setup</h3>
-            <p>Install Wi-Fi router and setup smart devices at home.</p>
-            <div class="task-meta">Posted by: Tigran | Price: $20 | Location: Yerevan</div>
-            <button>Apply</button>
-        </div>
+        {% for post in posts %}
+            {% if post.status == 'approved' %}
+            <div class="task-card">
+                <h3>{{ post.title }}</h3>
+                {% if post.image %}
+                    <img src="{{ post.image.url }}" alt="{{ post.title }}" class="task-image">
+                {% endif %}
+                <p>{{ post.description }}</p>
+                <div class="task-meta">
+                    Posted by: {{ post.user.username }} | Price: ${{ post.price }} | Location: {{ post.location }}
+                </div>
+                <button>Apply</button>
+            </div>
+            {% endif %}
+        {% endfor %}
     </div>
+    {% else %}
+        <p style="color:#bfa54a;">No tasks available at the moment.</p>
+    {% endif %}
 </main>
 
 {% endblock %}

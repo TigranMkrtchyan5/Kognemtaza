@@ -61,11 +61,40 @@ button:hover {opacity:0.85;}
 
 <script>
 async function unbanUser(userId){
-    const res = await fetch(`/unban-user/${userId}/`, {
-        method:'POST',
-        headers:{'X-CSRFToken':'{{ csrf_token }}'}
-    });
-    if(res.ok) location.reload();
+    if(!confirm("Are you sure you want to unban this user?")) {
+        return; // Отмена, если пользователь передумал
+    }
+    
+    try {
+        const res = await fetch(`/unban-user/${userId}/`, {
+            method:'POST',
+            headers:{'X-CSRFToken':'{{ csrf_token }}'}
+        });
+        
+        if(res.ok) {
+            // Если Django вернул статус 200, перезагружаем страницу
+            alert('User successfully unbanned!');
+            location.reload(); 
+        } else {
+            // Если Django вернул ошибку (403, 404, 500)
+            let errorText = await res.text();
+            
+            // Пытаемся получить JSON-ответ, если он есть
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorText = errorJson.error || errorJson.message || res.statusText;
+            } catch(e) {
+                // Если это не JSON, используем текст или статус
+                errorText = errorText || res.statusText;
+            }
+            
+            alert(`Error during unban process (Status ${res.status}): ${errorText}`);
+        }
+    } catch(error) {
+        // Ошибка сети или другая критическая ошибка
+        alert("A network error occurred. Check your server connection.");
+        console.error("Fetch error:", error);
+    }
 }
 </script>
 

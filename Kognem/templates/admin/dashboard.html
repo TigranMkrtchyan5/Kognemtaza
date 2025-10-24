@@ -7,8 +7,78 @@
 <title>Admin Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
 <style>
+/* ------------------------------------- */
+/* ОСНОВНЫЕ СТИЛИ */
+/* ------------------------------------- */
 body {font-family: 'Roboto', sans-serif; background: #1b1b1b; color: #eee; margin: 0; padding: 0;}
 header {background: linear-gradient(90deg, #bfa54a, #6aa84f); padding: 20px; color: #fff; text-align: center; font-size: 32px; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.5);}
+
+/* Стили для ссылок в шапке (Применяются к 'Banned Users') */
+header > a {margin-left: 20px; text-decoration: none; color: #fff; background: #6a1b9a; padding: 10px 16px; border-radius: 8px; transition: 0.3s; font-size: 18px;}
+header > a:hover {opacity: 0.85;}
+
+/* ------------------------------------- */
+/* СТИЛИ DROP DOWN МЕНЮ */
+/* ------------------------------------- */
+.dropdown {
+    position: relative;
+    display: inline-block;
+    margin-left: 20px;
+}
+
+.dropbtn {
+    background: #6a1b9a;
+    color: white;
+    padding: 10px 16px;
+    font-size: 18px;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s;
+    font-weight: bold;
+}
+.dropbtn:hover {
+    background-color: #55167a;
+}
+
+.dropdown-content {
+    display: none; /* Скрыто по умолчанию, управляется JS */
+    position: absolute;
+    background-color: #222;
+    min-width: 180px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.4);
+    z-index: 10;
+    border-radius: 4px;
+    top: 100%;
+    left: 0;
+    margin-top: 5px;
+    text-align: left;
+}
+
+/* Класс, добавляемый через JS для отображения меню */
+.dropdown-content.show {
+    display: block;
+}
+
+.dropdown-content a {
+    color: #eee;
+    padding: 10px 16px;
+    text-decoration: none;
+    display: block;
+    transition: background-color 0.3s;
+    font-size: 16px;
+    background: none !important; 
+    border-radius: 0;
+    margin: 0;
+}
+
+.dropdown-content a:hover {
+    background-color: #444 !important; 
+}
+
+/* ------------------------------------- */
+/* СТИЛИ КОНТЕНТА И ТАБЛИЦ */
+/* ------------------------------------- */
 main {padding: 30px;}
 h2 {color: #bfa54a; margin-top: 40px; font-size: 24px; border-bottom: 2px solid #6aa84f; display: inline-block; padding-bottom: 5px;}
 table {width: 100%; border-collapse: collapse; margin-top: 20px; background: #222; border-radius: 8px; overflow: hidden;}
@@ -20,24 +90,32 @@ button:hover {opacity: 0.85;}
 img {border-radius: 6px; max-width: 80px; max-height: 80px;}
 .role {font-weight: bold; color: #ffd700;}
 .action-buttons button {margin-right: 5px; margin-bottom: 3px;}
-
-/* Specific Colors */
 .ban {background-color: #b71c1c; color: #fff;}
+.unban {background-color: #27ae60; color: #fff;}
 .delete {background-color: #444; color: #fff;}
 .reset {background-color: #bfa54a; color: #000;}
-.banned-users-btn {background-color: #6a1b9a; color: #fff; padding: 10px 16px; font-size: 16px; border-radius: 8px; text-decoration: none; margin-left: 20px;}
+.approve {background-color: #ffb300; color: #000;}
+.reject {background-color: #6a1b9a; color: #fff;}
 </style>
 </head>
 <body>
 
 <header>
     Admin Dashboard
-    <a href="{% url 'banned_users' %}" class="banned-users-btn">Banned Users</a>
-</header>
+    <a href="{% url 'banned_users' %}">Banned Users</a>
+    
+    <div class="dropdown">
+        <button class="dropbtn">Admin Actions ▼</button>
+        <div class="dropdown-content">
+            <a href="{% url 'pending_posts' %}">Pending</a>
+            <a href="{% url 'approved_posts' %}">Approved</a> 
+            <a href="{% url 'rejected_posts' %}" style="color: #b71c1c;">Rejected</a>
+        </div>
+    </div>
+    </header>
 
 <main>
 
-<!-- Users Section -->
 <h2>Users</h2>
 <table>
 <tr>
@@ -53,30 +131,30 @@ img {border-radius: 6px; max-width: 80px; max-height: 80px;}
 <tr>
     <td>{{ user.id }}</td>
     <td><a href="{% url 'user_detail' user.id %}" style="color:#bfa54a; text-decoration: underline;">{{ user.username }}</a></td>
-    <td>{{ user.profile.full_name }}</td>
+    <td>{{ user.profile.full_name|default:user.get_full_name }}</td>
     <td>{{ user.email }}</td>
     <td class="role">{{ user.profile.role|capfirst }}</td>
-    <td>
-        {% if user.is_banned %}<span style="color:#b71c1c;">Banned</span>{% else %}<span style="color:#6aa84f;">Active</span>{% endif %}
-    </td>
+    <td>{% if user.is_banned %}<span style="color:#b71c1c;">Banned</span>{% else %}<span style="color:#6aa84f;">Active</span>{% endif %}</td>
     <td class="action-buttons">
         {% if user.profile.role not in admin_roles %}
-            {% if not user.is_banned %}
-                <button class="ban" onclick="banUser('{{ user.id }}')">Ban</button>
+            {% if user.is_banned %}
+                <button class="unban" onclick="handleAdminAction('unban', '{{ user.id }}')">Unban</button> 
+            {% else %}
+                <button class="ban" onclick="handleAdminAction('ban', '{{ user.id }}')">Ban</button>
             {% endif %}
-            <button class="delete" onclick="deleteUser('{{ user.id }}')">Delete</button>
-            <button class="reset" onclick="resetPassword('{{ user.id }}')">Reset Password</button>
+            <button class="delete" onclick="handleAdminAction('delete', '{{ user.id }}')">Delete</button>
+            <button class="reset" onclick="handleAdminAction('reset', '{{ user.id }}')">Reset Password</button>
         {% endif %}
     </td>
 </tr>
 {% endfor %}
 </table>
 
-<!-- Pending Posts Section -->
 <h2>Pending Posts</h2>
 <table>
 <tr>
     <th>ID</th>
+    <th>Title</th>
     <th>User</th>
     <th>Image</th>
     <th>Description</th>
@@ -85,71 +163,119 @@ img {border-radius: 6px; max-width: 80px; max-height: 80px;}
     <th>Status</th>
     <th>Actions</th>
 </tr>
-{% for post in posts %}
-<tr>
-    <td>{{ post.id }}</td>
-    <td>{{ post.user.username }}</td>
-    <td>{% if post.image %}<img src="{{ post.image.url }}" alt="Image">{% endif %}</td>
-    <td>{{ post.description }}</td>
-    <td>{{ post.location }}</td>
-    <td>{{ post.price }}</td>
-    <td>{{ post.status|capfirst }}</td>
-    <td class="action-buttons">
-        {% if post.status == 'pending' %}
-            <button class="approve" onclick="approvePost('{{ post.id }}')">Approve</button>
-            <button class="reject" onclick="rejectPost('{{ post.id }}')">Reject</button>
-        {% endif %}
-    </td>
-</tr>
-{% endfor %}
+
 </table>
 
 </main>
 
 <script>
-async function banUser(userId){
-    const reason = prompt("Enter ban reason:");
-    if(!reason) return;
-    const days = prompt("Enter ban duration in days (e.g., 7):");
-    if(!days || isNaN(days)) return;
-    const end_date = new Date();
-    end_date.setDate(end_date.getDate() + parseInt(days));
-    const res = await fetch(`/ban-user/${userId}/`, {
-        method:'POST',
-        headers: {'X-CSRFToken':'{{ csrf_token }}'},
-        body: JSON.stringify({reason: reason, end_date: end_date.toISOString()})
+// ----------------- Dropdown Logic -----------------
+const dropdownEl = document.querySelector('.dropdown');
+const dropdownContent = document.querySelector('.dropdown-content');
+let closeTimeout;
+const delay = 1000; // 1000 миллисекунд = 1 секунда
+
+if(dropdownEl && dropdownContent) {
+    dropdownEl.addEventListener('mouseover', () => {
+        clearTimeout(closeTimeout); 
+        dropdownContent.classList.add('show');
     });
-    if(res.ok) location.reload();
-}
 
-async function deleteUser(userId){
-    if(!confirm("Are you sure you want to delete this user?")) return;
-    const res = await fetch(`/delete-user/${userId}/`, {
-        method:'POST',
-        headers: {'X-CSRFToken':'{{ csrf_token }}'}
+    dropdownEl.addEventListener('mouseout', () => {
+        closeTimeout = setTimeout(() => {
+            dropdownContent.classList.remove('show');
+        }, delay);
     });
-    if(res.ok) location.reload();
 }
+// --------------------------------------------------
 
-async function resetPassword(userId){
-    const newPassword = prompt("Enter new password for user:");
-    if(!newPassword) return;
-    const res = await fetch(`/reset-password/${userId}/`, {
-        method:'POST',
-        headers: {'X-CSRFToken':'{{ csrf_token }}'},
-        body: JSON.stringify({password: newPassword})
-    });
-    if(res.ok) location.reload();
-}
+// ----------------- AJAX Action Core Function -----------------
 
-async function approvePost(postId){
-    const res = await fetch(`/admin/posts/approve/${postId}/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}});
-    if(res.ok) location.reload();
-}
+/**
+ * Главная функция для обработки всех административных действий (Ban, Unban, Delete, Reset).
+ * @param {string} action - Тип действия ('ban', 'unban', 'delete', 'reset').
+ * @param {string} userId - ID целевого пользователя.
+ */
+async function handleAdminAction(action, userId) {
+    let url = '';
+    let bodyData = {};
+    let confirmationMessage = '';
+    let successMessage = '';
+    let method = 'POST';
+    let headers = {'X-CSRFToken': '{{ csrf_token }}'};
 
-async function rejectPost(postId){
-    const res = await fetch(`/admin/posts/reject/${postId}/`, {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}});
-    if(res.ok) location.reload();
+    switch (action) {
+        case 'unban':
+            confirmationMessage = "Are you sure you want to unban this user?";
+            url = `/unban-user/${userId}/`;
+            successMessage = "User successfully unbanned. User will reappear in the list.";
+            break;
+            
+        case 'delete':
+            confirmationMessage = "Are you sure you want to delete this user? This action is irreversible.";
+            url = `/delete-user/${userId}/`;
+            successMessage = "User successfully deleted.";
+            break;
+
+        case 'ban':
+            const reason = prompt("Enter ban reason:");
+            if (!reason) return;
+            const days = prompt("Enter ban duration in days (e.g., 7):");
+            if (!days || isNaN(days)) {
+                alert("Invalid duration. Action canceled.");
+                return;
+            }
+            const endDate = new Date();
+            endDate.setDate(endDate.getDate() + parseInt(days));
+            
+            url = `/ban-user/${userId}/`;
+            bodyData = { reason: reason, end_date: endDate.toISOString() };
+            headers['Content-Type'] = 'application/json';
+            confirmationMessage = `Ban user for ${days} days? They will be logged out and removed from this list.`;
+            successMessage = "User successfully banned and logged out.";
+            break;
+            
+        case 'reset':
+            const newPassword = prompt("Enter new password for user (min 8 chars):");
+            if (!newPassword || newPassword.length < 8) {
+                alert("Password must be at least 8 characters long. Action canceled.");
+                return;
+            }
+            url = `/reset-password/${userId}/`;
+            bodyData = { password: newPassword };
+            headers['Content-Type'] = 'application/json';
+            confirmationMessage = "Are you sure you want to reset this user's password?";
+            successMessage = "Password successfully reset.";
+            break;
+
+        default:
+            console.error("Unknown action:", action);
+            return;
+    }
+
+    if (action !== 'ban' && action !== 'reset' && !confirm(confirmationMessage)) {
+        return;
+    }
+    
+    // Выполнение AJAX-запроса
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: headers,
+            body: Object.keys(bodyData).length > 0 ? JSON.stringify(bodyData) : null
+        });
+
+        if (response.ok) {
+            alert(successMessage);
+            location.reload(); // Перезагружаем страницу после успешного действия
+        } else {
+            const error = await response.json().catch(() => ({ error: response.statusText }));
+            alert(`Error processing action: ${error.error || response.statusText}`);
+        }
+    } catch (e) {
+        console.error("Network or Fetch Error:", e);
+        alert("A network error occurred. Check the console.");
+    }
 }
 </script>
 

@@ -4,6 +4,9 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils import timezone
 
+
+
+
 # ---------------- User Activity ----------------
 class UserActivity(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -13,7 +16,26 @@ class UserActivity(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.action[:30]}"
 
-# ---------------- Profile Model ----------------
+# ---------------- Ban Log ----------------
+
+class BanLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bans")
+    admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="issued_bans")
+    reason = models.TextField()
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField()
+    active = models.BooleanField(default=True)  # optional for historical tracking
+
+    @property
+    def is_active(self):
+        """Return True if ban is currently active"""
+        return timezone.now() < self.end_date
+
+    def __str__(self):
+        admin_name = self.admin.username if self.admin else "System"
+        return f"{self.user.username} banned by {admin_name}"
+
+# ---------------- Profil ----------------
 class Profile(models.Model):
     ROLE_CHOICES = [
         ('superadmin', 'Super Admin'),
@@ -33,27 +55,7 @@ class Profile(models.Model):
 
     @property
     def is_banned(self):
-        """
-        Returns True if there is an active BanLog for this user
-        """
-        return self.user.bans.filter(active=True, end_date__gt=timezone.now()).exists()
-
-# ---------------- Ban Log ----------------
-class BanLog(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bans")
-    admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="issued_bans")
-    reason = models.TextField()
-    start_date = models.DateTimeField(auto_now_add=True)
-    end_date = models.DateTimeField()
-    active = models.BooleanField(default=True)
-
-    def save(self, *args, **kwargs):
-        self.active = timezone.now() < self.end_date
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        admin_name = self.admin.username if self.admin else "System"
-        return f"{self.user.username} banned by {admin_name}"
+        return self.user.bans.filter(end_date__gt=timezone.now()).exists()
 
 # ---------------- Post Model ----------------
 class Post(models.Model):
@@ -63,18 +65,20 @@ class Post(models.Model):
         ('rejected', 'Rejected'),
     ]
 
+    title = models.CharField(max_length=255, default='')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     image = models.ImageField(upload_to='posts/')
     description = models.TextField()
     location = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    # НОВОЕ ПОЛЕ: Для хранения причины отказа
+    rejection_reason = models.CharField(max_length=500, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.description[:20]}"
-
+        return f"{self.user.username} - {self.title}"
 # ---------------- Admin Inline for Profile ----------------
 class ProfileInline(admin.StackedInline):
     model = Profile

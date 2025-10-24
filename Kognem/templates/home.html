@@ -4,35 +4,35 @@
 <main>
     <div class="welcome">
         {% if user.is_authenticated %}
-            <h1>Hi, {{ full_name }}</h1>
+            <h1>Hi, {{ user.profile.full_name }}</h1>
         {% else %}
             <h1>Welcome to Kognem!</h1>
+            <p>Please <a href="{% url 'login' %}">log in</a> to create a task.</p>
         {% endif %}
         <p>Find local helpers or post a task instantly.</p>
     </div>
 
     <h2>Available Tasks</h2>
+    {% if posts %}
     <div class="tasks-grid">
-        <div class="task-card">
-            <h3>Grocery Delivery</h3>
-            <p>Deliver groceries from the nearby store.</p>
-            <button>Apply</button>
-        </div>
-        <div class="task-card">
-            <h3>Pet Walking</h3>
-            <p>Walk my dog for 30 minutes in the evening.</p>
-            <button>Apply</button>
-        </div>
-        <div class="task-card">
-            <h3>Furniture Assembly</h3>
-            <p>Assemble IKEA table and chairs at home.</p>
-            <button>Apply</button>
-        </div>
-        <div class="task-card">
-            <h3>Tech Help</h3>
-            <p>Install Wi-Fi router and setup smart devices.</p>
-            <button>Apply</button>
-        </div>
+        {% for post in posts %}
+            {% if post.status == 'approved' %}
+            <div class="task-card">
+                <h3>{{ post.title }}</h3>
+                {% if post.image %}
+                    <img src="{{ post.image.url }}" alt="{{ post.title }}" class="task-image">
+                {% endif %}
+                <p>{{ post.description }}</p>
+                <div class="task-meta">
+                    Posted by: {{ post.user.username }} | Price: ${{ post.price }} | Location: {{ post.location }}
+                </div>
+                <button>Apply</button>
+            </div>
+            {% endif %}
+        {% endfor %}
     </div>
+    {% else %}
+        <p style="color:#bfa54a;">No tasks available at the moment.</p>
+    {% endif %}
 </main>
 {% endblock %}

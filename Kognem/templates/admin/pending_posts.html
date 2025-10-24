@@ -1,0 +1,151 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pending Posts Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* ------------------------------------- */
+/* ОСНОВНЫЕ СТИЛИ СТРАНИЦЫ */
+/* ------------------------------------- */
+body {font-family: 'Roboto', sans-serif; background: #1b1b1b; color: #eee; margin:0; padding:0;}
+header {background: linear-gradient(90deg, #bfa54a, #6aa84f); padding:20px; color:#fff; text-align:center; font-size:32px; font-weight:bold; box-shadow: 0 4px 6px rgba(0,0,0,0.5);}
+header a {margin-left:20px; text-decoration:none; color:#fff; background:#6a1b9a; padding:10px 16px; border-radius:8px; transition:0.3s;}
+header a:hover {opacity:0.85;}
+main {padding:30px;}
+h2 {color:#bfa54a; margin-top:40px; font-size:24px; border-bottom:2px solid #6aa84f; display:inline-block; padding-bottom:5px;}
+table {width:100%; border-collapse:collapse; margin-top:20px; background:#222; border-radius:8px; overflow:hidden;}
+th, td {padding:12px; text-align:left; border-bottom:1px solid #444;}
+th {background-color:#6aa84f; color:#fff;}
+tr:nth-child(even) {background-color:#1f1f1f;}
+img {border-radius:6px; max-width:80px; max-height:80px;}
+
+/* ------------------------------------- */
+/* СТИЛИ ДЛЯ ТАБЛИЦЫ */
+/* ------------------------------------- */
+.long-text {
+    max-width: 300px; /* Ограничиваем максимальную ширину ячейки */
+    word-wrap: break-word; /* Разбивает длинные слова */
+    overflow-wrap: break-word;
+    white-space: normal; /* Разрешает перенос строк */
+}
+
+/* ------------------------------------- */
+/* СТИЛИ КНОПОК ДЕЙСТВИЙ (Approve/Reject) */
+/* ------------------------------------- */
+button {padding: 8px 14px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.3s;}
+button:hover {opacity: 0.85;}
+.approve {background-color: #ffb300; color: #000;}
+.reject {background-color: #b71c1c; color: #fff;}
+</style>
+</head>
+<body>
+
+<header>
+    Pending Posts Management
+    <a href="{% url 'admin_dashboard' %}">Back to Dashboard</a>
+</header>
+
+<main>
+<h2>Pending Posts</h2>
+
+{% if posts %}
+<table>
+<thead>
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>User</th>
+        <th>Image</th>
+        <th>Description</th>
+        <th>Location</th>
+        <th>Price</th>
+        <th>Status</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+<tbody>
+{% for post in posts %}
+{% if post.status == 'pending' %}
+<tr>
+    <td>{{ post.id }}</td>
+    <td>{{ post.title }}</td>
+    <td>{{ post.user.username }}</td>
+    <td>
+        {% if post.image %}
+        <img src="{{ post.image.url }}" alt="{{ post.title }}">
+        {% endif %}
+    </td> 
+    <td class="long-text">{{ post.description }}</td>
+    <td>{{ post.location }}</td>
+    <td>{{ post.price }}</td>
+    <td><span style="color:#bfa54a;">{{ post.status|capfirst }}</span></td>
+    <td>
+        <button class="approve" onclick="approvePost('{{ post.id }}')">Approve</button>
+        <button class="reject" onclick="rejectPost('{{ post.id }}')">Reject</button>
+    </td>
+</tr>
+{% endif %}
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p style="color:#bfa54a;">No pending posts require review.</p>
+{% endif %}
+
+</main>
+
+<script>
+async function approvePost(postId){
+    if (!confirm("Are you sure you want to approve this post?")) return;
+    
+    // Предполагается, что у вас есть URL /admin/posts/approve/<int:post_id>/
+    const res = await fetch(`/admin/posts/approve/${postId}/`, {
+        method:'POST', 
+        headers:{'X-CSRFToken':'{{ csrf_token }}'}
+    });
+    if(res.ok) location.reload();
+}
+
+async function rejectPost(postId){
+    // 1. Запрашиваем у администратора причину отказа
+    const rejectionReason = prompt("Enter the reason for rejecting this post (max 500 characters):");
+
+    // 2. Проверка: Если пользователь нажал Отмена или оставил поле пустым
+    if (!rejectionReason || rejectionReason.trim() === "") {
+        if (rejectionReason !== null) { // Если не нажал "Отмена"
+            alert("Rejection reason cannot be empty.");
+        }
+        return; 
+    }
+    
+    // 3. Проверка: Ограничение до 500 символов
+    if (rejectionReason.length > 500) {
+        alert("The rejection reason cannot exceed 500 characters.");
+        return; 
+    }
+
+    // 4. Отправляем запрос на отказ, включая причину в теле JSON
+    // Вам нужно определить URL /admin/posts/reject/<int:post_id>/
+    const res = await fetch(`/admin/posts/reject/${postId}/`, {
+        method:'POST', 
+        headers:{
+            'X-CSRFToken':'{{ csrf_token }}',
+            'Content-Type': 'application/json' // Указываем, что отправляем JSON
+        },
+        body: JSON.stringify({ reason: rejectionReason }) // Отправляем причину
+    });
+
+    // 5. Обрабатываем ответ
+    if(res.ok) {
+        alert("Post rejected successfully!");
+        location.reload();
+    } else {
+        alert("Error rejecting post. Check server logs.");
+    }
+}
+</script>
+</body>
+</html>

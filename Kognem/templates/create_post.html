@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block body %}
+<link rel="stylesheet" href="{% static 'css/create_post.css' %}">
+<main class="container">
+
+    <!-- HEADER -->
+    <section class="header-section">
+        <h1 class="main-title">Ստեղծել Նոր Հայտարարություն</h1>
+        <p class="subtitle">Ավելացրու հայտարարություն արագ և հարմարավետ</p>
+    </section>
+    
+    <!-- FORM -->
+    <section class="form-section">
+        <form method="POST" enctype="multipart/form-data" class="post-form" id="taskForm">
+            {% csrf_token %}
+            {{ form.title }}  <!-- Վերնագիր -->
+
+            <!-- IMAGE UPLOAD -->
+            <div class="file-input-wrapper">
+                <input type="file" name="image" id="image" class="file-input" accept="image/*"/>
+                <label for="image" class="file-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-upload" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M5 20h14v-2H5v2zm7-18v12l4-4h-3V4h-2v6H8l4 4z"/>
+                    </svg>
+                    Վերբեռնել Նկար
+                </label>
+                <span class="file-text" id="file-text">Նկար ընտրված չէ</span>
+                <input type="hidden" name="resized_image" id="resized_image">
+            </div>
+
+            {{ form.description }}  <!-- Նկարագրություն -->
+            {{ form.price }}        <!-- Դրամ -->
+            {{ form.location }}     <!-- Հասցե -->
+
+            <button type="submit" class="submit-btn">Հաստատել</button>
+        </form>
+    </section>
+
+    <!-- INFO CARDS -->
+    <section class="info-cards">
+        <div class="card">
+            <h3>Խորհուրդ 1</h3>
+            <p>Կազմակերպիր քո հայտարարությունները ըստ առաջնահերթության։</p>
+        </div>
+        <div class="card">
+            <h3>Խորհուրդ 2</h3>
+            <p>Օգտագործիր պիտակներ՝ արագ գտնելու համար։</p>
+        </div>
+        <div class="card">
+            <h3>Խորհուրդ 3</h3>
+            <p>Վերանայիր լրացված հայտարարությունները՝ առաջընթացը տեսնելու համար։</p>
+        </div>
+    </section>
+</main>
+
+<script>
+const fileBtn = document.querySelector('.file-btn');
+const fileInput = document.querySelector('.file-input');
+const fileText = document.getElementById('file-text');
+const form = document.getElementById('taskForm');
+
+let resizedFileReady = false;
+
+// Open file dialog
+fileBtn.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    fileText.textContent = file.name;
+    resizedFileReady = false;
+
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 250;
+            canvas.height = 250;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(blob => {
+                const newFile = new File([blob], file.name, { type: 'image/jpeg' });
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(newFile);
+                fileInput.files = dataTransfer.files;
+
+                resizedFileReady = true;
+            }, 'image/jpeg', 0.9);
+        };
+        img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+});
+
+form.addEventListener('submit', e => {
+    if (!resizedFileReady) {
+        e.preventDefault();
+        alert('Խնդրում ենք սպասել, նկարը մշակվում է...');
+    }
+});
+</script>
+{% endblock %}

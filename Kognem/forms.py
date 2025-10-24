@@ -7,6 +7,9 @@ from django.utils.text import slugify
 from .models import Profile
 import re
 from django.contrib.auth import authenticate
+from django import forms
+from .models import Post
+
 
 PHONE_RE = re.compile(r'^0\d{8}$')  # 9 digits starting with 0
 
@@ -173,3 +176,15 @@ class ProfileUpdateForm(forms.ModelForm):
             self.user.save()
             super().save(commit=commit)
         return self.instance
+    
+
+class PostForm(forms.ModelForm):
+    class Meta:
+        model = Post
+        fields = ['title', 'image', 'description', 'location', 'price']
+        widgets = {
+            'title': forms.TextInput(attrs={'placeholder': 'Վերնագիր', 'class': 'input-field'}),
+            'description': forms.Textarea(attrs={'placeholder': 'Նկարագրություն', 'class': 'textarea-field'}),
+            'location': forms.TextInput(attrs={'placeholder': 'Հասցե', 'class': 'input-field'}),
+            'price': forms.NumberInput(attrs={'placeholder': 'Դրամ', 'class': 'input-field'}),
+        }

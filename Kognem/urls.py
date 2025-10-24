@@ -27,9 +27,16 @@ urlpatterns = [
     path('reset-password/<int:user_id>/', views.reset_password, name='reset_password'),
     path('user/<int:user_id>/', views.user_detail, name='user_detail'),
     path('admin-dashboard/login/', views.admin_dashboard_login, name='admin_dashboard_login'),
-    path('admin/banned-users/', views.banned_users, name='banned_users')
-    
+    path('admin/banned-users/', views.banned_users, name='banned_users'),
+    path('create-post/', views.create_post, name='create_post'),
+    path('admin/posts/approved/', views.approved_posts_view, name='approved_posts'),
+    path('admin/posts/rejected/', views.rejected_posts_view, name='rejected_posts'),
+    path('admin/posts/pending/', views.pending_posts_view, name='pending_posts'),
+    path('admin/posts/delete/<int:post_id>/', views.delete_post, name='delete_post'),
+
+
 
 
 ]
-   
+#path('admin/posts/approved/', views.approved_posts_view, name='approved_posts'),
+#path('admin/posts/rejected/', views.rejected_posts_view, name='rejected_posts'),
