@@ -18,6 +18,18 @@ urlpatterns = [
     path("check-email/", views.check_email, name="check_email"),
     path("check-phone/", views.check_phone, name="check_phone"),
     path("check-id/", views.check_id, name="check_id"),
+    path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('ban-user/<int:user_id>/', views.ban_user, name='ban_user'),
+    path('unban-user/<int:user_id>/', views.unban_user, name='unban_user'),
+    path('admin/posts/approve/<int:post_id>/', views.approve_post, name='approve_post'),
+    path('admin/posts/reject/<int:post_id>/', views.reject_post, name='reject_post'),
+    path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
+    path('reset-password/<int:user_id>/', views.reset_password, name='reset_password'),
+    path('user/<int:user_id>/', views.user_detail, name='user_detail'),
+    path('admin-dashboard/login/', views.admin_dashboard_login, name='admin_dashboard_login'),
+    path('admin/banned-users/', views.banned_users, name='banned_users')
+    
 
 
 ]
+   

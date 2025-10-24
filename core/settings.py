@@ -18,6 +18,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 LOGIN_REDIRECT_URL = '/home/'  # or the name of your home URL pattern: 'home'
 LOGOUT_REDIRECT_URL = '/'
 
+# session cookie names
+USER_SESSION_COOKIE_NAME = "user_sessionid"      # default for normal website users
+ADMIN_SESSION_COOKIE_NAME = "admin_sessionid"    # cookie used for admin/staff-panel
+# default (will be used unless middleware switches it)
+SESSION_COOKIE_NAME = USER_SESSION_COOKIE_NAME
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -49,6 +54,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'core.middleware.AdminSessionMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
