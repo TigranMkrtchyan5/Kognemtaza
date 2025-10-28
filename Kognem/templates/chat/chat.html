@@ -218,6 +218,34 @@
 
     // Optional: auto-scroll on load
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    async function fetchMessages() {
+        try {
+            const resp = await fetch(`/chat/${otherUsername}/messages/`);
+            if (!resp.ok) return;
+            const data = await resp.json();
+
+            const currentMessages = messagesDiv.querySelectorAll('.message');
+            const currentCount = currentMessages.length;
+            const newCount = data.messages.length;
+
+            // If new messages have arrived
+            if (newCount > currentCount) {
+                messagesDiv.innerHTML = '';
+                data.messages.forEach(msg => {
+                    const isSelf = msg.sender === selfUsername;
+                    addMessage(msg, isSelf);
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching messages:', err);
+        }
+    }
+
+    // ✅ Auto-refresh every 1 second
+    setInterval(fetchMessages, 1000);
+
+    // ✅ Initial scroll
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
 })();
 
 </script>

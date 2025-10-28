@@ -221,3 +221,173 @@
 })();
 </script>
 {% endblock %}
+
+
+
+
+
+
+
+
+
+<script>
+(function(){
+    const chatEl = document.getElementById('chat-app');
+    const selfUsername = chatEl.dataset.self;
+    const otherUsername = chatEl.dataset.other;
+    const messagesDiv = document.getElementById('messages');
+    const form = document.getElementById('send-form');
+    const input = document.getElementById('message-input');
+
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if(!text) return;
+
+        const resp = await fetch(`/chat/${otherUsername}/send/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type':'application/x-www-form-urlencoded'
+            },
+            body: `text=${encodeURIComponent(text)}`
+        });
+
+        const data = await resp.json();
+        if(data.message){
+            const msg = data.message;
+            const el = document.createElement('div');
+            el.classList.add('message', 'self');
+            el.innerHTML = `
+                <div class="sender">${msg.sender}</div>
+                <div class="text">${msg.content}</div>
+                <small>${new Date(msg.created_at).toLocaleString()}</small>
+            `;
+            messagesDiv.appendChild(el);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        input.value = '';
+    });
+
+    // Optional: auto-scroll on load
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    async function fetchMessages() {
+        try {
+            const resp = await fetch(`/chat/${otherUsername}/messages/`);
+            if (!resp.ok) return;
+            const data = await resp.json();
+
+            const currentMessages = messagesDiv.querySelectorAll('.message');
+            const currentCount = currentMessages.length;
+            const newCount = data.messages.length;
+
+            // If new messages have arrived
+            if (newCount > currentCount) {
+                messagesDiv.innerHTML = '';
+                data.messages.forEach(msg => {
+                    const isSelf = msg.sender === selfUsername;
+                    addMessage(msg, isSelf);
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching messages:', err);
+        }
+    }
+
+    // ✅ Auto-refresh every 1 second
+    setInterval(fetchMessages, 1000);
+
+    // ✅ Initial scroll
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+})();
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<script>
+(function(){
+    const chatEl = document.getElementById('chat-app');
+    const messagesDiv = document.getElementById('messages');
+    const form = document.getElementById('send-form');
+    const input = document.getElementById('message-input');
+    const selfUsername = '{{ request.user.username }}';
+    const otherUsername = '{{ other.username }}';
+
+    // ✅ Send message
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+
+        const resp = await fetch(`/chat/${otherUsername}/send/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: `text=${encodeURIComponent(text)}`
+        });
+
+        const data = await resp.json();
+        if (data.message) {
+            addMessage(data.message, true);
+        }
+
+        input.value = '';
+    });
+
+    // ✅ Add a message bubble
+    function addMessage(msg, isSelf) {
+        const el = document.createElement('div');
+        el.classList.add('message', isSelf ? 'self' : 'other');
+        el.innerHTML = `
+            <div class="text">${msg.content}</div>
+            <small>${msg.created_at}</small>
+        `;
+        messagesDiv.appendChild(el);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // ✅ Fetch messages from backend
+    async function fetchMessages() {
+        try {
+            const resp = await fetch(`/chat/${otherUsername}/messages/`);
+            if (!resp.ok) return;
+            const data = await resp.json();
+
+            const currentMessages = messagesDiv.querySelectorAll('.message');
+            const currentCount = currentMessages.length;
+            const newCount = data.messages.length;
+
+            // If new messages have arrived
+            if (newCount > currentCount) {
+                messagesDiv.innerHTML = '';
+                data.messages.forEach(msg => {
+                    const isSelf = msg.sender === selfUsername;
+                    addMessage(msg, isSelf);
+                });
+            }
+        } catch (err) {
+            console.error('Error fetching messages:', err);
+        }
+    }
+
+    // ✅ Auto-refresh every 1 second
+    setInterval(fetchMessages, 1000);
+
+    // ✅ Initial scroll
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+})();
+</script>
