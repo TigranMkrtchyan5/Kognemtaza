@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kognem — Պրոֆիլ{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/Account.css' %}">
+<style>
+.account-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+.account-buttons a {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #fff;
+    background: #6aa84f;
+    transition: 0.3s;
+}
+.account-buttons a:hover {
+    opacity: 0.85;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="page-main">
+    <section class="profile-container">
+        <h1 class="profile-title">Իմ անձնական էջը</h1>
+
+        <!-- Three buttons -->
+        <div class="account-buttons">
+            <a href="{% url 'myinfo' %}">My Info</a>
+            <a href="{% url 'myposts' %}">My Posts</a>
+            <a href="{% url 'notifications' %}">Notifications</a>
+        </div>
+</main>
+
+{% endblock %} 

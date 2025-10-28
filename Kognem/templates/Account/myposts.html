@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kognem — Իմ հրապարակումները{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/Account.css' %}">
+<style>
+/* Container styling */
+.profile-container {
+    max-width: 1100px;
+    margin: 40px auto;
+    padding: 25px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+}
+
+/* Title */
+.profile-title {
+    text-align: center;
+    margin-bottom: 35px;
+    color: #2c3e50;
+    font-size: 28px;
+}
+
+/* Table styling */
+.post-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+.post-table th, .post-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.post-table th {
+    background-color: #6aa84f;
+    color: #fff;
+    font-weight: 600;
+}
+
+.post-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.post-image {
+    max-width: 100px;
+    max-height: 100px;
+    border-radius: 6px;
+    display: block;
+    margin: 0 auto;
+}
+
+/* View button styling */
+.view-btn {
+    background: #2ecc71;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: 0.2s;
+}
+
+.view-btn:hover {
+    background: #27ae60;
+}
+
+/* Word wrap for long content */
+td, th {
+    word-break: break-word;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+    .post-table th, .post-table td {
+        padding: 8px;
+    }
+
+    .post-image {
+        max-width: 70px;
+        max-height: 70px;
+    }
+
+    .profile-title {
+        font-size: 24px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="page-main">
+    <section class="profile-container">
+        <h1 class="profile-title">Իմ հրապարակումները</h1>
+        <table class="post-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Վերնագիր</th>
+                    <th>Նկար</th>
+                    <th>Նկարագրություն</th>
+                    <th>Հասցե</th>
+                    <th>Գին</th>
+                    <th>Ստատուս</th>
+                    <th>Ամսաթիվ</th>
+                    <th>Ակցիաներ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in posts %}
+                <tr>
+                    <td>{{ post.id }}</td>
+                    <td>{{ post.title }}</td>
+                    <td>
+                        {% if post.image %}
+                            <img src="{{ post.image.url }}" alt="{{ post.title }}" class="post-image">
+                        {% else %}
+                            Չունի նկար
+                        {% endif %}
+                    </td>
+                    <td>{{ post.description|default:"Չունի նկարագրություն" }}</td>
+                    <td>{{ post.location|default:"Չունի հասցե" }}</td>
+                    <td>{{ post.price|default:"-" }}</td>
+                    <td>{{ post.get_status_display }}</td>
+                    <td>{{ post.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>
+                        <a href="{% url 'view_post' post.id %}" class="view-btn">Դիտել</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9">Դուք դեռ չունեք հրապարակումներ</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</main>
+{% endblock %}

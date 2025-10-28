@@ -1,11 +1,33 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hy">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kognem — Login</title>
 <link rel="stylesheet" href="{% static 'css/register.css' %}">
+<style>
+    /* Messages styling */
+    .messages {
+        margin-bottom: 20px;
+    }
+    .messages .error-msg {
+        color: #b71c1c;
+        background: #fce4e4;
+        padding: 10px 12px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+    .messages .success-msg {
+        color: #2e7d32;
+        background: #e8f5e9;
+        padding: 10px 12px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+</style>
 </head>
 <body>
 
@@ -15,6 +37,21 @@
 
     <form method="POST" action="">
         {% csrf_token %}
+
+        <!-- Messages -->
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    {% if 'success' in message.tags %}
+                        <div class="success-msg">{{ message }}</div>
+                    {% else %}
+                        <div class="error-msg">{{ message }}</div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Username / Email -->
         <div class="input-group">
             <label for="id_username">Օգտանուն կամ էլ. հասցե</label>
             <input type="text" name="username" id="id_username" placeholder="Username or Email" 
@@ -24,6 +61,7 @@
             {% endif %}
         </div>
 
+        <!-- Password -->
         <div class="input-group">
             <label for="id_password">Գաղտնաբառ</label>
             <input type="password" name="password" id="id_password" placeholder="Password" required class="form-control">
@@ -32,6 +70,7 @@
             {% endif %}
         </div>
 
+        <!-- Non-field errors -->
         {% if form.non_field_errors %}
             <div class="error-msg">{{ form.non_field_errors }}</div>
         {% endif %}

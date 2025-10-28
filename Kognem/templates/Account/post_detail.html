@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kognem — {{ post.title }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/Account.css' %}">
+<style>
+.post-detail-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 25px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.post-detail-title {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #2c3e50;
+}
+
+.post-detail-image {
+    display: block;
+    max-width: 100%;
+    max-height: 500px;
+    margin: 0 auto 20px auto;
+    border-radius: 10px;
+    object-fit: contain;
+}
+
+.post-info {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 12px;
+}
+
+.post-info span {
+    font-weight: 600;
+    color: #34495e;
+}
+
+.back-btn {
+    display: inline-block;
+    margin-top: 20px;
+    background: #6aa84f;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: 0.2s;
+}
+
+.back-btn:hover {
+    background: #519839;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="page-main">
+    <section class="post-detail-container">
+        <h1 class="post-detail-title">{{ post.title }}</h1>
+        
+        {% if post.image %}
+            <img src="{{ post.image.url }}" alt="{{ post.title }}" class="post-detail-image">
+        {% endif %}
+
+        <div class="post-info"><span>Նկարագրություն:</span> {{ post.description|default:"Չունի նկարագրություն" }}</div>
+        <div class="post-info"><span>Հասցե:</span> {{ post.location|default:"Չունի հասցե" }}</div>
+        <div class="post-info"><span>Գին:</span> {{ post.price|default:"-" }}</div>
+        <div class="post-info"><span>Ստատուս:</span> {{ post.get_status_display }}</div>
+        <div class="post-info"><span>Ամսաթիվ:</span> {{ post.created_at|date:"Y-m-d H:i" }}</div>
+
+        <a href="{% url 'myposts' %}" class="back-btn">Վերադառնալ իմ հրապարակումների էջ</a>
+    </section>
+</main>
+{% endblock %}

@@ -234,5 +234,23 @@
     "verification_id": "ALO1213121122",
     "date_joined": "2025-10-24 18:47",
     "last_updated": "2025-10-24 19:24"
+  },
+  {
+    "username": "Dobi",
+    "first_name": "Grno",
+    "last_name": "Babkenich",
+    "email": "dav0@mail.ru",
+    "phone": "023232222",
+    "verification_id": "ALO121312121",
+    "date_joined": "2025-10-26 16:13"
+  },
+  {
+    "username": "Alexo",
+    "first_name": "Debilyan",
+    "last_name": "Alex",
+    "email": "alexo_bab3@mail.ru",
+    "phone": "014714744",
+    "verification_id": "AO1213121",
+    "date_joined": "2025-10-27 13:03"
   }
 ]

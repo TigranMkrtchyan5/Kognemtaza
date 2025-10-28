@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block body %}
+<h2>Start a Chat</h2>
+<ul>
+  {% for u in users %}
+    <li>
+      {{ u.profile.full_name }} (@{{ u.username }})
+      <a href="{% url 'chat_room' u.id %}" class="btn-primary">Message</a>
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

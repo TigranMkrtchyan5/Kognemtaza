@@ -7,6 +7,7 @@ from django.utils import timezone
 
 
 
+
 # ---------------- User Activity ----------------
 class UserActivity(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -124,3 +125,50 @@ class PostAdmin(admin.ModelAdmin):
     list_display = ('user', 'description', 'location', 'price', 'status', 'created_at')
     list_filter = ('status', 'created_at')
     search_fields = ('description', 'location', 'user__username')
+
+
+
+
+
+# class Room(models.Model):
+#     room_name = models.CharField(max_length=255)
+
+#     def __str__(self):
+#         return self.room_name
+    
+
+# class Message(models.Model):
+#     room = models.ForeignKey(Room, on_delete=models.CASCADE) 
+#     sender = models.CharField(max_length=255)
+#     message = models.TextField()    
+
+
+#     def __str__(self):
+#         return str(self.room) 
+
+
+
+
+class Room(models.Model):
+    """Represents a chat room between two users."""
+    name = models.CharField(max_length=255, unique=True)
+    users = models.ManyToManyField(User, related_name='rooms')
+
+    def __str__(self):
+        return self.name
+
+class ChatMessage(models.Model):
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
+    content = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'sender': self.sender.username,
+            'recipient': self.recipient.username,
+            'content': self.content,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        }

@@ -220,18 +220,20 @@ async function handleAdminAction(action, userId) {
         case 'ban':
             const reason = prompt("Enter ban reason:");
             if (!reason) return;
-            const days = prompt("Enter ban duration in days (e.g., 7):");
-            if (!days || isNaN(days)) {
+
+            const hours = prompt("Գրեք արգելափակման ժամկետը:");
+            if (!hours || isNaN(hours)) {
                 alert("Invalid duration. Action canceled.");
                 return;
             }
+
             const endDate = new Date();
-            endDate.setDate(endDate.getDate() + parseInt(days));
-            
+            endDate.setTime(endDate.getTime() + parseFloat(hours) * 60 * 60 * 1000);
+
             url = `/ban-user/${userId}/`;
             bodyData = { reason: reason, end_date: endDate.toISOString() };
             headers['Content-Type'] = 'application/json';
-            confirmationMessage = `Ban user for ${days} days? They will be logged out and removed from this list.`;
+            confirmationMessage = `Ban user for ${hours} hours? They will be logged out and removed from this list.`;
             successMessage = "User successfully banned and logged out.";
             break;
             
@@ -253,11 +255,8 @@ async function handleAdminAction(action, userId) {
             return;
     }
 
-    if (action !== 'ban' && action !== 'reset' && !confirm(confirmationMessage)) {
-        return;
-    }
-    
-    // Выполнение AJAX-запроса
+    if (!confirm(confirmationMessage)) return;
+
     try {
         const response = await fetch(url, {
             method: method,
@@ -267,7 +266,7 @@ async function handleAdminAction(action, userId) {
 
         if (response.ok) {
             alert(successMessage);
-            location.reload(); // Перезагружаем страницу после успешного действия
+            location.reload();
         } else {
             const error = await response.json().catch(() => ({ error: response.statusText }));
             alert(`Error processing action: ${error.error || response.statusText}`);

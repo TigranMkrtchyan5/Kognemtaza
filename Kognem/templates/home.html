@@ -5,6 +5,10 @@
     <div class="welcome">
         {% if user.is_authenticated %}
             <h1>Hi, {{ user.profile.full_name }}</h1>
+            <!-- Messages Button -->
+            <a href="{% url 'messages_list' %}" class="btn-primary" style="margin-top:10px; display:inline-block;">
+                Messages
+            </a>
         {% else %}
             <h1>Welcome to Kognem!</h1>
             <p>Please <a href="{% url 'login' %}">log in</a> to create a task.</p>
@@ -26,7 +30,9 @@
                 <div class="task-meta">
                     Posted by: {{ post.user.username }} | Price: ${{ post.price }} | Location: {{ post.location }}
                 </div>
-                <button>Apply</button>
+                {% if post.user != user %}
+                    <a href="{% url 'chat_room' post.user.id %}" class="btn-primary">Message</a>
+                {% endif %}
             </div>
             {% endif %}
         {% endfor %}

@@ -3,6 +3,7 @@ from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.views import LogoutView
+from .views import chat_room
 
 
 urlpatterns = [
@@ -33,10 +34,20 @@ urlpatterns = [
     path('admin/posts/rejected/', views.rejected_posts_view, name='rejected_posts'),
     path('admin/posts/pending/', views.pending_posts_view, name='pending_posts'),
     path('admin/posts/delete/<int:post_id>/', views.delete_post, name='delete_post'),
-
-
-
+    path('Account/myinfo/', views.myinfo, name='myinfo'),
+    path('Account/myposts/', views.myposts, name='myposts'),
+    path('Account/notifications/', views.notifications, name='notifications'),
+    path('Account/view_post/<int:post_id>/', views.view_post, name='view_post'),
+    path('chat/<int:user_id>/', views.chat_room, name='chat_room'),
+    path('messages/', views.messages_list, name='messages_list'),
+    path('chat/create/<str:username>/', views.create_room, name='create_room'),
+    path('chat/<int:user_id>/', views.chat_room, name='chat_room'),
+    path('chat/<int:user_id>/send/', views.send_message, name='send_message'),
+    path('chat/<str:username>/messages/', views.get_messages, name='get_messages'),
 
 ]
-#path('admin/posts/approved/', views.approved_posts_view, name='approved_posts'),
-#path('admin/posts/rejected/', views.rejected_posts_view, name='rejected_posts'),
+
+
+    # path('account/', views.account_overview, name='account_overview'),  # Optional: main account page
+
+# path('chat/room/<str:room_name>/<str:username>/', views.CreateRoom, name='room'),
