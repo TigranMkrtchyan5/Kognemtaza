@@ -1,11 +1,13 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block body %}
-<main>
+<main class="container">
+
+    <!-- WELCOME SECTION -->
     <div class="welcome">
         {% if user.is_authenticated %}
             <h1>Hi, {{ user.profile.full_name }}</h1>
-            <!-- Messages Button -->
             <a href="{% url 'messages_list' %}" class="btn-primary" style="margin-top:10px; display:inline-block;">
                 Messages
             </a>
@@ -16,23 +18,72 @@
         <p>Find local helpers or post a task instantly.</p>
     </div>
 
+    <!-- FILTER FORM -->
+    <section class="filter-section" style="margin:20px 0; padding:10px; border:1px solid #ddd; border-radius:8px;">
+        <form method="GET" class="filter-form" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center;">
+            
+            <div class="form-group">
+                <label for="category">Category:</label>
+                <select name="category" id="category">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                        <option value="{{ cat.id }}" {% if request.GET.category == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="state">Marz (Province):</label>
+                <select name="state" id="state">
+                    <option value="">All Marzes</option>
+                    {% for state in states %}
+                        <option value="{{ state.id }}" {% if request.GET.state == state.id|stringformat:"s" %}selected{% endif %}>{{ state.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="province">Shrjan (District):</label>
+                <select name="province" id="province">
+                    <option value="">All Districts</option>
+                    {% if provinces %}
+                        {% for prov in provinces %}
+                            <option value="{{ prov.id }}" {% if request.GET.province == prov.id|stringformat:"s" %}selected{% endif %}>{{ prov.name }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn-primary" style="height:36px;">Filter</button>
+            <a href="{% url 'home' %}" class="btn-secondary" style="height:36px;">Reset</a>
+        </form>
+    </section>
+
+    <!-- TASKS LIST -->
     <h2>Available Tasks</h2>
     {% if posts %}
-    <div class="tasks-grid">
+    <div class="tasks-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:20px;">
         {% for post in posts %}
             {% if post.status == 'approved' %}
-            <div class="task-card">
+            <div class="task-card" style="border:1px solid #ddd; border-radius:8px; padding:15px; display:flex; flex-direction:column;">
                 <h3>{{ post.title }}</h3>
+
                 {% if post.image %}
-                    <img src="{{ post.image.url }}" alt="{{ post.title }}" class="task-image">
+                    <img src="{{ post.image.url }}" alt="{{ post.title }}" class="task-image" style="max-width:100%; border-radius:6px; margin:10px 0;">
                 {% endif %}
-                <p>{{ post.description }}</p>
-                <div class="task-meta">
+
+                <p>{{ post.description|truncatewords:25 }}</p>
+
+                <div class="task-meta" style="font-size:0.9em; color:#555;">
                     Posted by: {{ post.user.username }} | Price: ${{ post.price }} | Location: {{ post.location }}
                 </div>
-                {% if post.user != user %}
-                    <a href="{% url 'chat_room' post.user.id %}" class="btn-primary">Message</a>
-                {% endif %}
+
+                <div class="task-buttons" style="margin-top:10px;">
+                    {% if post.user != user %}
+                        <a href="{% url 'chat_room' post.user.id %}" class="btn-primary" style="margin-right:5px;">Message</a>
+                    {% endif %}
+                    <a href="{% url 'task_detail' post.id %}" class="btn-secondary">Details</a>
+                </div>
             </div>
             {% endif %}
         {% endfor %}
@@ -40,5 +91,27 @@
     {% else %}
         <p style="color:#bfa54a;">No tasks available at the moment.</p>
     {% endif %}
+
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const stateSelect = document.getElementById('state');
+    const provinceSelect = document.getElementById('province');
+
+    stateSelect.addEventListener('change', async () => {
+        provinceSelect.innerHTML = '<option value="">All Districts</option>';
+        if (!stateSelect.value) return;
+
+        const resp = await fetch(`/get_provinces/${stateSelect.value}/`);
+        const data = await resp.json();
+        data.provinces.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.id;
+            option.textContent = p.name;
+            provinceSelect.appendChild(option);
+        });
+    });
+});
+</script>
 {% endblock %}

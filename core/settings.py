@@ -50,9 +50,11 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'rest_framework',  
     'django.contrib.staticfiles',
     'Kognem.apps.KognemConfig',
     'channels',
+    
 ]
 
 MIDDLEWARE = [
@@ -67,6 +69,10 @@ MIDDLEWARE = [
     
     
 ]
+
+
+
+
 
 ROOT_URLCONF = 'core.urls'
 
@@ -90,6 +96,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 ASGI_APPLICATION = "core.asgi.application"
+
 
 CHANNEL_LAYERS = {
     "default": {

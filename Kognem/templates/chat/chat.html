@@ -1,9 +1,20 @@
-{% extends "base.html" %}
-{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Chat</title>
 
-{% block body %}
+<!-- Styles for Chat -->
 <style>
-/* Chat container */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+}
+
+/* Main chat container */
 .chat-container {
     max-width: 750px;
     margin: 30px auto;
@@ -15,10 +26,9 @@
     background: #f9f9f9;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     overflow: hidden;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Header */
+/* Chat Header */
 .chat-header {
     background: #fff;
     padding: 20px 25px;
@@ -27,30 +37,17 @@
     align-items: center;
     justify-content: space-between;
 }
-
-.chat-header .user-info {
-    display: flex;
-    align-items: center;
-}
-.chat-header .user-info img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    margin-right: 15px;
-    object-fit: cover;
-    border: 2px solid #4caf50;
-}
-.chat-header .user-info .full-name {
+.chat-header .full-name {
     font-weight: 600;
     font-size: 18px;
     color: #222;
 }
-.chat-header .user-info .username {
+.chat-header .username {
     font-size: 14px;
     color: #888;
 }
 
-/* Messages */
+/* Messages area */
 .chat-messages {
     flex: 1;
     padding: 20px;
@@ -61,7 +58,7 @@
     gap: 10px;
 }
 
-/* Message bubbles */
+/* Individual message styling */
 .message {
     max-width: 65%;
     padding: 12px 18px;
@@ -81,21 +78,16 @@
     align-self: flex-start;
     border-bottom-left-radius: 0;
 }
-
-/* Sender info */
-.message .sender-name {
+.message .sender {
     font-weight: 600;
     font-size: 12px;
     color: #111;
     margin-bottom: 2px;
 }
-.message .sender-username {
-    font-size: 11px;
-    color: #666;
-    margin-bottom: 5px;
+.message .text {
+    font-size: 14px;
+    color: #222;
 }
-
-/* Timestamp */
 .message small {
     display: block;
     font-size: 10px;
@@ -104,7 +96,7 @@
     text-align: right;
 }
 
-/* Chat input */
+/* Chat input section */
 .chat-input {
     display: flex;
     padding: 15px 20px;
@@ -146,14 +138,48 @@
     background: transparent;
 }
 
-/* Fade in animation */
+/* Fade-in animation */
 @keyframes fadeIn {
     from {opacity: 0; transform: translateY(5px);}
     to {opacity: 1; transform: translateY(0);}
 }
-</style>
 
-<div class="chat-container" id="chat-app" data-room="{{ room_name }}" data-self="{{ request.user.id }}" data-other="{{ other.id }}">
+/* Additional info messages */
+.info-msg {
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    margin: 10px 0;
+}
+
+/* Loading spinner */
+.loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #4caf50;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    margin: auto;
+    margin-top: 10px;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg);}
+    100% { transform: rotate(360deg);}
+}
+
+/* Responsive adjustments */
+@media (max-width: 800px) {
+    .chat-container {
+        max-width: 95%;
+        height: 600px;
+    }
+}
+</style>
+</head>
+<body>
+
+<div class="chat-container" id="chat-app" data-room="{{ room_name }}" data-self="{{ request.user.username }}" data-other="{{ other.id }}">
     <div class="chat-header">
         <span class="full-name">{{ other.profile.full_name }}</span>
         <span class="username">@{{ other.username }}</span>
@@ -168,7 +194,8 @@
             </div>
         {% endfor %}
     </div>
-    </div>
+
+    <div class="info-msg" id="info-msg">You are now chatting with {{ other.username }}</div>
 
     <form id="send-form" class="chat-input">
         <input id="message-input" type="text" placeholder="Type a message..." autocomplete="off">
@@ -176,59 +203,40 @@
     </form>
 </div>
 
+<!-- JS for chat functionality -->
 <script>
 (function(){
     const chatEl = document.getElementById('chat-app');
-    const selfUsername = chatEl.dataset.self;
-    const otherUsername = chatEl.dataset.other;
+    const selfUsername = chatEl.dataset.self;   // Your username or ID
+    const otherUserId = chatEl.dataset.other;  // This MUST be the numeric user ID
     const messagesDiv = document.getElementById('messages');
     const form = document.getElementById('send-form');
     const input = document.getElementById('message-input');
 
-    form.addEventListener('submit', async e => {
-        e.preventDefault();
-        const text = input.value.trim();
-        if(!text) return;
+    function addMessage(msg, isSelf) {
+        const el = document.createElement('div');
+        el.classList.add('message', isSelf ? 'self' : 'other');
+        el.innerHTML = `
+            <div class="sender">${msg.sender}</div>
+            <div class="text">${msg.content}</div>
+            <small>${new Date(msg.created_at).toLocaleString()}</small>
+        `;
+        messagesDiv.appendChild(el);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
 
-        const resp = await fetch(`/chat/${otherUsername}/send/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type':'application/x-www-form-urlencoded'
-            },
-            body: `text=${encodeURIComponent(text)}`
-        });
-
-        const data = await resp.json();
-        if(data.message){
-            const msg = data.message;
-            const el = document.createElement('div');
-            el.classList.add('message', 'self');
-            el.innerHTML = `
-                <div class="sender">${msg.sender}</div>
-                <div class="text">${msg.content}</div>
-                <small>${new Date(msg.created_at).toLocaleString()}</small>
-            `;
-            messagesDiv.appendChild(el);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        input.value = '';
-    });
-
-    // Optional: auto-scroll on load
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
     async function fetchMessages() {
         try {
-            const resp = await fetch(`/chat/${otherUsername}/messages/`);
-            if (!resp.ok) return;
+            const resp = await fetch(`/chat/${otherUserId}/messages/`);
+            if (!resp.ok) {
+                console.warn('Failed to fetch messages:', resp.status);
+                return;
+            }
             const data = await resp.json();
-
-            const currentMessages = messagesDiv.querySelectorAll('.message');
-            const currentCount = currentMessages.length;
+            const currentCount = messagesDiv.querySelectorAll('.message').length;
             const newCount = data.messages.length;
 
-            // If new messages have arrived
+            // Only update if there are new messages
             if (newCount > currentCount) {
                 messagesDiv.innerHTML = '';
                 data.messages.forEach(msg => {
@@ -241,12 +249,46 @@
         }
     }
 
-    // ✅ Auto-refresh every 1 second
-    setInterval(fetchMessages, 1000);
+    // Send a new message
+    form.addEventListener('submit', async e => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
 
-    // ✅ Initial scroll
+        try {
+            const resp = await fetch(`/chat/${otherUserId}/send/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `text=${encodeURIComponent(text)}`
+            });
+
+            if (!resp.ok) {
+                console.error('Failed to send message:', resp.status);
+                return;
+            }
+
+            const data = await resp.json();
+            if (data.message) {
+                addMessage(data.message, true); // Add as self
+            }
+
+            input.value = '';
+        } catch (err) {
+            console.error('Error sending message:', err);
+        }
+    });
+
+    // Initial load
+    fetchMessages();
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
-})();
 
+    // Auto-refresh every 1 second
+    setInterval(fetchMessages, 1000);
+})();
 </script>
-{% endblock %}
+
+</body>
+</html>

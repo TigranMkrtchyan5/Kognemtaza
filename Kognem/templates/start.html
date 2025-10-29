@@ -6,6 +6,41 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kognem — Start</title>
 <style>
+  /* --- Стили для кнопки "Log Out" (Դուրս գալ) --- */
+.btn-logout {
+    /* Основные параметры */
+    display: block; /* Делаем блочным, чтобы занимал всю ширину */
+    width: 100%;
+    padding: 15px 20px;
+    border-radius: 20px; 
+    font-weight: 700;
+    font-size: 20px;
+    cursor: pointer;
+    transition: 0.3s ease-out;
+    text-align: center;
+    text-decoration: none;
+    margin-top: 15px; /* Небольшой отступ сверху */
+
+    /* Красный Ghost стиль */
+    background: transparent;
+    border: 2px solid rgba(255, 60, 60, 0.6); /* Красная рамка */
+    color: #ff5050; /* Красный текст */
+    box-shadow: 0 0 10px rgba(255, 60, 60, 0.4); 
+}
+
+.btn-logout:hover {
+    /* Эффект при наведении */
+    background: rgba(255, 60, 60, 0.15); 
+    border-color: #ff3c3c; 
+    color: #fff; 
+    transform: translateY(-2px); 
+    box-shadow: 0 5px 20px rgba(255, 60, 60, 0.7); 
+}
+
+/* Стили для формы, чтобы она не портила макет */
+form#logout-form {
+    margin-top: 20px; /* Отделяем кнопку от других элементов */
+}
 /* --- УСИЛЕННЫЙ CSS ДИЗАЙН --- */
 :root{
   --primary-glow: #00e060; /* Основное ЯРКОЕ свечение */
@@ -117,13 +152,27 @@ html,body{
 <div class="wrap" role="main" aria-labelledby="kognemTitle">
   <div class="glass" role="region" aria-label="Welcome">
     <div class="brand">
-<img src="../Kognem/static/images/kognem_logo.jpg" alt="Kognem Logo">    </div>
+      {% for i in logo %}
+<img src="{{ i }}" alt="Kognem Logo">  
+      {% endfor %}
+</div>
     <div class="tag">Own your city. Achieve your goals. Connect. Succeed.</div>
 
     <div class="actions">
-      <a href="{% url 'login' %}"><button class="btn btn-primary">Login</button></a>
-      <a href="{% url 'register' %}"><button class="btn btn-ghost">Register</button></a>
-      <a class="guest" id="guest-btn" href="{% url 'home' %}"></div>Continue as Guest →a>
+        {% if not user.is_authenticated %}
+            <a href="{% url 'login' %}"><button class="btn btn-primary">Login</button></a>
+            <a href="{% url 'register' %}"><button class="btn btn-ghost">Register</button></a>
+            
+            <a class="guest" id="guest-btn" href="{% url 'home' %}">Continue as Guest →</a>
+        {% else %}
+            <a href="{% url 'home' %}"><button class="btn btn-primary">Home</button></a>
+            
+        <form id="logout-form" action="{% url 'logout' %}" method="post">
+    {% csrf_token %}
+    <button id="logout-btn" type="submit" class="btn-logout">Դուրս գալ</button>
+</form>
+
+                {% endif %}
     </div>
   </div>
 </div>

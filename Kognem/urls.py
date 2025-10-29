@@ -36,6 +36,7 @@ urlpatterns = [
     path('admin/posts/delete/<int:post_id>/', views.delete_post, name='delete_post'),
     path('Account/myinfo/', views.myinfo, name='myinfo'),
     path('Account/myposts/', views.myposts, name='myposts'),
+    path('get_provinces/<int:state_id>/', views.get_provinces, name='get_provinces'),
     path('Account/notifications/', views.notifications, name='notifications'),
     path('Account/view_post/<int:post_id>/', views.view_post, name='view_post'),
     path('chat/<int:user_id>/', views.chat_room, name='chat_room'),
@@ -43,7 +44,11 @@ urlpatterns = [
     path('chat/create/<str:username>/', views.create_room, name='create_room'),
     path('chat/<int:user_id>/', views.chat_room, name='chat_room'),
     path('chat/<int:user_id>/send/', views.send_message, name='send_message'),
+    path('chat/<int:user_id>/messages/', views.get_messages_by_id, name='get_messages_by_id'),
     path('chat/<str:username>/messages/', views.get_messages, name='get_messages'),
+    path('calculate_distance/', views.calculate_distance, name='calculate_distance'),
+    path('task/<int:post_id>/', views.task_detail, name='task_detail'),
+
 
 ]
 

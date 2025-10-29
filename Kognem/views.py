@@ -8,7 +8,7 @@ from django.utils.timezone import now
 from django.conf import settings
 import os, json, re
 from django.contrib.auth.models import User
-from .models import Profile,Post,BanLog
+from .models import Profile,Post,BanLog, Logo
 from .forms import CustomUserCreationForm, EmailOrUsernameAuthenticationForm
 from django.contrib.auth.decorators import user_passes_test
 from django.views.decorators.csrf import csrf_exempt
@@ -29,7 +29,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.contrib.auth.models import User
-from .models import Room, ChatMessage
+from .models import Post, Logo, Profile, Category, State, Province
+import requests
+
+
+
+
+def task_detail(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    return render(request, 'task_detail.html', {'post': post})
 
 @login_required
 def create_room(request, username):
@@ -72,6 +80,22 @@ def get_messages(request, username):
 
     return JsonResponse({'messages': messages_data})
 
+@login_required
+def get_messages_by_id(request, user_id):
+    other_user = get_object_or_404(User, pk=user_id)
+    room_name = f"room_{min(request.user.id, other_user.id)}_{max(request.user.id, other_user.id)}"
+    room = get_object_or_404(Room, name=room_name)
+    messages_qs = ChatMessage.objects.filter(room=room).order_by('created_at')
+
+    messages_data = [{
+        'sender': msg.sender.username,
+        'content': msg.content,
+        'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+    } for msg in messages_qs]
+
+    return JsonResponse({'messages': messages_data})
+
+
 
 
 @login_required
@@ -111,6 +135,7 @@ def messages_list(request):
     users = User.objects.filter(id__in=user_ids)
 
     return render(request, 'messages_list.html', {'users': users})
+
 
 
 
@@ -166,6 +191,15 @@ def create_post(request):
     else:
         form = PostForm()
     return render(request, 'create_post.html', {'form': form})
+
+
+
+
+@login_required
+def get_provinces(request, state_id):
+    provinces = Province.objects.filter(state_id=state_id).order_by('name')
+    data = [{'id': p.id, 'name': p.name} for p in provinces]
+    return JsonResponse({'provinces': data})
 
 # ---------------- Admin Decorators ----------------
 def admin_required(view_func):
@@ -482,24 +516,53 @@ def moderator_required(view_func):
 
 # ---------------- Home / Landing Pages ----------------
 def start(request):
+    logo = Logo.objects.first()
+
     if request.method == "POST" and "guest" in request.POST:
         if request.user.is_authenticated:
             logout(request)
         return redirect("home")
-    return render(request, "start.html")
+    return render(request, "start.html", context={
+        logo:'logo'
+    }
+    )
 
 def home(request):
     full_name = None
+    logo = Logo.objects.first()
+
     if request.user.is_authenticated:
         profile, _ = Profile.objects.get_or_create(user=request.user)
         full_name = profile.full_name or request.user.username
 
+    # Filters from GET parameters
+    category_id = request.GET.get('category')
+    state_id = request.GET.get('state')
+    province_id = request.GET.get('province')
+
     # Get all approved posts, newest first
     approved_posts = Post.objects.filter(status='approved').order_by('-created_at')
 
+    if category_id:
+        approved_posts = approved_posts.filter(category_id=category_id)
+    if state_id:
+        approved_posts = approved_posts.filter(state_id=state_id)
+    if province_id:
+        approved_posts = approved_posts.filter(province_id=province_id)
+
+    # Get all filter options
+    categories = Category.objects.all()
+    states = State.objects.all()
+    provinces = Province.objects.filter(state_id=state_id) if state_id else []
+
     return render(request, 'home.html', {
+        'nav_item':'home',
         'full_name': full_name,
-        'posts': approved_posts,  # send posts to template
+        'posts': approved_posts,
+        'logo': logo,
+        'categories': categories,
+        'states': states,
+        'provinces': provinces
     })
 
 
@@ -508,6 +571,8 @@ def ashxatanq(request):
 
     return render(request, 'ashxatanq.html', {
         'posts': approved_posts,
+        'nav_item':'ashxatanq',
+
     })
 
 
@@ -800,3 +865,47 @@ def delete_post(request, post_id):
             return JsonResponse({"success": False, "error": f"Internal error: {str(e)}"}, status=500)
 
     return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
+
+
+
+
+
+GOOGLE_API_KEY = 'AIzaSyD9KO1U7_6JxlBuCpiLju_K0tXwBM4ISWE'  # Move to settings.py for security
+
+def calculate_distance(request):
+    """
+    Expects GET parameters:
+    - user_lat
+    - user_lng
+    - dest_lat
+    - dest_lng
+    """
+    user_lat = request.GET.get('user_lat')
+    user_lng = request.GET.get('user_lng')
+    dest_lat = request.GET.get('dest_lat')
+    dest_lng = request.GET.get('dest_lng')
+
+    if not all([user_lat, user_lng, dest_lat, dest_lng]):
+        return JsonResponse({'error': 'Missing parameters'}, status=400)
+
+    url = (
+        f"https://maps.googleapis.com/maps/api/distancematrix/json?"
+        f"origins={user_lat},{user_lng}&destinations={dest_lat},{dest_lng}"
+        f"&mode=driving&key={GOOGLE_API_KEY}"
+    )
+
+    response = requests.get(url)
+    data = response.json()
+
+    if data['status'] != 'OK':
+        return JsonResponse({'error': 'Failed to calculate distance'}, status=500)
+
+    distance_text = data['rows'][0]['elements'][0]['distance']['text']
+    distance_value = data['rows'][0]['elements'][0]['distance']['value']  # in meters
+    duration_text = data['rows'][0]['elements'][0]['duration']['text']
+
+    return JsonResponse({
+        'distance_text': distance_text,
+        'distance_meters': distance_value,
+        'duration_text': duration_text
+    })

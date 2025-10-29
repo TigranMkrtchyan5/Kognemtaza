@@ -176,15 +176,27 @@ class ProfileUpdateForm(forms.ModelForm):
             self.user.save()
             super().save(commit=commit)
         return self.instance
-    
-
 class PostForm(forms.ModelForm):
     class Meta:
         model = Post
-        fields = ['title', 'image', 'description', 'location', 'price']
+        fields = ['title', 'image', 'description', 'price', 'category', 'state', 'province', 'location']
         widgets = {
-            'title': forms.TextInput(attrs={'placeholder': 'Վերնագիր', 'class': 'input-field'}),
-            'description': forms.Textarea(attrs={'placeholder': 'Նկարագրություն', 'class': 'textarea-field'}),
-            'location': forms.TextInput(attrs={'placeholder': 'Հասցե', 'class': 'input-field'}),
-            'price': forms.NumberInput(attrs={'placeholder': 'Դրամ', 'class': 'input-field'}),
+            'title': forms.TextInput(attrs={'placeholder': 'Վերնագիր', 'class':'input-field'}),
+            'description': forms.Textarea(attrs={'placeholder': 'Նկարագրություն', 'class':'textarea-field'}),
+            'price': forms.NumberInput(attrs={'placeholder': 'Դրամ', 'class':'input-field'}),
+            'category': forms.Select(attrs={'class':'select-field'}),
+            
+            # --- ИСПРАВЛЕНИЯ ЗДЕСЬ ---
+            'state': forms.Select(attrs={'class': 'select-field', 'id': 'state-select'}),
+            'province': forms.Select(attrs={'class': 'select-field', 'id': 'province-select'}),
+            # ---------------------------
+            
+            'location': forms.TextInput(attrs={'placeholder': 'Հասցե', 'class':'input-field'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Remove the empty "---------" from Category
+        self.fields['category'].empty_label = None
+        self.fields['state'].empty_label = ''
+        self.fields['province'].empty_label = None

@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils import timezone
+from django.contrib import admin
+
 
 
 
@@ -59,6 +61,33 @@ class Profile(models.Model):
         return self.user.bans.filter(end_date__gt=timezone.now()).exists()
 
 # ---------------- Post Model ----------------
+class Category(models.Model):
+    name = models.CharField(max_length=100)
+    
+
+    class Meta:
+        verbose_name_plural = "Categories"
+    
+    def __str__(self):
+        return self.name
+
+
+class State(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
+class Province(models.Model):
+    state = models.ForeignKey(State, on_delete=models.CASCADE, related_name='provinces')
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        unique_together = ('state', 'name')
+
+    def __str__(self):
+        return f"{self.name} ({self.state.name})"
+# Update Post
 class Post(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
@@ -66,20 +95,32 @@ class Post(models.Model):
         ('rejected', 'Rejected'),
     ]
 
-    title = models.CharField(max_length=255, default='')
+    title = models.CharField(max_length=255)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='posts')
     image = models.ImageField(upload_to='posts/')
     description = models.TextField()
     location = models.CharField(max_length=255)
+    state = models.ForeignKey(State, on_delete=models.SET_NULL, null=True)
+    province = models.ForeignKey(Province, on_delete=models.SET_NULL, null=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
-    # НОВОЕ ПОЛЕ: Для хранения причины отказа
     rejection_reason = models.CharField(max_length=500, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.title}"
+        return f"{self.user.username} - {self.title} - {self.category.name if self.category else 'No Category'}"
+
+
+
+
+class Logo(models.Model):
+    logo = models.ImageField(upload_to='logo/')
+
+    def __str__(self):
+        return 'logo'
+
 # ---------------- Admin Inline for Profile ----------------
 class ProfileInline(admin.StackedInline):
     model = Profile
@@ -171,4 +212,54 @@ class ChatMessage(models.Model):
             'recipient': self.recipient.username,
             'content': self.content,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+            
         }
+    
+
+
+# ---------------- Inline for ChatMessage ----------------
+class ChatMessageInline(admin.TabularInline):
+    model = ChatMessage
+    fields = ('sender', 'recipient', 'short_content', 'created_at')
+    readonly_fields = ('sender', 'recipient', 'short_content', 'created_at')
+    extra = 0
+    ordering = ('created_at',)
+
+    def short_content(self, obj):
+        return obj.content[:50] + ('...' if len(obj.content) > 50 else '')
+    short_content.short_description = 'Message'
+
+# ---------------- Room Admin ----------------
+@admin.register(Room)
+class RoomAdmin(admin.ModelAdmin):
+    list_display = ('id', 'display_users', 'last_message_time')
+    search_fields = ('users__username',)
+    inlines = [ChatMessageInline]
+    ordering = ('-id',)
+
+    def display_users(self, obj):
+        # Show participants' usernames separated by &
+        return " & ".join([user.username for user in obj.users.all()])
+    display_users.short_description = 'Participants'
+
+    def last_message_time(self, obj):
+        last_msg = obj.messages.order_by('-created_at').first()
+        return last_msg.created_at if last_msg else None
+    last_message_time.admin_order_field = 'messages__created_at'
+    last_message_time.short_description = 'Last Message At'
+
+# ---------------- ChatMessage Admin ----------------
+@admin.register(ChatMessage)
+class ChatMessageAdmin(admin.ModelAdmin):
+    list_display = ('room_display', 'sender', 'recipient', 'short_content', 'created_at')
+    list_filter = ('room', 'sender', 'recipient')
+    search_fields = ('content', 'sender__username', 'recipient__username')
+    ordering = ('-created_at',)
+
+    def room_display(self, obj):
+        return obj.room.__str__()
+    room_display.short_description = 'Room'
+
+    def short_content(self, obj):
+        return obj.content[:50] + ('...' if len(obj.content) > 50 else '')
+    short_content.short_description = 'Message'

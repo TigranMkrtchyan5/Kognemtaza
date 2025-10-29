@@ -1,393 +1,551 @@
-{% extends "base.html" %}
 {% load static %}
-
-{% block body %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kognem — Start</title>
 <style>
-/* Chat container */
-.chat-container {
-    max-width: 750px;
-    margin: 30px auto;
-    border: 1px solid #ddd;
-    border-radius: 15px;
-    display: flex;
-    flex-direction: column;
-    height: 700px;
-    background: #f9f9f9;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    overflow: hidden;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+/* --- УСИЛЕННЫЙ CSS ДИЗАЙН --- */
+:root{
+  --primary-glow: #00e060; /* Основное ЯРКОЕ свечение */
+  --secondary-glow: #007c3d;
+  --glass-bg: rgba(255,255,255,0.12); /* Чуть менее прозрачный фон стекла */
+  --glass-border-color: rgba(255,255,255,0.3); 
+  --text-base:#fff; /* Белый текст для контраста */
+}
+html,body{
+  margin:0;padding:0;width:100%;height:100%;overflow:hidden;
+  font-family:"Inter","Segoe UI",Roboto,sans-serif;
+  background:#101820;
+  color: var(--text-base);
+}
+#cityCanvas{
+  position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;
+  background: linear-gradient(to bottom, #101820 0%, #0a0e12 100%);
+}
+.wrap{position: relative; z-index:2; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;}
+
+.glass{
+  width:min(550px,94%);
+  border-radius:40px;
+  padding:55px;
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border-color);
+  backdrop-filter: blur(30px) saturate(180%); /* Чуть меньше размытие */
+  text-align:center;
+  color:var(--text-base);
+  box-shadow:
+    0 40px 120px rgba(0,0,0,0.5), 
+    inset 0 0 30px rgba(255,255,255,0.08),
+    0 0 60px rgba(0,224,96,0.25); /* Более сильное общее свечение */
 }
 
-/* Header */
-.chat-header {
-    background: #fff;
-    padding: 20px 25px;
-    border-bottom: 1px solid #ddd;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.brand h1{
+  font-size:58px;
+  font-weight:900;
+  letter-spacing:5px;
+  margin:0;
+  color:var(--text-lux);
+  text-shadow:
+    0 0 12px rgba(0,224,96,1), /* ОЧЕНЬ яркое основное свечение */
+    0 0 30px rgba(0,224,96,0.8),
+    0 0 50px rgba(0,224,96,0.6),
+    0 6px 15px rgba(0,0,0,0.8);
 }
 
-.chat-header .user-info {
-    display: flex;
-    align-items: center;
-}
-.chat-header .user-info img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    margin-right: 15px;
-    object-fit: cover;
-    border: 2px solid #4caf50;
-}
-.chat-header .user-info .full-name {
-    font-weight: 600;
-    font-size: 18px;
-    color: #222;
-}
-.chat-header .user-info .username {
-    font-size: 14px;
-    color: #888;
+.tag{
+  margin-top:16px; 
+  font-size:22px; 
+  color:rgba(255,255,255,0.95); /* Почти белый текст */
+  font-weight:600; 
+  text-shadow:0 2px 10px rgba(0,0,0,0.8);
 }
 
-/* Messages */
-.chat-messages {
-    flex: 1;
-    padding: 20px;
-    overflow-y: auto;
-    background: #e5ddd5;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+.actions{margin-top:40px; display:flex; flex-direction:column; gap:20px;}
+.btn{border-radius:20px;padding:18px 25px;font-weight:700;font-size:20px;border:0;cursor:pointer;transition:0.3s ease-out;}
+
+.btn-primary{
+  background:linear-gradient(90deg, var(--primary-glow), var(--secondary-glow));
+  color:white;
+  box-shadow:0 18px 45px rgba(0,224,96,0.7), inset 0 2px 8px rgba(255,255,255,0.1); 
+}
+.btn-primary:hover{
+  transform:translateY(-3px) scale(1.02);
+  box-shadow:0 25px 55px rgba(0,224,96,0.9), inset 0 2px 8px rgba(255,255,255,0.2);
+  filter:brightness(1.1);
 }
 
-/* Message bubbles */
-.message {
-    max-width: 65%;
-    padding: 12px 18px;
-    border-radius: 20px;
-    word-wrap: break-word;
-    position: relative;
-    display: inline-block;
-    animation: fadeIn 0.3s ease;
+.btn-ghost{
+  background:transparent; 
+  border:2px solid rgba(255,255,255,0.5); /* Более заметная рамка */
+  color:rgba(255,255,255,1);
 }
-.message.self {
-    background: #dcf8c6;
-    align-self: flex-end;
-    border-bottom-right-radius: 0;
-}
-.message.other {
-    background: #fff;
-    align-self: flex-start;
-    border-bottom-left-radius: 0;
+.btn-ghost:hover{
+  background: rgba(255,255,255,0.1); 
+  border-color: rgba(255,255,255,0.7);
+  transform:translateY(-2px);
+  box-shadow:0 5px 20px rgba(255,255,255,0.2);
 }
 
-/* Sender info */
-.message .sender-name {
-    font-weight: 600;
-    font-size: 12px;
-    color: #111;
-    margin-bottom: 2px;
+.guest{
+  margin-top:16px; 
+  color:var(--primary-glow); 
+  font-weight:700; 
+  display:inline-block; 
+  font-size:18px; 
+  text-decoration:none; 
+  transition:0.3s ease-out; 
+  cursor:pointer;
+  text-shadow:0 0 10px rgba(0,224,96,0.6); /* Более яркое неоновое свечение */
 }
-.message .sender-username {
-    font-size: 11px;
-    color: #666;
-    margin-bottom: 5px;
-}
-
-/* Timestamp */
-.message small {
-    display: block;
-    font-size: 10px;
-    color: #666;
-    margin-top: 5px;
-    text-align: right;
+.guest:hover{
+  text-decoration:underline; 
+  text-decoration-color: var(--primary-glow);
+  transform:scale(1.05);
 }
 
-/* Chat input */
-.chat-input {
-    display: flex;
-    padding: 15px 20px;
-    border-top: 1px solid #ddd;
-    background: #fff;
-}
-.chat-input input {
-    flex: 1;
-    padding: 12px 20px;
-    border-radius: 25px;
-    border: 1px solid #ccc;
-    outline: none;
-    font-size: 15px;
-}
-.chat-input button {
-    margin-left: 12px;
-    padding: 12px 25px;
-    border: none;
-    border-radius: 25px;
-    background: #4caf50;
-    color: #fff;
-    cursor: pointer;
-    font-weight: 600;
-    transition: background 0.2s ease;
-}
-.chat-input button:hover {
-    background: #45a049;
-}
-
-/* Scrollbar styling */
-.chat-messages::-webkit-scrollbar {
-    width: 8px;
-}
-.chat-messages::-webkit-scrollbar-thumb {
-    background-color: rgba(0,0,0,0.2);
-    border-radius: 4px;
-}
-.chat-messages::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-/* Fade in animation */
-@keyframes fadeIn {
-    from {opacity: 0; transform: translateY(5px);}
-    to {opacity: 1; transform: translateY(0);}
+@media(max-width:480px){
+  .glass{padding:35px;border-radius:30px;}.brand h1{font-size:42px;letter-spacing:3px;}.tag{font-size:18px;}.btn{font-size:17px;padding:15px 20px;}.guest{font-size:16px;margin-top:10px;}
 }
 </style>
+</head>
+<body>
 
-<div class="chat-container" id="chat-app" data-room="{{ room_name }}" data-self="{{ request.user.id }}" data-other="{{ other.id }}">
-    <div class="chat-header">
-        <span class="full-name">{{ other.profile.full_name }}</span>
-        <span class="username">@{{ other.username }}</span>
-    </div>
+<canvas id="cityCanvas" aria-hidden="true"></canvas>
 
-    <div class="chat-messages" id="messages">
-        {% for msg in messages %}
-            <div class="message {% if msg.sender == request.user.username %}self{% else %}other{% endif %}">
-                <div class="sender">{{ msg.sender }}</div>
-                <div class="text">{{ msg.content }}</div>
-                <small>{{ msg.created_at|date:"M d, Y H:i" }}</small>
-            </div>
-        {% endfor %}
-    </div>
-    </div>
+<div class="wrap" role="main" aria-labelledby="kognemTitle">
+  <div class="glass" role="region" aria-label="Welcome">
+    <div class="brand">
+<img src="../Kognem/static/images/kognem_logo.jpg" alt="Kognem Logo">    </div>
+    <div class="tag">Own your city. Achieve your goals. Connect. Succeed.</div>
 
-    <form id="send-form" class="chat-input">
-        <input id="message-input" type="text" placeholder="Type a message..." autocomplete="off">
-        <button type="submit">Send</button>
-    </form>
+    <div class="actions">
+      <a href="{% url 'login' %}"><button class="btn btn-primary">Login</button></a>
+      <a href="{% url 'register' %}"><button class="btn btn-ghost">Register</button></a>
+      <a class="guest" id="guest-btn" href="{% url 'home' %}"></div>Continue as Guest →a>
+    </div>
+  </div>
 </div>
 
 <script>
 (function(){
-    const chatEl = document.getElementById('chat-app');
-    const selfUsername = chatEl.dataset.self;
-    const otherUsername = chatEl.dataset.other;
-    const messagesDiv = document.getElementById('messages');
-    const form = document.getElementById('send-form');
-    const input = document.getElementById('message-input');
+const canvas=document.getElementById('cityCanvas');
+const ctx=canvas.getContext('2d');
+let W,H,DPR;
 
-    form.addEventListener('submit', async e => {
-        e.preventDefault();
-        const text = input.value.trim();
-        if(!text) return;
+// УДАЛЕНО: let slowTime = 0; (Больше не нужно)
 
-        const resp = await fetch(`/chat/${otherUsername}/send/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type':'application/x-www-form-urlencoded'
-            },
-            body: `text=${encodeURIComponent(text)}`
-        });
+function resize(){
+  DPR=Math.max(1,window.devicePixelRatio||1); 
+  W=window.innerWidth; 
+  H=window.innerHeight; 
+  canvas.width=W*DPR; 
+  canvas.height=H*DPR; 
+  canvas.style.width=W+'px'; 
+  canvas.style.height=H+'px'; 
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener('resize',resize);
+resize();
 
-        const data = await resp.json();
-        if(data.message){
-            const msg = data.message;
-            const el = document.createElement('div');
-            el.classList.add('message', 'self');
-            el.innerHTML = `
-                <div class="sender">${msg.sender}</div>
-                <div class="text">${msg.content}</div>
-                <small>${new Date(msg.created_at).toLocaleString()}</small>
-            `;
-            messagesDiv.appendChild(el);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
+const rand=(a,b)=>Math.random()*(b-a)+a;
+const easeOutQuad = t => t * (2 - t);
 
-        input.value = '';
-    });
+let skyscrapers=[],cars=[],people=[],clouds=[], shuttles=[], stars=[], rainDrops=[], dataLines=[];
+let worker={x:0,poleTop:0,poleBottom:0,arm:0,dir:1};
 
-    // Optional: auto-scroll on load
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-})();
-</script>
-{% endblock %}
+/* --- Инициализация сцены --- */
+function initSkyscrapers(){
+  skyscrapers=[]; 
+  for(let i=0;i<10;i++){ 
+    let w=rand(90,220),h=rand(H*0.5,H*1.0);
+    let s = { // Создаем объект s
+      x:i*(W/9)+rand(-60,60), 
+      w:w,h:h,y:H*0.78-h,
+      shade:rand(0.1, 0.4),
+      glowColor: Math.random() < 0.5 ? 'rgba(0,224,96,0.2)' : 'rgba(0,144,255,0.2)', // Чуть ярче
+      litWindows: [] // Массив для статического света
+    };
 
-
-
-
-
-
-
-
-
-<script>
-(function(){
-    const chatEl = document.getElementById('chat-app');
-    const selfUsername = chatEl.dataset.self;
-    const otherUsername = chatEl.dataset.other;
-    const messagesDiv = document.getElementById('messages');
-    const form = document.getElementById('send-form');
-    const input = document.getElementById('message-input');
-
-    form.addEventListener('submit', async e => {
-        e.preventDefault();
-        const text = input.value.trim();
-        if(!text) return;
-
-        const resp = await fetch(`/chat/${otherUsername}/send/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type':'application/x-www-form-urlencoded'
-            },
-            body: `text=${encodeURIComponent(text)}`
-        });
-
-        const data = await resp.json();
-        if(data.message){
-            const msg = data.message;
-            const el = document.createElement('div');
-            el.classList.add('message', 'self');
-            el.innerHTML = `
-                <div class="sender">${msg.sender}</div>
-                <div class="text">${msg.content}</div>
-                <small>${new Date(msg.created_at).toLocaleString()}</small>
-            `;
-            messagesDiv.appendChild(el);
-            messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
-
-        input.value = '';
-    });
-
-    // Optional: auto-scroll on load
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    async function fetchMessages() {
-        try {
-            const resp = await fetch(`/chat/${otherUsername}/messages/`);
-            if (!resp.ok) return;
-            const data = await resp.json();
-
-            const currentMessages = messagesDiv.querySelectorAll('.message');
-            const currentCount = currentMessages.length;
-            const newCount = data.messages.length;
-
-            // If new messages have arrived
-            if (newCount > currentCount) {
-                messagesDiv.innerHTML = '';
-                data.messages.forEach(msg => {
-                    const isSelf = msg.sender === selfUsername;
-                    addMessage(msg, isSelf);
+    // Генерируем светящиеся окна ОДИН РАЗ
+    for(let wx=s.x+rand(5,10);wx<s.x+s.w-5;wx+=rand(15,25)){ 
+        for(let wy=s.y+rand(10,20);wy<s.y+s.h-15;wy+=rand(20,40)){
+            if(Math.random() < 0.35) { // Вероятность 35%
+                s.litWindows.push({
+                    x: wx, 
+                    y: wy, 
+                    w: rand(5,10), 
+                    h: rand(10,18),
+                    intensity: rand(0.8, 1.0) // Яркость 80-100%
                 });
             }
-        } catch (err) {
-            console.error('Error fetching messages:', err);
         }
     }
+    skyscrapers.push(s);
+  }
+  skyscrapers.sort((a,b) => a.h - b.h);
+}
 
-    // ✅ Auto-refresh every 1 second
-    setInterval(fetchMessages, 1000);
+function spawnCars(){cars=[]; const roadY=H*0.78; for(let i=0;i<12;i++){const dir=Math.random()<0.5?1:-1; const w=rand(50,100); cars.push({x:rand(-400,W+400),y:roadY+(dir===1?-12:12),w:w,h:w*0.36,dir,speed:dir*rand(2.5,5), lightColor: Math.random() < 0.5 ? '255,255,100' : '0,200,255'});}}
+function spawnPeople(){people=[]; const sidewalkY=H*0.72; for(let i=0;i<18;i++){const dir=Math.random()<0.5?1:-1; people.push({x:rand(-300,W+300),y:sidewalkY+rand(-10,10),size:rand(18,26),speed:dir*rand(1,2),dir,step:Math.random()*Math.PI*2});}}
+function spawnClouds(){clouds=[]; for(let i=0;i<6;i++) clouds.push({x:rand(-200,W+200),y:rand(60,H*0.2),s:rand(1,1.8),speed:rand(0.08,0.25)});}
 
-    // ✅ Initial scroll
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+function spawnShuttles(){
+  shuttles = [];
+  for(let i=0;i<4;i++){
+    const dir=Math.random()<0.5?1:-1;
+    shuttles.push({
+      x: rand(-W, W * 2),
+      y: rand(H * 0.08, H * 0.25),
+      size: rand(0.7, 1.6),
+      speed: dir * rand(0.08, 0.2),
+      dir: dir,
+      color: `rgba(${rand(180,255)},${rand(180,255)},${rand(180,255)},0.1)`,
+      trailColor: `rgba(0,200,255,${rand(0.5,0.8)})` // Ярче след
+    });
+  }
+}
+function spawnStars(){
+    stars = [];
+    for(let i=0; i<120; i++){ 
+        stars.push({
+            x: rand(0, W),
+            y: rand(0, H * 0.4), 
+            size: rand(0.6, 1.8),
+            alpha: rand(0.5, 1.0), // Более яркие звезды
+            speed: rand(0.008, 0.03) 
+        });
+    }
+}
+function spawnRainDrops(){
+    rainDrops = [];
+    for(let i=0; i<200; i++){ 
+        rainDrops.push({
+            x: rand(0, W),
+            y: rand(-H, H), 
+            speed: rand(1.5, 4),
+            length: rand(15, 30),
+            opacity: rand(0.05, 0.2) // Менее мутные частицы
+        });
+    }
+}
+
+function spawnDataLines(){
+    dataLines = [];
+    for(let i=0; i<50; i++){
+        dataLines.push({
+            x: rand(0, W),
+            y: rand(H * 0.3, H * 0.8),
+            dx: rand(-1, 1),
+            dy: rand(-1, 1),
+            speed: rand(0.5, 2),
+            length: rand(30, 80),
+            color: Math.random() < 0.5 ? 'rgba(0,255,100,0.5)' : 'rgba(0,180,255,0.5)', // Ярче неоновые цвета
+            opacity: rand(0.1, 0.3)
+        });
+    }
+}
+
+function resetWorker(){worker.x=W*0.12; worker.poleTop=H*0.54; worker.poleBottom=H*0.68; worker.arm=0; worker.dir=1;}
+
+function initScene(){
+  initSkyscrapers(); 
+  spawnCars(); 
+  spawnPeople(); 
+  spawnClouds(); 
+  spawnShuttles(); 
+  spawnStars(); 
+  spawnRainDrops(); 
+  spawnDataLines(); 
+  resetWorker();
+}
+initScene();
+
+/* --- Вспомогательные функции --- */
+function roundRect(ctx,x,y,w,h,r){
+  const rad=Math.min(r,Math.abs(w/2),Math.abs(h/2)); 
+  ctx.beginPath(); 
+  ctx.moveTo(x+rad,y); 
+  ctx.arcTo(x+w,y,x+w,y+h,rad); 
+  ctx.arcTo(x+w,y+h,x,y+h,rad); 
+  ctx.arcTo(x,y+h,x,y,rad); 
+  ctx.arcTo(x,y,x+w,y,rad); 
+  ctx.closePath();
+}
+
+/* --- Функции отрисовки --- */
+
+function drawSky(){
+  const g=ctx.createLinearGradient(0,0,0,H*0.6); 
+  g.addColorStop(0,'#0f172a'); 
+  g.addColorStop(0.3,'#1f2d4d'); 
+  g.addColorStop(0.6,'#3f4e7c'); 
+  g.addColorStop(1,'#5f6c8c'); 
+  ctx.fillStyle=g; 
+  ctx.fillRect(0,0,W,H*0.6);
+
+  // Очень яркое неоновое свечение у горизонта
+  const cityGlow = ctx.createRadialGradient(W/2, H*0.6, H*0.1, W/2, H*0.6, W*0.6);
+  cityGlow.addColorStop(0, 'rgba(0,144,255,0.3)'); 
+  cityGlow.addColorStop(0.2, 'rgba(0,224,96,0.25)'); 
+  cityGlow.addColorStop(0.4, 'rgba(255,190,0,0.2)'); 
+  cityGlow.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = cityGlow;
+  ctx.fillRect(0, H*0.4, W, H*0.25);
+}
+
+function drawStar(s, now){
+    ctx.save();
+    ctx.translate(s.x, s.y);
+    // Мигание звезд можно оставить, так как оно придает глубину и не делает сцену "мутной"
+    const alpha = s.alpha + Math.sin(now * s.speed) * 0.2; 
+    ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+    ctx.beginPath();
+    ctx.arc(0, 0, s.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+}
+
+function drawCloud(c){
+    ctx.save();
+    ctx.globalAlpha = 0.15; // Менее мутные облака
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, 60 * c.s, 0, Math.PI * 2);
+    ctx.arc(c.x + 50 * c.s, c.y - 20 * c.s, 50 * c.s, 0, Math.PI * 2);
+    ctx.arc(c.x - 30 * c.s, c.y + 15 * c.s, 55 * c.s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+}
+
+// ИСПРАВЛЕНО: Статический свет вместо мигания
+function drawSkyscraper(s){
+  ctx.save();
+  // Уменьшен эффект тумана для более яркой картинки
+  const alpha = 1 - (s.y / H) * 0.3; 
+  ctx.globalAlpha = alpha;
+
+  ctx.fillStyle='rgba(0,0,0,0.95)'; // Темнее корпус
+  ctx.fillRect(s.x,s.y,s.w,s.h); 
+  
+  ctx.shadowColor = s.glowColor;
+  ctx.shadowBlur = 40; // Сильнее свечение от здания
+  ctx.fillStyle='rgba(0,0,0,0.95)'; 
+  ctx.fillRect(s.x,s.y,s.w,s.h); 
+  ctx.shadowBlur = 0; 
+
+  // Линии данных/освещения
+  for(let i=0; i<3; i++){
+    ctx.fillStyle = s.glowColor;
+    ctx.fillRect(s.x + s.w * (0.1 + i * 0.3), s.y, s.w * 0.05, s.h); 
+    ctx.fillRect(s.x, s.y + s.h * (0.1 + i * 0.3), s.w, s.h * 0.02); 
+  }
+
+  // Отрисовываем СТАТИЧЕСКИЕ светящиеся окна
+  s.litWindows.forEach(w => {
+      // Желтый свет с индивидуальной яркостью
+      ctx.fillStyle=`rgba(255,255,100,${w.intensity})`; 
+      ctx.fillRect(w.x, w.y, w.w, w.h);
+  });
+
+  ctx.restore();
+}
+
+function drawCar(c){
+  ctx.save(); 
+  ctx.translate(c.x,c.y); 
+  if(c.dir<0) ctx.scale(-1,1); 
+  const w=c.w,h=c.h,bodyH=h*0.7,roofH=h*0.42; 
+  ctx.fillStyle='rgba(10,15,20,0.9)'; 
+  roundRect(ctx,-w*0.5,-bodyH,w,bodyH,10); ctx.fill(); 
+  ctx.fillStyle='rgba(255,255,255,0.08)'; 
+  roundRect(ctx,-w*0.18,-bodyH-roofH,w*0.36,roofH,8); ctx.fill(); 
+  ctx.fillStyle='#050505'; 
+  ctx.beginPath(); ctx.arc(-w*0.22,4,h*0.4,0,Math.PI*2); ctx.fill(); 
+  ctx.beginPath(); ctx.arc(w*0.22,4,h*0.4,0,Math.PI*2); ctx.fill(); 
+
+  ctx.fillStyle=`rgba(${c.lightColor},0.8)`; 
+  ctx.shadowColor = `rgba(${c.lightColor},0.6)`;
+  ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.arc(w*0.45,-h*0.4,h*0.18,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0; 
+  ctx.fillStyle='rgba(255,50,0,0.8)'; 
+  ctx.beginPath(); ctx.arc(-w*0.45,-h*0.4,h*0.18,0,Math.PI*2); ctx.fill();
+
+  ctx.restore();
+}
+
+function drawPerson(p,t){
+  ctx.save(); ctx.translate(p.x,p.y); if(p.dir<0) ctx.scale(-1,1); 
+  const step=Math.sin(p.step+t*0.006)*0.9, torsoH=p.size; 
+  ctx.fillStyle='#1c3c33'; 
+  roundRect(ctx,-p.size*0.28,-torsoH-6,p.size*0.56,torsoH,4); ctx.fill(); 
+  ctx.beginPath(); ctx.arc(0,-torsoH-12,p.size*0.36,0,Math.PI*2); ctx.fillStyle='#f6e9db'; ctx.fill(); 
+  ctx.restore();
+}
+
+function drawWorker(dt){
+  const poleX=worker.x,poleTop=worker.poleTop,poleBottom=worker.poleBottom; 
+  worker.arm+=0.02*worker.dir*dt; if(worker.arm>0.8) worker.dir=-1; if(worker.arm<-0.3) worker.dir=1; 
+  ctx.save(); 
+  ctx.strokeStyle='#183025'; 
+  ctx.lineWidth=5; 
+  ctx.beginPath(); ctx.moveTo(poleX,poleTop); ctx.lineTo(poleX,poleBottom); ctx.stroke(); 
+
+  ctx.fillStyle = `rgba(255,100,0,${Math.sin(Date.now()*0.005)*0.5+0.5})`; 
+  ctx.shadowColor = `rgba(255,100,0,0.8)`;
+  ctx.shadowBlur = 15;
+  ctx.beginPath(); ctx.arc(poleX, poleTop + 10, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0; 
+  ctx.restore();
+}
+
+function drawShuttle(s){
+  ctx.save();
+  ctx.translate(s.x, s.y);
+  ctx.scale(s.dir, 1);
+  const size = s.size * 20;
+
+  ctx.fillStyle = s.color; 
+  ctx.strokeStyle = `rgba(255,255,255,0.2)`;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); 
+  ctx.moveTo(-size, 0);
+  ctx.lineTo(size * 0.8, -size * 0.4);
+  ctx.lineTo(size, 0);
+  ctx.lineTo(size * 0.8, size * 0.4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = s.trailColor;
+  ctx.lineWidth = 3;
+  ctx.shadowColor = s.trailColor;
+  ctx.shadowBlur = 15;
+  ctx.beginPath();
+  ctx.moveTo(-size * 0.8, 0);
+  ctx.lineTo(-size * 1.5 - Math.sin(Date.now()*0.005)*10, 0); 
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = `rgba(255,255,255,0.8)`;
+  ctx.shadowColor = `rgba(255,255,255,0.8)`;
+  ctx.shadowBlur = 10;
+  ctx.beginPath(); ctx.arc(0, 0, size * 0.15, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.restore();
+}
+
+function drawRainDrop(r){
+    ctx.globalAlpha = r.opacity;
+    ctx.strokeStyle = 'rgba(200, 200, 255, 0.7)'; 
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(r.x, r.y);
+    ctx.lineTo(r.x, r.y + r.length);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+}
+
+function drawDataLine(d){
+    ctx.globalAlpha = d.opacity;
+    ctx.strokeStyle = d.color;
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = d.color;
+    ctx.shadowBlur = 10; // Ярче свечение
+
+    ctx.beginPath();
+    ctx.moveTo(d.x, d.y);
+    ctx.lineTo(d.x + d.dx * d.length, d.y + d.dy * d.length);
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+}
+
+
+/* --- Главный цикл анимации --- */
+let lastTime=performance.now();
+function loop(now){
+  const dt=now-lastTime; 
+  lastTime=now; 
+  // УДАЛЕНО: slowTime += dt * 0.005; 
+  ctx.clearRect(0,0,W,H); 
+  
+  drawSky(); 
+  
+  stars.forEach(s=>drawStar(s, now));
+
+  clouds.forEach(c=>{
+    c.x += c.speed * dt * 0.05;
+    if(c.x > W + 100) c.x = -200;
+    drawCloud(c);
+  });
+
+  dataLines.forEach(d => {
+      d.x += d.dx * d.speed * dt * 0.05;
+      d.y += d.dy * d.speed * dt * 0.05;
+      if (d.x < -100 || d.x > W + 100 || d.y < -100 || d.y > H + 100) {
+          d.x = rand(0,W);
+          d.y = rand(H * 0.3, H * 0.8);
+      }
+      drawDataLine(d);
+  });
+
+  skyscrapers.forEach(s=>drawSkyscraper(s)); 
+  
+  const roadY=H*0.78; 
+  ctx.fillStyle='#0b1a16'; 
+  ctx.fillRect(0,roadY,W,H-roadY); 
+  
+  cars.forEach(c=>{
+    c.x+=c.speed*dt*0.03;
+    if(c.dir>0&&c.x-c.w*0.5>W+120)c.x=-120;
+    if(c.dir<0&&c.x+c.w*0.5<-160)c.x=W+120; 
+    drawCar(c);
+  }); 
+  
+  people.forEach(p=>{
+    p.x+=p.speed*dt*0.02;
+    p.step+=0.08*dt*Math.abs(p.speed);
+    if(p.dir>0&&p.x>W+80)p.x=-80;
+    if(p.dir<0&&p.x<-80)p.x=W+80; 
+    drawPerson(p,now);
+  }); 
+  
+  drawWorker(dt); 
+
+  shuttles.forEach(s=>{
+    s.x += s.speed * dt * 0.03;
+    const w = s.size * 20 * 2;
+    if(s.dir > 0 && s.x - w > W + 50) s.x = -w;
+    if(s.dir < 0 && s.x + w < -50) s.x = W + w;
+    drawShuttle(s);
+  });
+
+  rainDrops.forEach(r => {
+      r.y += r.speed * dt * 0.05;
+      if (r.y > H + r.length) {
+          r.y = rand(-H, 0); 
+          r.x = rand(0, W);
+      }
+      drawRainDrop(r);
+  });
+
+  requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+
+document.getElementById('guest-btn').addEventListener('click', () => {
+    console.log('Continuing as Guest...');
+    // Здесь будет код перенаправления в рабочем приложении Django
+});
+
+
 })();
-
 </script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-<script>
-(function(){
-    const chatEl = document.getElementById('chat-app');
-    const messagesDiv = document.getElementById('messages');
-    const form = document.getElementById('send-form');
-    const input = document.getElementById('message-input');
-    const selfUsername = '{{ request.user.username }}';
-    const otherUsername = '{{ other.username }}';
-
-    // ✅ Send message
-    form.addEventListener('submit', async e => {
-        e.preventDefault();
-        const text = input.value.trim();
-        if (!text) return;
-
-        const resp = await fetch(`/chat/${otherUsername}/send/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: `text=${encodeURIComponent(text)}`
-        });
-
-        const data = await resp.json();
-        if (data.message) {
-            addMessage(data.message, true);
-        }
-
-        input.value = '';
-    });
-
-    // ✅ Add a message bubble
-    function addMessage(msg, isSelf) {
-        const el = document.createElement('div');
-        el.classList.add('message', isSelf ? 'self' : 'other');
-        el.innerHTML = `
-            <div class="text">${msg.content}</div>
-            <small>${msg.created_at}</small>
-        `;
-        messagesDiv.appendChild(el);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-
-    // ✅ Fetch messages from backend
-    async function fetchMessages() {
-        try {
-            const resp = await fetch(`/chat/${otherUsername}/messages/`);
-            if (!resp.ok) return;
-            const data = await resp.json();
-
-            const currentMessages = messagesDiv.querySelectorAll('.message');
-            const currentCount = currentMessages.length;
-            const newCount = data.messages.length;
-
-            // If new messages have arrived
-            if (newCount > currentCount) {
-                messagesDiv.innerHTML = '';
-                data.messages.forEach(msg => {
-                    const isSelf = msg.sender === selfUsername;
-                    addMessage(msg, isSelf);
-                });
-            }
-        } catch (err) {
-            console.error('Error fetching messages:', err);
-        }
-    }
-
-    // ✅ Auto-refresh every 1 second
-    setInterval(fetchMessages, 1000);
-
-    // ✅ Initial scroll
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-})();
-</script>
+</body>
+</html>
