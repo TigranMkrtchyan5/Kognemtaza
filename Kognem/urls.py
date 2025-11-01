@@ -1,3 +1,4 @@
+
 from django.contrib import admin
 from django.urls import path
 from . import views
@@ -20,6 +21,9 @@ urlpatterns = [
     path("check-phone/", views.check_phone, name="check_phone"),
     path("check-id/", views.check_id, name="check_id"),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('admin/users/all/', views.all_users, name='all_users'),
+    path('admin/users/active/', views.active_users, name='active_users'),
+    path('admin/users/banned/', views.banned_users, name='banned_users'),
     path('ban-user/<int:user_id>/', views.ban_user, name='ban_user'),
     path('unban-user/<int:user_id>/', views.unban_user, name='unban_user'),
     path('admin/posts/approve/<int:post_id>/', views.approve_post, name='approve_post'),
@@ -27,9 +31,8 @@ urlpatterns = [
     path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
     path('reset-password/<int:user_id>/', views.reset_password, name='reset_password'),
     path('user/<int:user_id>/', views.user_detail, name='user_detail'),
-    path('admin-dashboard/login/', views.admin_dashboard_login, name='admin_dashboard_login'),
-    path('admin/banned-users/', views.banned_users, name='banned_users'),
     path('create-post/', views.create_post, name='create_post'),
+    path('admin/post_management/', views.post_management, name='post_management'),
     path('admin/posts/approved/', views.approved_posts_view, name='approved_posts'),
     path('admin/posts/rejected/', views.rejected_posts_view, name='rejected_posts'),
     path('admin/posts/pending/', views.pending_posts_view, name='pending_posts'),
@@ -52,7 +55,3 @@ urlpatterns = [
 
 ]
 
-
-    # path('account/', views.account_overview, name='account_overview'),  # Optional: main account page
-
-# path('chat/room/<str:room_name>/<str:username>/', views.CreateRoom, name='room'),

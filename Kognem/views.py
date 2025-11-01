@@ -31,13 +31,51 @@ from django.http import JsonResponse
 from django.contrib.auth.models import User
 from .models import Post, Logo, Profile, Category, State, Province
 import requests
+from django.shortcuts import render, redirect
+from django.db.models import Count, Q
+from django.contrib.auth.decorators import login_required
+from django.http import Http404, HttpResponseForbidden 
+from .models import Post 
+
+
+#------------------------------ DECORATORS -------------------------------------------------------------------
+
+def admin_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.role in ['admin', 'superadmin']:
+            return view_func(request, *args, **kwargs)
+        messages.error(request, "Դուք չունեք թույլտվություն մուտք գործելու այս էջ:")
+        return redirect('home')
+    return wrapper
+
+
+def superadmin_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.role == 'superadmin':
+            return view_func(request, *args, **kwargs)
+        messages.error(request, "Դուք չունեք թույլտվություն մուտք գործելու այս էջ:")
+        return redirect('home')
+    return wrapper
+
+def moderator_required(view_func):
+    def wrapper(request, *args, **kwargs):
+        if request.user.is_authenticated and (request.user.is_superuser or request.user.profile.role in ['admin', 'moderator']):
+            return view_func(request, *args, **kwargs)
+        messages.error(request, "Դուք չունեք թույլտվություն մուտք գործելու այս էջ:")
+        return redirect('home')
+    return wrapper
 
 
 
+@property
+def is_banned(self):
+    now = timezone.now()
+    return self.user.bans.filter(active=True, end_date__gt=now).exists()
 
-def task_detail(request, post_id):
-    post = get_object_or_404(Post, id=post_id)
-    return render(request, 'task_detail.html', {'post': post})
+
+
+#-------------------------------CHAT LOGIC , MESSAGES-------------------------------------------------------------
+
 
 @login_required
 def create_room(request, username):
@@ -136,39 +174,10 @@ def messages_list(request):
 
     return render(request, 'messages_list.html', {'users': users})
 
-
-
-
-
-# @database_sync_to_async
-# def create_notification(message):
-#     ChatNotification.objects.create(user=message['recipient_id'], message_id=message['id'])
-
-
-# @login_required
-# def chat_room(request, room_name,user_id):
-#     other = get_object_or_404(User, pk=user_id)
-
-#     # Ensure user cannot chat with banned users
-#     if other.profile.is_banned:
-#         messages.error(request, "Cannot chat with this user.")
-#         return redirect("messages_list")
-
-#     room_name = f"chat_{min(request.user.id, other.id)}_{max(request.user.id, other.id)}"
-
-#     messages_qs = ChatMessage.objects.filter(
-#         sender_id__in=[request.user.id, other.id],
-#         recipient_id__in=[request.user.id, other.id]
-#     ).order_by("created_at")
-
-#     message_data = [m.to_dict() for m in messages_qs]
-
-#     return render(request, 'chat/chat.html', {
-#         "room_name": room_name,
-#         "other": other,
-#         "messages": message_data,
-#     })
-
+# ------------------------------------------TASK,Post CODES ----------------------------------------------------------------
+def task_detail(request, post_id):
+    post = get_object_or_404(Post, id=post_id)
+    return render(request, 'task_detail.html', {'post': post})
 
 @login_required
 def view_post(request, post_id):
@@ -193,86 +202,171 @@ def create_post(request):
     return render(request, 'create_post.html', {'form': form})
 
 
+@admin_required 
+def post_management(request):
+    current_status = request.GET.get('status', 'all')
+    base_queryset = Post.objects.select_related('user').all().order_by('-created_at')
+    counts = base_queryset.aggregate(
+        all_posts_count=Count('id'),
+        pending_posts_count=Count('id', filter=Q(status='pending')),
+        approved_posts_count=Count('id', filter=Q(status='approved')),
+        rejected_posts_count=Count('id', filter=Q(status='rejected')),
+    )
+
+    # ----------- FILTER posteri hamar---------------------
+    if current_status == 'pending':
+        posts = base_queryset.filter(status='pending')
+        table_title = "Pending Posts"
+    elif current_status == 'approved':
+        posts = base_queryset.filter(status='approved')
+        table_title = "Approved Posts"
+    elif current_status == 'rejected':
+        posts = base_queryset.filter(status='rejected')
+        table_title = "Rejected Posts"
+    else:
+        posts = base_queryset
+        table_title = "All Posts"
+        current_status = 'all'
+
+    context = {
+        
+        'all_posts_count': counts['all_posts_count'],
+        'pending_posts_count': counts['pending_posts_count'],
+        'approved_posts_count': counts['approved_posts_count'],
+        'rejected_posts_count': counts['rejected_posts_count'],
+        
+        
+        'posts': posts, 
+        'current_status': current_status, 
+        'table_title': table_title,
+    }
+    
+    return render(request, 'admin/post_management.html', context)
+
+#----------------------------------- ADMINI ARAVELUTYUNNER ---------------------------------------
+@csrf_exempt
+@admin_required
+def approve_post(request, post_id):
+    try:
+        post = Post.objects.get(pk=post_id)
+        post.status = 'approved'
+        post.save()
+        return JsonResponse({"success": True})
+    except Post.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Post not found"}, status=404)
+
+@csrf_exempt
+@admin_required
+def reject_post(request, post_id):
+    if request.method != 'POST':
+        return JsonResponse({"success": False, "error": "Invalid method"}, status=405)
+        
+    try:
+        post = Post.objects.get(pk=post_id)
+        
+        try:
+            data = json.loads(request.body)
+            rejection_reason = data.get('reason', '').strip()
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "error": "Invalid JSON format"}, status=400)
+
+        if not rejection_reason:
+            return JsonResponse({"success": False, "error": "Rejection reason is required"}, status=400)
+            
+        post.status = 'rejected'
+        post.rejection_reason = rejection_reason 
+        post.save()
+        
+        return JsonResponse({"success": True})
+        
+    except Post.DoesNotExist:
+        return JsonResponse({"success": False, "error": "Post not found"}, status=404)
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)}, status=500)
 
 
-@login_required
-def get_provinces(request, state_id):
-    provinces = Province.objects.filter(state_id=state_id).order_by('name')
-    data = [{'id': p.id, 'name': p.name} for p in provinces]
-    return JsonResponse({'provinces': data})
+@admin_required
+def approved_posts_view(request):
+    posts = Post.objects.filter(status='approved').order_by('-created_at')
+    return render(request, 'admin/approved_posts.html', {'posts': posts})
 
-# ---------------- Admin Decorators ----------------
-def admin_required(view_func):
-    def wrapper(request, *args, **kwargs):
-        if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.role in ['admin', 'superadmin']:
-            return view_func(request, *args, **kwargs)
-        messages.error(request, "Դուք չունեք թույլտվություն մուտք գործելու այս էջ:")
-        return redirect('home')
-    return wrapper
 
-def superadmin_required(view_func):
-    def wrapper(request, *args, **kwargs):
-        if request.user.is_authenticated and hasattr(request.user, 'profile') and request.user.profile.role == 'superadmin':
-            return view_func(request, *args, **kwargs)
-        messages.error(request, "Դուք չունեք թույլտվություն մուտք գործելու այս էջ:")
-        return redirect('home')
-    return wrapper
+@admin_required
+def rejected_posts_view(request):
+    posts = Post.objects.filter(status='rejected').order_by('-created_at')
+    return render(request, 'admin/rejected_posts.html', {'posts': posts})
+
+
+@admin_required
+def pending_posts_view(request):
+    posts = Post.objects.filter(status='pending').order_by('-created_at')
+
+    return render(request, 'admin/pending_posts.html', {'posts': posts})
+
+@moderator_required
+def review_posts(request):
+    return render(request, 'admin/review_posts.html')
+
+
+@csrf_exempt
+@admin_required
+def delete_post(request, post_id):
+    """
+    Удаляет пост по его ID (используется на страницах Rejected/Approved/Pending).
+    """
+    if request.method == 'POST':
+        try:
+            post_to_delete = Post.objects.get(pk=post_id)
+            
+            post_to_delete.delete()
+            
+            return JsonResponse({"success": True, "message": "Post deleted successfully."})
+            
+        except Post.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Post not found."}, status=404)
+        except Exception as e:
+            return JsonResponse({"success": False, "error": f"Internal error: {str(e)}"}, status=500)
+
+    return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
 
 # ---------------- Admin Dashboard ----------------
 @admin_required
 def admin_dashboard(request):
-    if not request.user.is_authenticated or request.user.profile.role not in ['admin', 'superadmin']:
-        form = EmailOrUsernameAuthenticationForm()
-        return render(request, "admin/login.html", {"form": form})
+    all_users = User.objects.select_related("profile").prefetch_related('bans').all()
     
-    # ИЗМЕНЕНИЕ: Фильтруем пользователей, чтобы показывать ТОЛЬКО НЕЗАБАНЕННЫХ
-    # Если вы используете BanLog, то проверяем, что нет активных банов
-    active_users = User.objects.select_related("profile").exclude(
-        bans__active=True, 
-        bans__end_date__gt=timezone.now()
-    ).distinct()
+    for user in all_users:
+        try:
+            user.active_ban = user.bans.filter(active=True).order_by('-end_date').first()
+        except AttributeError:
+            user.active_ban = None
+    
+    all_users_count = User.objects.count()
+    active_users_count = User.objects.filter(is_active=True).count()
+    banned_users_count = User.objects.filter(is_active=False).count()
+    pending_posts_count = Post.objects.filter(status='pending').count()
     
     pending_posts = Post.objects.filter(status='pending').order_by("-created_at")
     
-    
     return render(request, "admin/dashboard.html", {
-        "users": active_users, # <-- ИСПОЛЬЗУЕМ ОТФИЛЬТРОВАННЫХ ПОЛЬЗОВАТЕЛЕЙ
+        "users": all_users,
         "posts": pending_posts,
         "current_user": request.user,
-        "admin_roles": ["admin", "superadmin", "support"],  # optional for template
+        "all_users_count": all_users_count,
+        "active_users_count": active_users_count,
+        "banned_users_count": banned_users_count,
+        "pending_posts_count": pending_posts_count,
+        "current_filter": "all", 
+        "page_title": "All Users"  
     })
-
-def admin_dashboard_login(request):
-    """Login view for the admin dashboard."""
-    if request.user.is_authenticated:
-        # If user is already logged in, redirect to dashboard
-        return redirect('admin_dashboard')
-
-    form = EmailOrUsernameAuthenticationForm(request.POST or None)
-
-    if request.method == 'POST' and form.is_valid():
-        user = form.get_user()
-        login(request, user)
-        if user.profile.role in ['admin', 'superadmin']:
-            return redirect('admin_dashboard')
-        else:
-            # Logged in but not an admin
-            return render(request, "admin/login.html", {
-                "form": form,
-                "error": "You are not authorized to view the admin dashboard."
-            })
-
-    return render(request, "admin/login.html", {"form": form})
 
 
 @admin_required
 def user_detail(request, user_id):
     try:
         target_user = User.objects.select_related('profile').get(pk=user_id)
-        posts = Post.objects.filter(user=target_user).order_by('-created_at')  # Optional if posts exist
+        posts = Post.objects.filter(user=target_user).order_by('-created_at')  
         current_user_role = request.user.profile.role
 
-        # Restrict admin from seeing superadmin info
         if request.user.profile.role == 'admin' and target_user.profile.role in ['admin', 'superadmin', 'support']:
             messages.error(request, "Դուք չեք կարող մուտք գործել այս օգտվողի էջը")
             return redirect('admin_dashboard')
@@ -287,25 +381,78 @@ def user_detail(request, user_id):
         return redirect('admin_dashboard')
 
 
-# ---------------- Admin User Actions ----------------
+
 @admin_required
-def banned_users(request):
-    # ИЗМЕНЕНИЕ: Используем 'bans__active' и 'bans__end_date'
-    banned_users_list = User.objects.filter(
-        bans__active=True,  # <-- ИСПРАВЛЕНО
-        bans__end_date__gt=timezone.now()
-    ).distinct().select_related('profile').prefetch_related('bans') # <-- ИСПРАВЛЕНО
+def all_users(request):
+    """View for all users"""
+    users = User.objects.select_related("profile").prefetch_related('bans').all()
     
-    # Создаем объект active_ban для шаблона
-    for user in banned_users_list:
+    for user in users:
         try:
-            # ИСПОЛЬЗУЕМ user.bans.filter()
             user.active_ban = user.bans.filter(active=True).order_by('-end_date').first()
         except AttributeError:
-             user.active_ban = None 
+            user.active_ban = None
     
-    return render(request, 'admin/banned_users.html', {'banned_users': banned_users_list})
+    all_users_count = User.objects.count()
+    active_users_count = User.objects.filter(is_active=True).count()
+    banned_users_count = User.objects.filter(is_active=False).count()
+    
+    return render(request, "admin/dashboard.html", {
+        "users": users,
+        "all_users_count": all_users_count,
+        "active_users_count": active_users_count,
+        "banned_users_count": banned_users_count,
+        "current_filter": "all",
+        "page_title": "All Users"
+    })
 
+@admin_required
+def active_users(request):
+    """View for active users only"""
+    users = User.objects.filter(is_active=True).select_related("profile").prefetch_related('bans').all()
+    
+    for user in users:
+        try:
+            user.active_ban = user.bans.filter(active=True).order_by('-end_date').first()
+        except AttributeError:
+            user.active_ban = None
+    
+    all_users_count = User.objects.count()
+    active_users_count = User.objects.filter(is_active=True).count()
+    banned_users_count = User.objects.filter(is_active=False).count()
+    
+    return render(request, "admin/dashboard.html", {
+        "users": users,
+        "all_users_count": all_users_count,
+        "active_users_count": active_users_count,
+        "banned_users_count": banned_users_count,
+        "current_filter": "active",
+        "page_title": "Active Users"
+    })
+
+@admin_required
+def banned_users(request):
+    """View for banned users only"""
+    users = User.objects.filter(is_active=False).select_related("profile").prefetch_related('bans').all()
+    
+    for user in users:
+        try:
+            user.active_ban = user.bans.filter(active=True).order_by('-end_date').first()
+        except AttributeError:
+            user.active_ban = None
+    
+    all_users_count = User.objects.count()
+    active_users_count = User.objects.filter(is_active=True).count()
+    banned_users_count = User.objects.filter(is_active=False).count()
+    
+    return render(request, "admin/dashboard.html", {
+        "users": users,
+        "all_users_count": all_users_count,
+        "active_users_count": active_users_count,
+        "banned_users_count": banned_users_count,
+        "current_filter": "banned",
+        "page_title": "Banned Users"
+    })
 @csrf_exempt
 @admin_required
 def ban_user(request, user_id):
@@ -327,13 +474,13 @@ def ban_user(request, user_id):
         if timezone.is_naive(end_date):
             end_date = timezone.make_aware(end_date)
 
-        # Logout user from all sessions
+
         for session in Session.objects.all():
             session_data = session.get_decoded()
             if str(session_data.get('_auth_user_id')) == str(user.id):
                 session.delete()
 
-        # Create active ban
+
         BanLog.objects.create(
             user=user,
             admin=request.user,
@@ -342,7 +489,7 @@ def ban_user(request, user_id):
             active=True
         )
 
-        # ❌ Set user inactive to prevent login
+        
         user.is_active = False
         user.save()
 
@@ -353,19 +500,6 @@ def ban_user(request, user_id):
     except Exception as e:
         return JsonResponse({"success": False, "error": f"Internal server error: {str(e)}"}, status=500)
 
-
-
-
-
-
-@property
-def is_banned(self):
-    now = timezone.now()
-    return self.user.bans.filter(active=True, end_date__gt=now).exists()
-
-
-
-@csrf_exempt
 @admin_required
 def unban_user(request, user_id):
     if request.method != "POST":
@@ -374,10 +508,8 @@ def unban_user(request, user_id):
     try:
         user = User.objects.get(pk=user_id)
 
-        # Deactivate all active bans
         user.bans.filter(active=True).update(active=False)
 
-        # Restore user activity
         user.is_active = True
         user.save()
 
@@ -388,8 +520,6 @@ def unban_user(request, user_id):
     except Exception as e:
         return JsonResponse({"success": False, "error": f"Internal server error: {str(e)}"}, status=500)
 
-
-#------------------------------------------------------------------------------------------------------------------------
 @csrf_exempt
 @admin_required
 def delete_user(request, user_id):
@@ -413,7 +543,6 @@ def reset_password(request, user_id):
     try:
         user_to_reset = User.objects.get(pk=user_id)
 
-        # Check permissions
         target_role = user_to_reset.profile.role
         requester_role = request.user.profile.role
 
@@ -424,14 +553,12 @@ def reset_password(request, user_id):
                 "error": "You do not have permission to reset this user's password."
             }, status=403)
 
-        # ✅ Read JSON body correctly
         data = json.loads(request.body.decode("utf-8"))
         new_password = data.get("password")
 
         if not new_password:
             return JsonResponse({"success": False, "error": "New password is required"}, status=400)
 
-        # ✅ Set new password
         user_to_reset.set_password(new_password)
         user_to_reset.save()
 
@@ -441,70 +568,8 @@ def reset_password(request, user_id):
         return JsonResponse({"success": False, "error": "User not found"}, status=404)
     except Exception as e:
         return JsonResponse({"success": False, "error": str(e)}, status=500)
-# ---------------- Admin Post Actions ----------------
-@csrf_exempt
-@admin_required
-def approve_post(request, post_id):
-    try:
-        post = Post.objects.get(pk=post_id)
-        post.status = 'approved'
-        post.save()
-        return JsonResponse({"success": True})
-    except Post.DoesNotExist:
-        return JsonResponse({"success": False, "error": "Post not found"}, status=404)
-@csrf_exempt
-@admin_required
-def reject_post(request, post_id):
-    if request.method != 'POST':
-        return JsonResponse({"success": False, "error": "Invalid method"}, status=405)
-        
-    try:
-        # 1. Находим пост
-        post = Post.objects.get(pk=post_id)
-        
-        # 2. Читаем тело JSON для получения причины
-        try:
-            data = json.loads(request.body)
-            rejection_reason = data.get('reason', '').strip()
-        except json.JSONDecodeError:
-            return JsonResponse({"success": False, "error": "Invalid JSON format"}, status=400)
-
-        # 3. Проверяем наличие причины (требуется для админа)
-        if not rejection_reason:
-            return JsonResponse({"success": False, "error": "Rejection reason is required"}, status=400)
-            
-        # 4. Обновляем статус и сохраняем причину
-        post.status = 'rejected'
-        post.rejection_reason = rejection_reason # <-- ДОБАВЛЕНО/ИСПРАВЛЕНО
-        post.save()
-        
-        return JsonResponse({"success": True})
-        
-    except Post.DoesNotExist:
-        return JsonResponse({"success": False, "error": "Post not found"}, status=404)
-    except Exception as e:
-        # Общая ошибка, если что-то пошло не так
-        return JsonResponse({"success": False, "error": str(e)}, status=500)
-
-@admin_required
-def approved_posts_view(request):
-    posts = Post.objects.filter(status='approved').order_by('-created_at')
-    return render(request, 'admin/approved_posts.html', {'posts': posts})
-
-@admin_required
-def rejected_posts_view(request):
-    posts = Post.objects.filter(status='rejected').order_by('-created_at')
-    return render(request, 'admin/rejected_posts.html', {'posts': posts})
-
-
-@admin_required
-def pending_posts_view(request):
-    posts = Post.objects.filter(status='pending').order_by('-created_at')
-
-    return render(request, 'admin/pending_posts.html', {'posts': posts})
 
 # ---------------- Role Decorators ----------------
-
 
 def moderator_required(view_func):
     def wrapper(request, *args, **kwargs):
@@ -535,12 +600,10 @@ def home(request):
         profile, _ = Profile.objects.get_or_create(user=request.user)
         full_name = profile.full_name or request.user.username
 
-    # Filters from GET parameters
     category_id = request.GET.get('category')
     state_id = request.GET.get('state')
     province_id = request.GET.get('province')
 
-    # Get all approved posts, newest first
     approved_posts = Post.objects.filter(status='approved').order_by('-created_at')
 
     if category_id:
@@ -550,7 +613,6 @@ def home(request):
     if province_id:
         approved_posts = approved_posts.filter(province_id=province_id)
 
-    # Get all filter options
     categories = Category.objects.all()
     states = State.objects.all()
     provinces = Province.objects.filter(state_id=state_id) if state_id else []
@@ -589,7 +651,6 @@ def register_view(request):
         if form.is_valid():
             user = form.save(commit=False)
 
-            # Ensure unique username
             original_username = user.username
             counter = 1
             while User.objects.filter(username=user.username).exists():
@@ -602,10 +663,9 @@ def register_view(request):
                 full_name=form.cleaned_data.get('full_name'),
                 phone=form.cleaned_data.get('phone'),
                 verification_id=form.cleaned_data.get('verification_id'),
-                role='user'  # Default role
+                role='user'  
             )
 
-            # Authenticate to set backend
             authenticated_user = authenticate(username=user.username, password=form.cleaned_data.get('password1'))
             if authenticated_user:
                 login(request, authenticated_user)
@@ -613,7 +673,6 @@ def register_view(request):
                 messages.error(request, "Սխալ ստեղծման ժամանակ: Խնդրում ենք փորձել կրկին.")
                 return redirect('register')
 
-            # Update JSON log
             json_path = os.path.join(settings.BASE_DIR, 'user_data.json')
             user_data = {
                 "username": user.username,
@@ -664,10 +723,8 @@ def login_view(request):
         user = form.get_user()
         now = timezone.now()
 
-        # ✅ Deactivate expired bans automatically
         now = timezone.now()
 
-        # Deactivate expired bans automatically
         user.bans.filter(active=True, end_date__lt=now).update(active=False)
 
         # Check for active ban
@@ -699,14 +756,6 @@ def logout_view(request):
     logout(request)
     messages.info(request, "Դու դուրս եկար համակարգից։")
     return redirect("start")
-
-
-
-
-
-
-
-
 # ---------------- Account / Profile ----------------
 @login_required
 def myinfo(request):
@@ -813,7 +862,7 @@ def notifications(request):
 
 
 
-# ---------------- AJAX / API ----------------
+# ---------------- AJAX / API (stugum ete arden ka )----------------
 def check_username(request):
     username = request.GET.get("username", "")
     exists = User.objects.filter(username=username).exists()
@@ -833,43 +882,7 @@ def check_id(request):
     vid = request.GET.get("verification_id", "")
     exists = Profile.objects.filter(verification_id=vid).exclude(user=request.user).exists()
     return JsonResponse({"exists": exists})
-
-# ---------------- Admin / Moderator Views ----------------
-
-@moderator_required
-def review_posts(request):
-    # Example placeholder for post approval logic
-    return render(request, 'admin/review_posts.html')
-
-
-@csrf_exempt
-@admin_required
-def delete_post(request, post_id):
-    """
-    Удаляет пост по его ID (используется на страницах Rejected/Approved/Pending).
-    """
-    if request.method == 'POST':
-        try:
-            # Находим пост. Используем get_object_or_404, если он не был импортирован.
-            post_to_delete = Post.objects.get(pk=post_id)
-            
-            # В отличие от пользователей, здесь обычно не нужны сложные проверки ролей
-            # Просто удаляем, если админ имеет доступ к этой функции.
-            post_to_delete.delete()
-            
-            return JsonResponse({"success": True, "message": "Post deleted successfully."})
-            
-        except Post.DoesNotExist:
-            return JsonResponse({"success": False, "error": "Post not found."}, status=404)
-        except Exception as e:
-            return JsonResponse({"success": False, "error": f"Internal error: {str(e)}"}, status=500)
-
-    return JsonResponse({"success": False, "error": "Invalid request method."}, status=405)
-
-
-
-
-
+#-----------------------------------------------------------------------------------------------------------------
 GOOGLE_API_KEY = 'AIzaSyD9KO1U7_6JxlBuCpiLju_K0tXwBM4ISWE'  # Move to settings.py for security
 
 def calculate_distance(request):
@@ -909,3 +922,9 @@ def calculate_distance(request):
         'distance_meters': distance_value,
         'duration_text': duration_text
     })
+
+@login_required
+def get_provinces(request, state_id):
+    provinces = Province.objects.filter(state_id=state_id).order_by('name')
+    data = [{'id': p.id, 'name': p.name} for p in provinces]
+    return JsonResponse({'provinces': data})

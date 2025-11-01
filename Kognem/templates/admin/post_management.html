@@ -1,0 +1,1091 @@
+{% load static %}
+{% load humanize %}
+{% load price_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Posts Management - Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6C63FF;
+            --primary-dark: #5A52D5;
+            --primary-light: #8B85FF;
+            --secondary: #FF6584;
+            --secondary-dark: #E04F6D;
+            --secondary-light: #FF8BA0;
+            --accent: #36D1DC;
+            --light-bg: #FFFFFF;
+            --light-secondary: #F8F9FA;
+            --light-border: #E9ECEF;
+            --text-dark: #2D3748;
+            --text-medium: #4A5568;
+            --text-light: #718096;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
+            --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
+            --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
+            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 249, 250, 0.9) 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--light-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            background: white;
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--light-border);
+            box-shadow: var(--shadow-light);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .header-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .brand {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .header-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: var(--primary);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: var(--shadow-light);
+        }
+
+        .header-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        /* Main Content (строка ~130) */
+main {
+    /* max-width: 1400px; <--- УДАЛЯЕМ */
+    width: 100%; /* Используем почти всю ширину */
+    margin: 0 auto;
+    padding: 30px;
+}
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--gradient-glass);
+            backdrop-filter: blur(10px);
+            padding: 30px 25px;
+            border-radius: 20px;
+            border: 1px solid var(--light-border);
+            box-shadow: var(--shadow-light);
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-large);
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1), var(--shadow-light);
+        }
+
+        .stat-card.active::before {
+            transform: scaleX(1);
+        }
+
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 1.8rem;
+            box-shadow: var(--shadow-light);
+        }
+
+        .stat-icon.all {
+            background: var(--gradient-primary);
+        }
+
+        .stat-icon.pending {
+            background: linear-gradient(135deg, #ed8936 0%, #f6ad55 100%);
+        }
+
+        .stat-icon.approved {
+            background: linear-gradient(135deg, #48bb78 0%, #68d391 100%);
+        }
+
+        .stat-icon.rejected {
+            color: wheat;
+            background-color: red;
+        }
+
+        .stat-number {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+            line-height: 1;
+        }
+
+        .stat-label {
+            color: var(--text-medium);
+            font-weight: 600;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Section Styling */
+        .section {
+            background: white;
+            border-radius: 24px;
+            padding: 35px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow-medium);
+            border: 1px solid var(--light-border);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--light-border);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section-title i {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .section-title h2 {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label i {
+            color: var(--primary);
+        }
+
+        .filter-select {
+            padding: 12px 45px 12px 16px;
+            border: 1px solid var(--light-border);
+            border-radius: 12px;
+            background: white;
+            color: var(--text-dark);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236C63FF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            background-size: 16px;
+            box-shadow: var(--shadow-light);
+        }
+
+        .filter-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .stats-badge {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Table Styling - Full Width */
+        .table-container {
+            width: 100%;
+            border-radius: 16px;
+            border: 1px solid var(--light-border);
+            box-shadow: var(--shadow-light);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            table-layout: fixed;
+        }
+
+        table th {
+            background: var(--light-secondary);
+            padding: 18px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--light-border);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: sticky;
+            top: 0;
+        }
+
+        table td {
+            padding: 18px 16px;
+            border-bottom: 1px solid var(--light-border);
+            color: var(--text-medium);
+            transition: background-color 0.2s ease;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table tr:hover td {
+            background: var(--light-secondary);
+        }
+
+        /* Column Widths */
+        table th:nth-child(1), table td:nth-child(1) { width: 60px; } /* ID */
+        table th:nth-child(2), table td:nth-child(2) { width: 80px; } /* Image */
+        table th:nth-child(3), table td:nth-child(3) { width: 150px; } /* Title */
+        table th:nth-child(4), table td:nth-child(4) { width: 120px; } /* User */
+        table th:nth-child(5), table td:nth-child(5) { width: 200px; } /* Description */
+        table th:nth-child(6), table td:nth-child(6) { width: 120px; } /* Location */
+        table th:nth-child(7), table td:nth-child(7) { width: 80px; } /* Price */
+        table th:nth-child(8), table td:nth-child(8) { width: 100px; } /* Status */
+        table th:nth-child(9), table td:nth-child(9) { width: 200px; } /* Rejection Reason */
+        table th:nth-child(10), table td:nth-child(10) { width: 120px; } /* Actions */
+
+        /* Post Link Styling */
+        .post-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .post-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Image Styling */
+        .post-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid var(--light-border);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: var(--shadow-light);
+        }
+
+        .post-image:hover {
+            transform: scale(2.5);
+            box-shadow: var(--shadow-large);
+            z-index: 10;
+            position: relative;
+        }
+
+        /* Status Badges */
+        .status-badge {
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-pending {
+            background: rgba(237, 137, 54, 0.1);
+            color: #ed8936;
+            border: 1px solid rgba(237, 137, 54, 0.2);
+        }
+
+        .status-approved {
+            background: rgba(72, 187, 120, 0.1);
+            color: #38a169;
+            border: 1px solid rgba(72, 187, 120, 0.2);
+        }
+
+        .status-rejected {
+            background: rgba(245, 101, 101, 0.1);
+            color: #e53e3e;
+            border: 1px solid rgba(245, 101, 101, 0.2);
+        }
+
+       /* Action Buttons - СЖАТИЕ */
+/* Action Buttons - СЖАТИЕ (строка ~670) */
+.action-buttons {
+    display: flex;
+    gap: 8px; /* Увеличиваем вертикальный отступ между кнопками */
+    align-items: flex-start; /* Выравнивание кнопок по левому краю */
+    justify-content: flex-start;
+    position: relative;
+    /* 📌 КЛЮЧЕВОЕ ИЗМЕНЕНИЕ: Размещаем кнопки по вертикали */
+    flex-direction: column; 
+    
+    white-space: nowrap; /* Можно оставить, но с column не так критично */
+    flex-wrap: nowrap;
+    min-width: 100px; /* Увеличиваем минимальную ширину, чтобы кнопки не были слишком узкими */
+}
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            box-shadow: var(--shadow-light);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .btn-approve {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-approve:hover {
+            background: #38a169;
+        }
+
+        .btn-reject {
+            background: var(--secondary);
+            color: white;
+        }
+        .price-cell {
+    /* Гарантирует, что содержимое ячейки (цена) не будет переноситься на новую строку */
+    white-space: nowrap; 
+}
+
+.price-cell strong {
+    /* Дополнительно гарантируем, что жирный текст не будет переноситься */
+    white-space: nowrap; 
+}
+        .btn-reject:hover {
+            background: var(--secondary-dark);
+        }
+
+        .btn-delete {
+            background: var(--text-light);
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: var(--text-medium);
+        }
+
+        .btn-icon {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            justify-content: center;
+            border-radius: 8px;
+        }
+
+        /* User Link */
+        .user-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+        }
+
+        .user-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        /* Text Truncation */
+        .long-text {
+            max-width: 100%;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .rejection-reason {
+            background: rgba(245, 101, 101, 0.05);
+            border-left: 4px solid var(--secondary);
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-style: italic;
+            font-size: 0.8rem;
+            line-height: 1.4;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .empty-state .subtext {
+            font-size: 1rem;
+            opacity: 0.7;
+        }
+
+        /* Loading indicator */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .btn.loading {
+            position: relative;
+        }
+
+        .btn.loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .header-left, .header-center {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .filter-section {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        @media (max-width: 768px) {
+            main {
+                padding: 20px;
+            }
+
+            .section {
+                padding: 25px;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            table th,
+            table td {
+                padding: 12px 10px;
+                font-size: 0.8rem;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+                font-size: 0.75rem;
+                padding: 6px 10px;
+            }
+
+            .btn-icon {
+                width: 100%;
+                height: auto;
+                padding: 6px 10px;
+            }
+
+            .post-image {
+                width: 50px;
+                height: 50px;
+            }
+
+            /* Adjust column widths for mobile */
+            table th:nth-child(1), table td:nth-child(1) { width: 50px; }
+            table th:nth-child(2), table td:nth-child(2) { width: 60px; }
+            table th:nth-child(3), table td:nth-child(3) { width: 120px; }
+            table th:nth-child(4), table td:nth-child(4) { width: 100px; }
+            table th:nth-child(5), table td:nth-child(5) { width: 150px; }
+            table th:nth-child(6), table td:nth-child(6) { width: 100px; }
+            table th:nth-child(7), table td:nth-child(7) { width: 60px; }
+            table th:nth-child(8), table td:nth-child(8) { width: 80px; }
+            table th:nth-child(9), table td:nth-child(9) { width: 150px; }
+            table th:nth-child(10), table td:nth-child(10) { width: 100px; }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 15px 20px;
+            }
+
+            main {
+                padding: 15px;
+            }
+
+            .section {
+                padding: 20px;
+            }
+
+            .brand {
+                font-size: 1.6rem;
+            }
+
+            .header-btn {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+            }
+
+            .stat-card {
+                padding: 25px 20px;
+            }
+
+            .stat-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+
+            .stat-number {
+                font-size: 2.2rem;
+            }
+
+            .post-image {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .filter-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .filter-select {
+                width: 100%;
+            }
+
+            /* Further adjust column widths for very small screens */
+            table th:nth-child(1), table td:nth-child(1) { width: 40px; }
+            table th:nth-child(2), table td:nth-child(2) { width: 50px; }
+            table th:nth-child(3), table td:nth-child(3) { width: 100px; }
+            table th:nth-child(4), table td:nth-child(4) { width: 80px; }
+            table th:nth-child(5), table td:nth-child(5) { width: 120px; }
+            table th:nth-child(6), table td:nth-child(6) { width: 80px; }
+            table th:nth-child(7), table td:nth-child(7) { width: 50px; }
+            table th:nth-child(8), table td:nth-child(8) { width: 70px; }
+            table th:nth-child(9), table td:nth-child(9) { width: 120px; }
+            table th:nth-child(10), table td:nth-child(10) { width: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <div class="brand">
+            <i class="fas fa-newspaper"></i>
+            Posts Management
+        </div>
+        <a href="{% url 'admin_dashboard' %}" class="header-btn">
+            <i class="fas fa-arrow-left"></i>
+            Back to Dashboard
+        </a>
+    </div>
+</header>
+
+<main>
+    <div class="stats-grid">
+        <a href="{% url 'post_management' %}?status=all" class="stat-card {% if current_status == 'all' %}active{% endif %}" id="stat-all">
+            <div class="stat-icon all">
+                <i class="fas fa-layer-group"></i>
+            </div>
+            <div class="stat-number">{{ all_posts_count }}</div>
+            <div class="stat-label">All Posts</div>
+        </a>
+        <a href="{% url 'post_management' %}?status=pending" class="stat-card {% if current_status == 'pending' %}active{% endif %}" id="stat-pending">
+            <div class="stat-icon pending">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-number">{{ pending_posts_count }}</div>
+            <div class="stat-label">Pending Posts</div>
+        </a>
+        <a href="{% url 'post_management' %}?status=approved" class="stat-card {% if current_status == 'approved' %}active{% endif %}" id="stat-approved">
+            <div class="stat-icon approved">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stat-number">{{ approved_posts_count }}</div>
+            <div class="stat-label">Approved Posts</div>
+        </a>
+        <a href="{% url 'post_management' %}?status=rejected" class="stat-card {% if current_status == 'rejected' %}active{% endif %}" id="stat-rejected">
+            <div class="stat-icon rejected">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="stat-number">{{ rejected_posts_count }}</div>
+            <div class="stat-label">Rejected Posts</div>
+        </a>
+    </div>
+
+    <section class="section">
+        <div class="section-header">
+            <div class="section-title">
+                <i class="fas fa-list"></i>
+                <h2 id="table-title">{{ table_title }}</h2>
+                <span class="stats-badge" id="post-count">{{ posts|length }} posts</span>
+            </div>
+            <div class="filter-section">
+                <span class="filter-label">Filter by status:</span>
+                <select class="filter-select" id="status-filter" onchange="window.location.href = '{% url 'post_management' %}?status=' + this.value">
+                    <option value="all" {% if current_status == 'all' %}selected{% endif %}>All Posts</option>
+                    <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="approved" {% if current_status == 'approved' %}selected{% endif %}>Approved</option>
+                    <option value="rejected" {% if current_status == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Image</th>
+                        <th>Title</th>
+                        <th>User</th>
+                        <th>Description</th>
+                        <th>Location</th>
+                        <th>Price</th>
+                        <th>Status</th>
+                        <th>Rejection Reason</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="posts-table-body">
+                    {% for post in posts %}
+                    <tr class="post-row">
+                        <td>{{ post.id }}</td>
+                        <td>
+                            {% if post.image %}
+                                <img src="{{ post.image.url }}" alt="{{ post.title }}" class="post-image" onclick="viewPost('{{ post.id }}')">
+                            {% else %}
+                                <div style="width: 70px; height: 70px; background: var(--light-secondary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--text-light); cursor: pointer;" onclick="viewPost('{{ post.id }}')">
+                                    <i class="fas fa-image"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>{{ post.title|truncatewords:5 }}</td>
+                        <td>
+                            <a href="{% url 'user_detail' post.user.id %}" class="user-link">
+                                {{ post.user.username }}
+                            </a>
+                        </td>
+                        <td class="long-text">{{ post.description|truncatewords:10 }}</td>
+                        <td>{{ post.location|truncatewords:3 }}</td>
+<td class="price-cell"><strong>${{ post.price }}</strong></td>         <td>
+                        <td>
+                            {% if post.status == 'pending' %}
+                                <span class="status-badge status-pending">Pending</span>
+                            {% elif post.status == 'approved' %}
+                                <span class="status-badge status-approved">Approved</span>
+                            {% elif post.status == 'rejected' %}
+                                <span class="status-badge status-rejected">Rejected</span>
+                            {% endif %}
+                        </td>
+                        <td class="long-text">
+                            {% if post.rejection_reason %}
+                                <div class="rejection-reason">
+                                    {{ post.rejection_reason }}
+                                </div>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="action-buttons">
+                            {% if post.status == 'pending' %}
+                                <button class="btn btn-approve" onclick="approvePost('{{ post.id }}', this)">
+                                    <i class="fas fa-check"></i>
+                                    Հաստատել
+                                </button>
+                                <button class="btn btn-reject" onclick="showRejectModal('{{ post.id }}', this)">
+                                    <i class="fas fa-times"></i>
+                                    Մերժել
+                                </button>
+                            {% elif post.status == 'rejected' %}
+                                <button class="btn btn-approve" onclick="approvePost('{{ post.id }}', this)">
+                                    <i class="fas fa-check"></i>
+                                    Հաստատել
+                                </button>
+                                <button class="btn btn-delete" onclick="deletePost('{{ post.id }}', this)">
+                                    <i class="fas fa-trash"></i>
+                                    Ջնջել
+                                </button>
+                            {% elif post.status == 'approved' %}
+                                <button class="btn btn-reject" onclick="showRejectModal('{{ post.id }}', this)">
+                                    <i class="fas fa-times"></i>
+                                    Մերժել
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="empty-state">
+                            <i class="fas fa-newspaper"></i>
+                            <p>No posts found.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+<script>
+// ----------------- CSRF Token Function -----------------
+function getCSRFToken() {
+    const name = 'csrftoken';
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// ----------------- Post Viewing -----------------
+function viewPost(postId) {
+    window.open(`/posts/${postId}/`, '_blank');
+}
+
+// ----------------- Post Actions -----------------
+async function approvePost(postId, button) {
+    if (!confirm('Are you sure you want to approve this post?')) return;
+    
+    if (button) {
+        button.classList.add('loading');
+        button.disabled = true;
+    }
+    
+    try {
+        const response = await fetch(`/admin/posts/approve/${postId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            }
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.success) {
+            alert('Post approved successfully');
+            location.reload();
+        } else {
+            alert(data.error || 'Error approving post');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Network error occurred');
+    } finally {
+        if (button) {
+            button.classList.remove('loading');
+            button.disabled = false;
+        }
+    }
+}
+
+async function deletePost(postId, button) {
+    if (!confirm('Are you sure you want to permanently delete this post? This action cannot be undone.')) return;
+    
+    if (button) {
+        button.classList.add('loading');
+        button.disabled = true;
+    }
+    
+    try {
+        const response = await fetch(`/admin/posts/delete/${postId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+            }
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.success) {
+            alert('Post deleted successfully');
+            location.reload();
+        } else {
+            alert(data.error || 'Error deleting post');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Network error occurred');
+    } finally {
+        if (button) {
+            button.classList.remove('loading');
+            button.disabled = false;
+        }
+    }
+}
+
+// ----------------- Reject Post -----------------
+function showRejectModal(postId, button) {
+    const reason = prompt('Please enter the reason for rejecting this post (max 500 characters):');
+    
+    if (reason === null) return;
+    
+    if (!reason.trim()) {
+        alert('Rejection reason cannot be empty');
+        return;
+    }
+    
+    if (reason.length > 500) {
+        alert('Rejection reason cannot exceed 500 characters');
+        return;
+    }
+    
+    rejectPost(postId, reason, button);
+}
+
+async function rejectPost(postId, reason, button) {
+    if (button) {
+        button.classList.add('loading');
+        button.disabled = true;
+    }
+    
+    try {
+        const response = await fetch(`/admin/posts/reject/${postId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCSRFToken(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                reason: reason
+            })
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.success) {
+            alert('Post rejected successfully');
+            location.reload();
+        } else {
+            alert(data.error || 'Error rejecting post');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Network error occurred');
+    } finally {
+        if (button) {
+            button.classList.remove('loading');
+            button.disabled = false;
+        }
+    }
+}
+
+// ----------------- Image Hover Effect -----------------
+document.addEventListener('DOMContentLoaded', function() {
+    const images = document.querySelectorAll('.post-image');
+    images.forEach(img => {
+        img.addEventListener('mouseenter', function() {
+            this.style.transform = 'scale(2.5)';
+            this.style.zIndex = '1000';
+            this.style.boxShadow = 'var(--shadow-large)';
+        });
+        
+        img.addEventListener('mouseleave', function() {
+            this.style.transform = 'scale(1)';
+            this.style.zIndex = '1';
+            this.style.boxShadow = 'var(--shadow-light)';
+        });
+    });
+});
+</script>
+
+</body>
+</html>

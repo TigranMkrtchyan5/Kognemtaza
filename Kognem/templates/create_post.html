@@ -1,13 +1,403 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block body %}
-<link rel="stylesheet" href="{% static 'css/create_post.css' %}">
+<style>
+    :root {
+        --primary: #4A6FA5;
+        --primary-dark: #3A5984;
+        --primary-light: #6B8DC3;
+        --secondary: #FF6B8B;
+        --secondary-dark: #E04F6D;
+        --secondary-light: #FF8BA0;
+        --accent: #36D1DC;
+        --dark-bg: #0A0A0F;
+        --navy-bg: #1A1F35;
+        --card-bg: #252A40;
+        --border-dark: #2D3748;
+        --border-light: #4A5568;
+        --text-white: #FFFFFF;
+        --text-light: #E2E8F0;
+        --text-muted: #A0AEC0;
+        --glass: rgba(74, 111, 165, 0.1);
+        --glass-border: rgba(74, 111, 165, 0.2);
+        --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.3);
+        --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.4);
+        --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.5);
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, #FF9A3D 100%);
+        --gradient-dark: linear-gradient(135deg, var(--navy-bg) 0%, var(--dark-bg) 100%);
+    }
+
+    body {
+        background: var(--dark-bg);
+        color: var(--text-white);
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: var(--dark-bg);
+    }
+
+    /* Header Section */
+    .header-section {
+        text-align: center;
+        padding: 40px 20px;
+        margin-bottom: 30px;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.2s;
+        background: var(--gradient-dark);
+        border-radius: 20px;
+        border: 1px solid var(--border-dark);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .main-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 15px;
+        background: var(--gradient-primary);
+        
+        -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-light);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* Form Section */
+    .form-section {
+        background: var(--card-bg);
+        padding: 40px;
+        border-radius: 20px;
+        border: 1px solid var(--border-dark);
+        box-shadow: var(--shadow-light);
+        margin-bottom: 40px;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.4s;
+    }
+
+    .post-form {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: var(--text-white);
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 14px 16px;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--navy-bg);
+        color: var(--text-white);
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+        color: var(--text-muted);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.3);
+        background: var(--navy-bg);
+    }
+
+    .form-group textarea {
+        min-height: 120px;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    /* File Upload */
+    .file-input-wrapper {
+        position: relative;
+        margin-bottom: 10px;
+    }
+
+    .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .file-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 24px;
+        background: var(--navy-bg);
+        border: 2px dashed var(--border-light);
+        border-radius: 12px;
+        color: var(--text-light);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .file-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(74, 111, 165, 0.2);
+    }
+
+    .file-text {
+        display: block;
+        margin-top: 8px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-style: italic;
+    }
+
+    /* Map Styles */
+    .map-container {
+        border-radius: 12px;
+        border: 1px solid var(--border-dark);
+        overflow: hidden;
+        box-shadow: var(--shadow-light);
+        margin-bottom: 15px;
+    }
+
+    #map {
+        width: 100%;
+        height: 400px;
+        background: var(--navy-bg);
+    }
+
+    .map-controls {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .map-btn {
+        padding: 10px 16px;
+        background: var(--navy-bg);
+        border: 1px solid var(--border-light);
+        border-radius: 8px;
+        color: var(--text-light);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.9rem;
+    }
+
+    .map-btn:hover {
+        background: var(--primary);
+        color: var(--text-white);
+        border-color: var(--primary);
+    }
+
+    #distanceInfo {
+        padding: 12px 16px;
+        background: var(--navy-bg);
+        border-radius: 10px;
+        color: var(--text-white);
+        font-weight: 600;
+        border: 1px solid var(--border-light);
+    }
+
+    /* Submit Button */
+    .submit-btn {
+        background: var(--gradient-primary);
+        color: var(--text-white);
+        border: none;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-large);
+        background: var(--gradient-primary);
+    }
+
+    .submit-btn:active {
+        transform: translateY(0);
+    }
+
+    /* Info Cards */
+    .info-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 25px;
+        margin-top: 40px;
+    }
+
+    .card {
+        background: var(--card-bg);
+        padding: 30px 25px;
+        border-radius: 16px;
+        border: 1px solid var(--border-dark);
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s ease;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards;
+    }
+
+    .card:nth-child(1) { animation-delay: 0.6s; }
+    .card:nth-child(2) { animation-delay: 0.8s; }
+    .card:nth-child(3) { animation-delay: 1s; }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+        border-color: var(--primary-light);
+    }
+
+    .card h3 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+        color: var(--text-white);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .card h3::before {
+        content: '';
+        width: 8px;
+        height: 8px;
+        background: var(--gradient-primary);
+        border-radius: 50%;
+    }
+
+    .card p {
+        color: var(--text-light);
+        line-height: 1.6;
+        margin: 0;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Form Select Styling */
+    select {
+        background: var(--navy-bg) url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23A0AEC0' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") right 0.75rem center/16px 12px no-repeat;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+    }
+
+    select:focus {
+        background: var(--navy-bg) url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%234A6FA5' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") right 0.75rem center/16px 12px no-repeat;
+    }
+
+    /* Small text styling */
+    small {
+        color: var(--text-muted) !important;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .container {
+            padding: 15px;
+        }
+
+        .header-section {
+            padding: 30px 15px;
+        }
+
+        .main-title {
+            font-size: 2rem;
+        }
+
+        .form-section {
+            padding: 25px;
+        }
+
+        .info-cards {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            padding: 25px 20px;
+        }
+
+        .map-controls {
+            flex-direction: column;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .main-title {
+            font-size: 1.8rem;
+        }
+
+        .form-section {
+            padding: 20px;
+        }
+
+        .submit-btn {
+            padding: 14px 24px;
+            font-size: 1rem;
+        }
+    }
+</style>
 
 <main class="container">
 
     <!-- HEADER -->
     <section class="header-section">
-        <h1 class="main-title">Ստեղծել Նոր Հայտարարություն</h1>
+        <h1 class="main-title">
+            <i class="fas fa-plus-circle"></i>
+            Ստեղծել Նոր Հայտարարություն
+        </h1>
         <p class="subtitle">Ավելացրու հայտարարություն արագ և հարմարավետ</p>
     </section>
 
@@ -18,103 +408,338 @@
 
             <!-- Title -->
             <div class="form-group">
-                <label for="id_title">Վերնագիր</label>
+                <label for="id_title">
+                    <i class="fas fa-heading"></i>
+                    Վերնագիր
+                </label>
                 {{ form.title }}
             </div>
 
             <!-- IMAGE UPLOAD -->
-            <div class="file-input-wrapper">
-                <input type="file" name="image" id="image" class="file-input" accept="image/*"/>
-                <label for="image" class="file-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="icon-upload" viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M5 20h14v-2H5v2zm7-18v12l4-4h-3V4h-2v6H8l4 4z"/>
-                    </svg>
-                    Վերբեռնել Նկար
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-image"></i>
+                    Նկար
                 </label>
-                <span class="file-text" id="file-text">Նկար ընտրված չէ</span>
+                <div class="file-input-wrapper">
+                    <input type="file" name="image" id="image" class="file-input" accept="image/*"/>
+                    <label for="image" class="file-btn">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        Վերբեռնել Նկար
+                    </label>
+                    <span class="file-text" id="file-text">Նկար ընտրված չէ</span>
+                </div>
             </div>
 
             <!-- Description -->
             <div class="form-group">
-                <label for="id_description">Նկարագրություն</label>
+                <label for="id_description">
+                    <i class="fas fa-align-left"></i>
+                    Նկարագրություն
+                </label>
                 {{ form.description }}
             </div>
 
             <!-- Price -->
             <div class="form-group">
-                <label for="id_price">Գին</label>
+                <label for="id_price">
+                    <i class="fas fa-dollar-sign"></i>
+                    Գին
+                </label>
                 {{ form.price }}
             </div>
 
             <!-- Category -->
             <div class="form-group">
-                <label for="id_category">Ընտրել Կատեգորիան</label>
+                <label for="id_category">
+                    <i class="fas fa-tags"></i>
+                    Ընտրել Կատեգորիան
+                </label>
                 {{ form.category }}
             </div>
 
             <!-- Marz -->
             <div class="form-group">
-                <label for="state-select">Ընտրել Մարզը</label>
+                <label for="state-select">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Ընտրել Մարզը
+                </label>
                 {{ form.state }}
             </div>
 
             <!-- Shrjan -->
             <div class="form-group">
-                <label for="province-select">Ընտրել Շրջան</label>
+                <label for="province-select">
+                    <i class="fas fa-map-pin"></i>
+                    Ընտրել Շրջան
+                </label>
                 {{ form.province }}
             </div>
 
             <!-- Address -->
             <div class="form-group">
-                <label for="id_location">Հասցե</label>
+                <label for="id_location">
+                    <i class="fas fa-home"></i>
+                    Հասցե
+                </label>
                 {{ form.location }}
+                <small style="margin-top: 5px; display: block;">
+                    Մուտքագրեք ցանկացած հասցե Հայաստանում
+                </small>
             </div>
 
             <!-- Hidden fields for lat/lng -->
             <input type="hidden" name="latitude" id="latitude">
             <input type="hidden" name="longitude" id="longitude">
 
-            <!-- Map preview -->
-            <div id="map" style="width: 100%; height: 400px; margin-bottom: 15px;"></div>
-            <div id="distanceInfo" style="margin-bottom: 20px; font-weight: bold;"></div>
+            <!-- Map Section -->
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-map"></i>
+                    Տեղակայություն քարտեզի վրա
+                </label>
+                
+                <div class="map-controls">
+                    <button type="button" class="map-btn" id="locateMe">
+                        <i class="fas fa-location-arrow"></i>
+                        Գտնել իմ տեղը
+                    </button>
+                    <button type="button" class="map-btn" id="searchAddress">
+                        <i class="fas fa-search"></i>
+                        Որոնել հասցեն
+                    </button>
+                </div>
+                
+                <div class="map-container">
+                    <div id="map"></div>
+                </div>
+                
+                <div id="distanceInfo">
+                    Քարտեզի վրա նշեք Ձեր տեղակայությունը կամ օգտագործեք հասցեի որոնում
+                </div>
+            </div>
 
             <!-- Submit -->
-            <button type="submit" class="submit-btn">Հաստատել</button>
+            <button type="submit" class="submit-btn">
+                <i class="fas fa-check-circle"></i>
+                Հաստատել Հայտարարությունը
+            </button>
         </form>
     </section>
 
     <!-- INFO CARDS -->
     <section class="info-cards">
         <div class="card">
-            <h3>Խորհուրդ 1</h3>
-            <p>Կազմակերպիր քո հայտարարությունները ըստ առաջնահերթության։</p>
+            <h3>Պատկերացրեք Ձեր առաջադրանքը</h3>
+            <p>Մանրամասն նկարագրեք Ձեր առաջադրանքը, ներառեք բոլոր կարևոր մանրամասները և ակնկալիքները:</p>
         </div>
         <div class="card">
-            <h3>Խորհուրդ 2</h3>
-            <p>Օգտագործիր պիտակներ՝ արագ գտնելու համար։</p>
+            <h3>Նշեք ճշգրիտ գին</h3>
+            <p>Նշեք արդար գին, որը համապատասխանում է առաջադրանքի բարդությանը և պահանջվող ժամանակին:</p>
         </div>
         <div class="card">
-            <h3>Խորհուրդ 3</h3>
-            <p>Վերանայիր լրացված հայտարարությունները՝ առաջընթացը տեսնելու համար։</p>
+            <h3>Ճշտեք տեղակայությունը</h3>
+            <p>Օգտագործեք քարտեզը ճշգրիտ տեղակայությունը նշելու համար, որպեսզի օգնողները կարողանան գտնել Ձեզ:</p>
         </div>
     </section>
 
 </main>
 
 <!-- GOOGLE MAPS API -->
-
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9KO1U7_6JxlBuCpiLju_K0tXwBM4ISWE&libraries=places&language=hy"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-
     const fileBtn = document.querySelector('.file-btn');
     const fileInput = document.getElementById('image');
     const fileText = document.getElementById('file-text');
     const form = document.getElementById('taskForm');
     const stateSelect = document.getElementById('state-select');
     const provinceSelect = document.getElementById('province-select');
+    const submitBtn = document.querySelector('.submit-btn');
+    const locateMeBtn = document.getElementById('locateMe');
+    const searchAddressBtn = document.getElementById('searchAddress');
+    const addressInput = document.getElementById('id_location');
 
     let resizedFileReady = false;
+    let map, destinationMarker, userMarker;
+    let geocoder = new google.maps.Geocoder();
+
+    // Initialize Map
+    function initMap() {
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: { lat: 40.1792, lng: 44.4991 }, // Yerevan
+            zoom: 10,
+            styles: [
+                {
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#1a1f35"}]
+                },
+                {
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#8ec3b9"}]
+                },
+                {
+                    "elementType": "labels.text.stroke",
+                    "stylers": [{"color": "#1a1f35"}]
+                },
+                {
+                    "featureType": "administrative",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#2b2d42"}]
+                },
+                {
+                    "featureType": "administrative.country",
+                    "elementType": "geometry.stroke",
+                    "stylers": [{"color": "#4a6fa5"}]
+                },
+                {
+                    "featureType": "administrative.land_parcel",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#64779e"}]
+                },
+                {
+                    "featureType": "landscape",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#2c3152"}]
+                },
+                {
+                    "featureType": "poi",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#2c3152"}]
+                },
+                {
+                    "featureType": "poi",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#d59563"}]
+                },
+                {
+                    "featureType": "poi.park",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#263c3f"}]
+                },
+                {
+                    "featureType": "poi.park",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#6b9a76"}]
+                },
+                {
+                    "featureType": "road",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#38414e"}]
+                },
+                {
+                    "featureType": "road",
+                    "elementType": "geometry.stroke",
+                    "stylers": [{"color": "#212a37"}]
+                },
+                {
+                    "featureType": "road",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#9ca5b3"}]
+                },
+                {
+                    "featureType": "road.highway",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#4a6fa5"}]
+                },
+                {
+                    "featureType": "road.highway",
+                    "elementType": "geometry.stroke",
+                    "stylers": [{"color": "#1f2835"}]
+                },
+                {
+                    "featureType": "road.highway",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#f3d19c"}]
+                },
+                {
+                    "featureType": "transit",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#2f3948"}]
+                },
+                {
+                    "featureType": "transit.station",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#d59563"}]
+                },
+                {
+                    "featureType": "water",
+                    "elementType": "geometry",
+                    "stylers": [{"color": "#17263c"}]
+                },
+                {
+                    "featureType": "water",
+                    "elementType": "labels.text.fill",
+                    "stylers": [{"color": "#515c6d"}]
+                },
+                {
+                    "featureType": "water",
+                    "elementType": "labels.text.stroke",
+                    "stylers": [{"color": "#17263c"}]
+                }
+            ]
+        });
+
+        // Create destination marker
+        destinationMarker = new google.maps.Marker({
+            map: map,
+            draggable: true,
+            icon: {
+                url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="%234A6FA5" d="M16 0C10.477 0 6 4.477 6 10c0 10 10 22 10 22s10-12 10-22c0-5.523-4.477-10-10-10zm0 16c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6z"/>
+                    </svg>
+                `),
+                scaledSize: new google.maps.Size(32, 32),
+                anchor: new google.maps.Point(16, 32)
+            }
+        });
+
+        // Update coordinates when marker is dragged
+        destinationMarker.addListener('dragend', function() {
+            const position = destinationMarker.getPosition();
+            updateCoordinates(position.lat(), position.lng());
+            reverseGeocode(position);
+        });
+
+        // Add click listener to map to place marker
+        map.addListener('click', function(event) {
+            destinationMarker.setPosition(event.latLng);
+            updateCoordinates(event.latLng.lat(), event.latLng.lng());
+            reverseGeocode(event.latLng);
+        });
+    }
+
+    // Update hidden coordinate fields
+    function updateCoordinates(lat, lng) {
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+    }
+
+    // Reverse geocode coordinates to address
+    function reverseGeocode(latLng) {
+        geocoder.geocode({ location: latLng }, function(results, status) {
+            if (status === 'OK' && results[0]) {
+                addressInput.value = results[0].formatted_address;
+            }
+        });
+    }
+
+    // Geocode address to coordinates
+    function geocodeAddress(address) {
+        geocoder.geocode({ address: address }, function(results, status) {
+            if (status === 'OK' && results[0]) {
+                const location = results[0].geometry.location;
+                map.setCenter(location);
+                map.setZoom(16);
+                destinationMarker.setPosition(location);
+                updateCoordinates(location.lat(), location.lng());
+            } else {
+                alert('Հասցեն չգտնվեց: Խնդրում ենք ստուգել ուղղագրությունը:');
+            }
+        });
+    }
 
     // IMAGE RESIZE
     fileBtn.addEventListener('click', () => fileInput.click());
@@ -122,6 +747,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const file = e.target.files[0];
         if (!file) return;
         fileText.textContent = file.name;
+        fileText.style.color = 'var(--primary-light)';
         resizedFileReady = false;
 
         const reader = new FileReader();
@@ -151,107 +777,99 @@ document.addEventListener('DOMContentLoaded', () => {
     stateSelect.addEventListener('change', async () => {
         provinceSelect.innerHTML = '<option value="">Ընտրել Շրջան</option>';
         if (!stateSelect.value) return;
-        const resp = await fetch(`/get_provinces/${stateSelect.value}/`);
-        const data = await resp.json();
-        data.provinces.forEach(p => {
-            const option = document.createElement('option');
-            option.value = p.id;
-            option.textContent = p.name;
-            provinceSelect.appendChild(option);
-        });
+        
+        provinceSelect.disabled = true;
+        const loadingOption = document.createElement('option');
+        loadingOption.textContent = 'Բեռնվում է...';
+        provinceSelect.appendChild(loadingOption);
+
+        try {
+            const resp = await fetch(`/get_provinces/${stateSelect.value}/`);
+            const data = await resp.json();
+            
+            provinceSelect.innerHTML = '<option value="">Ընտրել Շրջան</option>';
+            data.provinces.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = p.name;
+                provinceSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error fetching provinces:', error);
+            provinceSelect.innerHTML = '<option value="">Սխալ բեռնման ժամանակ</option>';
+        } finally {
+            provinceSelect.disabled = false;
+        }
+    });
+
+    // LOCATE ME BUTTON
+    locateMeBtn.addEventListener('click', () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const userPos = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                
+                if (userMarker) {
+                    userMarker.setMap(null);
+                }
+                
+                userMarker = new google.maps.Marker({
+                    position: userPos,
+                    map: map,
+                    icon: {
+                        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+                            <svg width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="12" cy="12" r="10" fill="%2336D1DC" opacity="0.8"/>
+                                <circle cx="12" cy="12" r="4" fill="white"/>
+                            </svg>
+                        `),
+                        scaledSize: new google.maps.Size(24, 24),
+                        anchor: new google.maps.Point(12, 12)
+                    },
+                    title: 'Իմ տեղը'
+                });
+                
+                map.setCenter(userPos);
+                map.setZoom(14);
+            }, error => {
+                alert('Ձեր տեղը որոշելու համար թույլտվություն տվեք բրաուզերին:');
+            });
+        } else {
+            alert('Ձեր բրաուզերը չի աջակցում տեղորոշումը:');
+        }
+    });
+
+    // SEARCH ADDRESS BUTTON
+    searchAddressBtn.addEventListener('click', () => {
+        const address = addressInput.value.trim();
+        if (address) {
+            geocodeAddress(address + ', Armenia');
+        } else {
+            alert('Խնդրում ենք մուտքագրել հասցե:');
+        }
     });
 
     // FORM VALIDATION
     form.addEventListener('submit', e => {
-        if (!resizedFileReady) {
+        if (!resizedFileReady && fileInput.files.length > 0) {
             e.preventDefault();
             alert('Խնդրում ենք սպասել, նկարը մշակվում է...');
+            return;
         }
         if (!stateSelect.value || !provinceSelect.value) {
             e.preventDefault();
             alert('Խնդրում ենք ընտրել մարզն ու շրջանը:');
+            return;
         }
+
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Հաստատվում է...';
+        submitBtn.disabled = true;
     });
 
-    // GOOGLE MAP + AUTOCOMPLETE + USER LOCATION + ROUTE
-    const addressInput = document.getElementById('id_location');
-    const latInput = document.getElementById('latitude');
-    const lngInput = document.getElementById('longitude');
-    const distanceInfo = document.getElementById('distanceInfo');
-
-    const map = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: 40.1792, lng: 44.4991 }, // Yerevan
-        zoom: 12
-    });
-
-    const destinationMarker = new google.maps.Marker({ map: map });
-    let userMarker = null;
-    let directionsService = new google.maps.DirectionsService();
-    let directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
-
-    // Autocomplete for address
-    const autocomplete = new google.maps.places.Autocomplete(addressInput, {
-        types: ['address'],
-        componentRestrictions: { country: 'am' }
-    });
-
-    autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (!place.geometry) return;
-
-        const destLat = place.geometry.location.lat();
-        const destLng = place.geometry.location.lng();
-
-        latInput.value = destLat;
-        lngInput.value = destLng;
-
-        destinationMarker.setPosition(place.geometry.location);
-        map.setCenter(place.geometry.location);
-        map.setZoom(16);
-
-        if (userMarker) {
-            calculateAndDisplayRoute(userMarker.getPosition(), place.geometry.location);
-        }
-    });
-
-    // Try to get user location
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            const userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            userMarker = new google.maps.Marker({
-                position: userPos,
-                map: map,
-                icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    scale: 8,
-                    fillColor: '#4285F4',
-                    fillOpacity: 1,
-                    strokeWeight: 2,
-                    strokeColor: '#ffffff'
-                },
-                title: 'Your Location'
-            });
-            map.setCenter(userPos);
-        });
-    }
-
-    // Calculate route & distance
-    function calculateAndDisplayRoute(origin, destination) {
-        directionsService.route({
-            origin: origin,
-            destination: destination,
-            travelMode: google.maps.TravelMode.DRIVING
-        }, (result, status) => {
-            if (status === google.maps.DirectionsStatus.OK) {
-                directionsRenderer.setDirections(result);
-                const route = result.routes[0].legs[0];
-                distanceInfo.textContent = `Distance: ${route.distance.text}, Duration: ${route.duration.text}`;
-            } else {
-                console.error('Directions request failed due to ' + status);
-            }
-        });
-    }
-
+    // Initialize the map when the page loads
+    initMap();
 });
 </script>
 

@@ -4,37 +4,747 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Kognem{% endblock %}</title> <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    {% block extra_head %}{% endblock %} </head>
+    <title>{% block title %}Kognem{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6C63FF;
+            --primary-dark: #5A52D5;
+            --primary-light: #8B85FF;
+            --secondary: #FF6584;
+            --secondary-dark: #E04F6D;
+            --secondary-light: #FF8BA0;
+            --accent: #36D1DC;
+            --dark: #1A1D29;
+            --darker: #12141C;
+            --light: #FFFFFF;
+            --text-bold: #FFFFFF;
+            --text-secondary: #B0B3C1;
+            --glass: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --card-bg: rgba(30, 33, 47, 0.6);
+            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, #FF9A3D 100%);
+            --shadow-primary: 0 10px 30px rgba(108, 99, 255, 0.25);
+            --shadow-secondary: 0 10px 30px rgba(255, 101, 132, 0.25);
+            --shadow-large: 0 25px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--darker) 0%, var(--dark) 100%);
+            color: var(--text-bold);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(108, 99, 255, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(255, 101, 132, 0.1) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(54, 209, 220, 0.05) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .floating-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .floating-element {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            opacity: 0.08;
+            filter: blur(40px);
+            animation: float 20s infinite linear;
+        }
+
+        .floating-element:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: 5%;
+            animation-delay: 0s;
+        }
+
+        .floating-element:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            left: 80%;
+            background: var(--gradient-secondary);
+            animation-delay: -5s;
+            animation-duration: 25s;
+        }
+
+        .floating-element:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            top: 80%;
+            left: 10%;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+            animation-delay: -10s;
+            animation-duration: 30s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+            25% {
+                transform: translate(50px, 50px) rotate(90deg);
+            }
+            50% {
+                transform: translate(0, 100px) rotate(180deg);
+            }
+            75% {
+                transform: translate(-50px, 50px) rotate(270deg);
+            }
+            100% {
+                transform: translate(0, 0) rotate(360deg);
+            }
+        }
+
+        /* Header Styles */
+        header {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .header-scrolled {
+            background: rgba(26, 29, 41, 0.95);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .brand i {
+            font-size: 1.8rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .main-nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 0;
+            position: relative;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .main-nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+            transition: width 0.3s ease;
+        }
+
+        .main-nav a:hover, .main-nav a.active {
+            color: var(--text-bold);
+        }
+
+        .main-nav a:hover::after, .main-nav a.active::after {
+            width: 100%;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn-login, .btn-register, .btn-profile, .btn-create {
+            padding: 10px 24px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-login {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--glass-border);
+        }
+
+        .btn-register, .btn-profile, .btn-create {
+            background: var(--gradient-primary);
+            color: var(--text-bold);
+            box-shadow: var(--shadow-primary);
+        }
+
+        .btn-login:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-bold);
+            transform: translateY(-2px);
+        }
+
+        .btn-register:hover, .btn-profile:hover, .btn-create:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(108, 99, 255, 0.35);
+        }
+
+        .user-dropdown {
+            position: relative;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            min-width: 220px;
+            box-shadow: var(--shadow-large);
+            z-index: 1001;
+            overflow: hidden;
+            margin-top: 10px;
+            animation: dropdownFade 0.3s ease;
+        }
+
+        @keyframes dropdownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dropdown-content a {
+            color: var(--text-secondary);
+            padding: 14px 20px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            border-bottom: 1px solid var(--glass-border);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+
+        .dropdown-content a:hover {
+            background: rgba(108, 99, 255, 0.1);
+            color: var(--primary-light);
+        }
+
+        .user-dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 8px;
+            background: var(--glass);
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .hamburger div {
+            width: 22px;
+            height: 2px;
+            background: var(--text-bold);
+            margin: 3px 0;
+            transition: 0.3s;
+            border-radius: 2px;
+        }
+
+        .hamburger.active div:nth-child(1) {
+            transform: rotate(-45deg) translate(-5px, 5px);
+        }
+
+        .hamburger.active div:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active div:nth-child(3) {
+            transform: rotate(45deg) translate(-5px, -5px);
+        }
+
+        /* Main Content */
+        main {
+            min-height: calc(100vh - 140px);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--glass-border);
+            margin-top: 60px;
+            padding: 40px 0 30px;
+        }
+
+        .footer-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-brand {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-light);
+        }
+
+        .footer-copyright {
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-nav {
+                gap: 20px;
+            }
+            
+            .auth-buttons {
+                gap: 12px;
+            }
+            
+            .btn-login, .btn-register, .btn-profile, .btn-create {
+                padding: 9px 18px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hamburger {
+                display: flex;
+            }
+
+            .main-nav {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: var(--card-bg);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                padding: 25px 20px;
+                box-shadow: var(--shadow-large);
+                border-top: 1px solid var(--glass-border);
+                gap: 0;
+            }
+
+            .main-nav a {
+                padding: 15px 0;
+                width: 100%;
+                border-bottom: 1px solid var(--glass-border);
+            }
+
+            .main-nav a:last-child {
+                border-bottom: none;
+            }
+
+            .main-nav.active {
+                display: flex;
+            }
+
+            .auth-buttons {
+                display: none;
+                position: absolute;
+                top: 100%;
+                right: 0;
+                width: 250px;
+                background: var(--card-bg);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                padding: 20px;
+                box-shadow: var(--shadow-large);
+                border-top: 1px solid var(--glass-border);
+                border-radius: 0 0 0 12px;
+                gap: 15px;
+            }
+
+            .auth-buttons.active {
+                display: flex;
+            }
+
+            .brand {
+                font-size: 1.8rem;
+            }
+
+            .footer-container {
+                flex-direction: column;
+                gap: 25px;
+                text-align: center;
+            }
+
+            .footer-links {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-container {
+                padding: 12px 15px;
+            }
+            
+            .brand {
+                font-size: 1.6rem;
+            }
+            
+            .btn-login, .btn-register, .btn-profile, .btn-create {
+                padding: 8px 16px;
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Enhanced text visibility */
+        body * {
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Animation utilities */
+        .fade-in {
+            animation: fadeIn 0.8s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in-left {
+            animation: slideInLeft 0.8s ease;
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.8s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
 <body>
-<header>
-    <div class="header-container">
-        <div class="brand">Kognem</div>
-        <nav class="main-nav">
-            <a href="{% url 'home' %}">Գլխավոր էջ</a>
+    <div class="floating-elements">
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+        <div class="floating-element"></div>
+    </div>
+    
+    <header id="header">
+        <div class="header-container">
+            <div class="brand fade-in">
+                <i class="fas fa-rocket"></i>
+                Kognem
+            </div>
 
-            <a href="{% url 'ashxatanq' %}">Առաջադրանքներ</a>
-        </nav>
-        <div class="auth-buttons">
-            {% if user.is_authenticated %}
-                <a href="{% url 'Account' %}" class="btn-profile">{{ user.profile.full_name }}</a>
-                <a href="{% url 'create_post' %}" class="btn-post-ad">Տեղադրել հայտարարություն</a>
+            <!-- Hamburger for Mobile -->
+            <div class="hamburger" id="hamburger">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
 
-            {% else %}
-                <a href="{% url 'login' %}" class="btn-login">Login</a>
-                <a href="{% url 'register' %}" class="btn-register">Register</a>
-            {% endif %}
+            <nav class="main-nav" id="main-nav">
+                <a href="{% url 'home' %}" class="{% if request.path == '/' %}active{% endif %} slide-in-left">Գլխավոր էջ</a>
+                <a href="{% url 'ashxatanq' %}" class="{% if request.path == '/ashxatanq/' %}active{% endif %} slide-in-left">Առաջադրանքներ</a>
+            </nav>
+
+            <div class="auth-buttons" id="auth-buttons">
+                {% if user.is_authenticated %}
+                    <div class="user-dropdown slide-in-right">
+                        <a href="{% url 'Account' %}" class="btn-profile">
+                            <i class="fas fa-user-circle"></i>
+                            {{ user.profile.full_name }}
+                        </a>
+                    
+                    </div>
+                    <a href="{% url 'create_post' %}" class="btn-create slide-in-right">
+                        <i class="fas fa-plus-circle"></i>
+                        Տեղադրել հայտարարություն
+                    </a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="btn-login slide-in-right">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login
+                    </a>
+                    <a href="{% url 'register' %}" class="btn-register slide-in-right">
+                        <i class="fas fa-user-plus"></i>
+                        Register
+                    </a>
+                {% endif %}
+            </div>
         </div>
-    </div>
-</header>
+    </header>
 
-<main>
-    {% block body %}{% endblock %} </main>
+    <main>
+        {% block body %}{% endblock %}
+    </main>
 
-<footer>
-    <div class="footer-container">
-        © 2025 Kognem. All rights reserved.
-    </div>
-</footer>
+    <footer class="fade-in">
+        <div class="footer-container">
+            <div class="footer-brand">Kognem</div>
+            <div class="footer-links">
+                <a href="{% url 'home' %}">Home</a>
+                <a href="{% url 'ashxatanq' %}">Tasks</a>
+                <a href="#">About</a>
+                <a href="#">Contact</a>
+            </div>
+            <div class="footer-copyright">© 2025 Kognem. All rights reserved.</div>
+        </div>
+    </footer>
+
+    <script>
+        // Floating background elements
+        function createFloatingElements() {
+            const container = document.querySelector('.floating-elements');
+            
+            // Already created in HTML, but we can add more dynamically if needed
+            for (let i = 4; i <= 6; i++) {
+                const element = document.createElement('div');
+                element.classList.add('floating-element');
+                
+                // Random properties
+                const size = 80 + Math.random() * 120;
+                const top = Math.random() * 100;
+                const left = Math.random() * 100;
+                const delay = Math.random() * 20;
+                const duration = 15 + Math.random() * 20;
+                
+                // Random gradient
+                const gradients = [
+                    'var(--gradient-primary)',
+                    'var(--gradient-secondary)',
+                    'linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%)'
+                ];
+                const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+                
+                element.style.width = `${size}px`;
+                element.style.height = `${size}px`;
+                element.style.top = `${top}%`;
+                element.style.left = `${left}%`;
+                element.style.background = randomGradient;
+                element.style.animationDelay = `-${delay}s`;
+                element.style.animationDuration = `${duration}s`;
+                
+                container.appendChild(element);
+            }
+        }
+
+        // Header scroll effect
+        function handleHeaderScroll() {
+            const header = document.getElementById('header');
+            if (window.scrollY > 50) {
+                header.classList.add('header-scrolled');
+            } else {
+                header.classList.remove('header-scrolled');
+            }
+        }
+
+        // Mobile navigation toggle
+        const hamburger = document.getElementById('hamburger');
+        const mainNav = document.getElementById('main-nav');
+        const authButtons = document.getElementById('auth-buttons');
+
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            mainNav.classList.toggle('active');
+            authButtons.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!hamburger.contains(e.target) && !mainNav.contains(e.target) && !authButtons.contains(e.target)) {
+                mainNav.classList.remove('active');
+                authButtons.classList.remove('active');
+                hamburger.classList.remove('active');
+            }
+        });
+
+        // Close mobile menu when clicking on a link
+        const navLinks = document.querySelectorAll('.main-nav a, .auth-buttons a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                mainNav.classList.remove('active');
+                authButtons.classList.remove('active');
+                hamburger.classList.remove('active');
+            });
+        });
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            createFloatingElements();
+            window.addEventListener('scroll', handleHeaderScroll);
+            
+            // Add hover effects to interactive elements
+            const interactiveElements = document.querySelectorAll('.main-nav a, .btn-login, .btn-register, .btn-profile, .btn-create');
+            
+            interactiveElements.forEach(element => {
+                element.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                });
+                
+                element.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Add animation to elements when they come into view
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animationPlayState = 'running';
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            // Observe elements with animation classes
+            document.querySelectorAll('.fade-in, .slide-in-left, .slide-in-right').forEach(el => {
+                observer.observe(el);
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

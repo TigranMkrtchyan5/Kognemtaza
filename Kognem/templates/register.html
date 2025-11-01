@@ -6,13 +6,364 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kognem — Register</title>
-    <link rel="stylesheet" href="{% static 'css/register.css' %}">
-    <script src="{% static 'js/main.js' %}" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6C63FF;
+            --primary-dark: #5A52D5;
+            --primary-light: #8B85FF;
+            --secondary: #FF6584;
+            --secondary-dark: #E04F6D;
+            --secondary-light: #FF8BA0;
+            --accent: #36D1DC;
+            --light-bg: #FFFFFF;
+            --light-secondary: #F8F9FA;
+            --light-border: #E9ECEF;
+            --text-dark: #2D3748;
+            --text-medium: #4A5568;
+            --text-light: #718096;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
+            --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
+            --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
+            --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, #FF9A3D 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--light-bg);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 15% 20%, rgba(108, 99, 255, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 85% 80%, rgba(255, 101, 132, 0.05) 0%, transparent 40%);
+            z-index: -1;
+        }
+
+        .register-container {
+            background: white;
+            border-radius: 24px;
+            padding: 50px;
+            box-shadow: var(--shadow-large);
+            border: 1px solid var(--light-border);
+            width: 100%;
+            max-width: 480px;
+            position: relative;
+            overflow: hidden;
+            transform: translateY(30px);
+            opacity: 0;
+            animation: fadeInUp 0.8s forwards 0.2s;
+        }
+
+        .register-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        .brand {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: var(--gradient-primary);
+            
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .tagline {
+            text-align: center;
+            color: var(--text-medium);
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        /* Messages */
+        .message {
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            font-weight: 500;
+            text-align: center;
+            border: 1px solid;
+        }
+
+        .message.success {
+            background: rgba(72, 187, 120, 0.1);
+            color: #38a169;
+            border-color: rgba(72, 187, 120, 0.2);
+        }
+
+        .message.error {
+            background: rgba(245, 101, 101, 0.1);
+            color: #e53e3e;
+            border-color: rgba(245, 101, 101, 0.2);
+        }
+
+        /* Form Styles */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label i {
+            color: var(--primary);
+            font-size: 0.9rem;
+        }
+
+        input {
+            padding: 14px 16px;
+            border: 1px solid var(--light-border);
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+            color: var(--text-dark);
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        input:invalid:not(:focus):not(:placeholder-shown) {
+            border-color: var(--secondary);
+        }
+
+        input:valid:not(:focus):not(:placeholder-shown) {
+            border-color: var(--primary-light);
+        }
+
+        .error-msg {
+            color: var(--secondary);
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .error-msg::before {
+            content: '⚠';
+            font-size: 0.8rem;
+        }
+
+        /* Guest Login */
+        .guest-login {
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .btn-guest {
+            color: var(--text-medium);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--light-border);
+            background: var(--light-secondary);
+        }
+
+        .btn-guest:hover {
+            background: white;
+            border-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* Submit Button */
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-large);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* Login Link */
+        .login-link {
+            text-align: center;
+            color: var(--text-medium);
+            margin-top: 25px;
+            font-weight: 500;
+        }
+
+        .login-link a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .login-link a:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Password Strength Indicator */
+        .password-strength {
+            height: 4px;
+            background: var(--light-border);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .strength-weak { background: var(--secondary); width: 33%; }
+        .strength-medium { background: #f6ad55; width: 66%; }
+        .strength-strong { background: #48bb78; width: 100%; }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .register-container {
+                padding: 35px;
+                max-width: 400px;
+            }
+
+            .brand {
+                font-size: 2.2rem;
+            }
+
+            .tagline {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+
+            .register-container {
+                padding: 30px 25px;
+            }
+
+            .brand {
+                font-size: 2rem;
+            }
+
+            input {
+                padding: 12px 14px;
+            }
+
+            .btn-primary {
+                padding: 14px;
+                font-size: 1rem;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
 
 <div class="register-container">
-    <h1 class="brand">Kognem</h1>
+    <h1 class="brand">
+        <i class="fas fa-rocket"></i>
+        Kognem
+    </h1>
     <p class="tagline">Օգնիր բոլորին, կերտիր ապագադ</p>
 
     {% if messages %}
@@ -26,7 +377,10 @@
 
         <!-- Full name -->
         <div class="input-group">
-            <label for="full_name">Անուն Ազգանուն</label>
+            <label for="full_name">
+                <i class="fas fa-user"></i>
+                Անուն Ազգանուն
+            </label>
             <input type="text" name="full_name" id="full_name" placeholder="Անուն Ազգանուն" required value="{{ form.full_name.value|default:'' }}">
             {% if form.full_name.errors %}
                 <div class="error-msg">{{ form.full_name.errors.0 }}</div>
@@ -36,7 +390,10 @@
 
         <!-- Username -->
         <div class="input-group">
-            <label for="username">Username</label>
+            <label for="username">
+                <i class="fas fa-at"></i>
+                Username
+            </label>
             <input type="text" name="username" id="username" placeholder="username" required value="{{ form.username.value|default:'' }}">
             {% if form.username.errors %}
                 <div class="error-msg">{{ form.username.errors.0 }}</div>
@@ -46,7 +403,10 @@
 
         <!-- Email -->
         <div class="input-group">
-            <label for="email">Էլ. հասցե</label>
+            <label for="email">
+                <i class="fas fa-envelope"></i>
+                Էլ. հասցե
+            </label>
             <input type="email" name="email" id="email" placeholder="you@example.com" required value="{{ form.email.value|default:'' }}">
             {% if form.email.errors %}
                 <div class="error-msg">{{ form.email.errors.0 }}</div>
@@ -56,7 +416,10 @@
 
         <!-- Phone -->
         <div class="input-group">
-            <label for="phone">Հեռախոսահամար</label>
+            <label for="phone">
+                <i class="fas fa-phone"></i>
+                Հեռախոսահամար
+            </label>
             <input type="text" name="phone" id="phone" placeholder="0XXXXXXXX" pattern="0\d{8}">
             {% if form.phone.errors %}
                 <div class="error-msg">{{ form.phone.errors }}</div>
@@ -66,7 +429,10 @@
 
         <!-- Verification ID -->
         <div class="input-group">
-            <label for="verification_id">Վկայագրի կամ ID համարը</label>
+            <label for="verification_id">
+                <i class="fas fa-id-card"></i>
+                Վկայագրի կամ ID համարը
+            </label>
             <input type="text" name="verification_id" id="verification_id" placeholder="Վկայագրի ID" required value="{{ form.verification_id.value|default:'' }}">
             {% if form.verification_id.errors %}
                 <div class="error-msg">{{ form.verification_id.errors.0 }}</div>
@@ -76,8 +442,14 @@
 
         <!-- Password -->
         <div class="input-group">
-            <label for="password">Գաղտնաբառ</label>
+            <label for="password">
+                <i class="fas fa-lock"></i>
+                Գաղտնաբառ
+            </label>
             <input type="password" name="password1" id="password" placeholder="••••••••" required>
+            <div class="password-strength">
+                <div class="strength-bar" id="strengthBar"></div>
+            </div>
             {% if form.password1.errors %}
                 <div class="error-msg">{{ form.password1.errors.0 }}</div>
             {% endif %}
@@ -86,7 +458,10 @@
 
         <!-- Confirm Password -->
         <div class="input-group">
-            <label for="password2">Հաստատել Գաղտնաբառը</label>
+            <label for="password2">
+                <i class="fas fa-lock"></i>
+                Հաստատել Գաղտնաբառը
+            </label>
             <input type="password" name="password2" id="password2" placeholder="••••••••" required>
             {% if form.password2.errors %}
                 <div class="error-msg">{{ form.password2.errors.0 }}</div>
@@ -95,10 +470,16 @@
         </div>
 
         <div class="guest-login">
-            <a href="{% url 'home' %}" class="btn-guest">Շարունակել առանց մուտք գործելու</a>
+            <a href="{% url 'home' %}" class="btn-guest">
+                <i class="fas fa-user-clock"></i>
+                Շարունակել առանց մուտք գործելու
+            </a>
         </div>
 
-        <button type="submit" id="submitBtn" class="btn-primary" disabled>Գրանցվել</button>
+        <button type="submit" id="submitBtn" class="btn-primary" disabled>
+            <i class="fas fa-user-plus"></i>
+            Գրանցվել
+        </button>
         <p class="login-link">Ունեք անձնական էջ? <a href="{% url 'login' %}">Մուտք</a></p>
     </form>
 </div>
@@ -111,6 +492,7 @@ const phoneInput = document.getElementById('phone');
 const vidInput = document.getElementById('verification_id');
 const passwordInput = document.getElementById('password');
 const confirmInput = document.getElementById('password2');
+const strengthBar = document.getElementById('strengthBar');
 
 const emailError = document.getElementById('emailError');
 const fullNameError = document.getElementById('fullNameError');
@@ -121,6 +503,28 @@ const passwordError = document.getElementById('passwordError');
 const confirmError = document.getElementById('confirmError');
 
 const submitBtn = document.getElementById('submitBtn');
+
+// Password strength indicator
+function updatePasswordStrength() {
+    const password = passwordInput.value;
+    let strength = 0;
+    
+    if (password.length >= 5) strength += 1;
+    if (/[A-ZԱՊՐՅՒԻՕԵՎԹԽԾՂ]/.test(password)) strength += 1;
+    if (/[0-9]/.test(password)) strength += 1;
+    if (/[^A-Za-z0-9]/.test(password)) strength += 1;
+    
+    strengthBar.className = 'strength-bar';
+    if (password.length > 0) {
+        if (strength <= 1) {
+            strengthBar.classList.add('strength-weak');
+        } else if (strength <= 2) {
+            strengthBar.classList.add('strength-medium');
+        } else {
+            strengthBar.classList.add('strength-strong');
+        }
+    }
+}
 
 function validateEmail(){
     const v = emailInput.value.trim();
@@ -173,20 +577,31 @@ async function checkUsernameExists() {
     const username = usernameInput.value.trim();
     if (!username) return false;
 
-    const response = await fetch(`/check-username/?username=${username}`);
-    const data = await response.json();
+    try {
+        const response = await fetch(`/check-username/?username=${username}`);
+        const data = await response.json();
 
-    if (data.exists) {
-        usernameInput.style.borderColor = '#ff6b6b';
-        usernameError.textContent = 'Այս օգտագործանունը արդեն զբաղված է';
-        return true;
-    } else {
+        if (data.exists) {
+            usernameInput.style.borderColor = '#ff6b6b';
+            usernameError.textContent = 'Այս օգտագործանունը արդեն զբաղված է';
+            return true;
+        } else {
+            return false;
+        }
+    } catch (error) {
+        console.error('Error checking username:', error);
         return false;
     }
 }
 
 function validatePhone() {
     const v = phoneInput.value.trim();
+    if (v === '') {
+        phoneInput.style.borderColor = '';
+        phoneError.textContent = '';
+        return true;
+    }
+    
     const re = /^0\d{8}$/;
     if (!re.test(v)) {
         phoneInput.style.borderColor = '#ff6b6b';
@@ -257,15 +672,26 @@ async function updateSubmitState(){
     return ok;
 }
 
-[emailInput, fullNameInput, usernameInput, phoneInput, vidInput, passwordInput, confirmInput].forEach(el=>{
+// Event listeners
+[emailInput, fullNameInput, usernameInput, phoneInput, vidInput, passwordInput, confirmInput].forEach(el => {
     el.addEventListener('input', () => updateSubmitState());
 });
+
+passwordInput.addEventListener('input', updatePasswordStrength);
 
 // Submit handler waits for async validation
 document.getElementById('registerForm').addEventListener('submit', async function(e){
     const ok = await updateSubmitState();
-    if (!ok) e.preventDefault();
+    if (!ok) {
+        e.preventDefault();
+    } else {
+        submitBtn.innerHTML = '<div class="loading"></div> Գրանցվում է...';
+        submitBtn.disabled = true;
+    }
 });
+
+// Initial validation state
+updateSubmitState();
 </script>
 
 </body>

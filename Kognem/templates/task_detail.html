@@ -3,299 +3,809 @@
 
 {% block body %}
 <style>
-    /* ✒️ Шрифты и Основа */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+    :root {
+        --primary: #6C63FF;
+        --primary-dark: #5A52D5;
+        --primary-light: #8B85FF;
+        --secondary: #FF6584;
+        --secondary-dark: #E04F6D;
+        --secondary-light: #FF8BA0;
+        --accent: #36D1DC;
+        --light-bg: #FFFFFF;
+        --light-secondary: #F8F9FA;
+        --light-border: #E9ECEF;
+        --text-dark: #2D3748;
+        --text-medium: #4A5568;
+        --text-light: #718096;
+        --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
+        --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
+        --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    }
 
     body {
-        background-color: #f0f4f8; /* Очень светлый, холодный фон */
+        background: var(--light-bg);
+        color: var(--text-dark);
         font-family: 'Inter', sans-serif;
-        color: #1a202c;
+        margin: 0;
+        padding: 0;
     }
 
-    /* 📦 Главный Контейнер */
     .container {
-        max-width: 1000px; /* Немного шире для лучшего отображения изображения */
-        margin: 50px auto;
-        padding: 0 20px;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
     }
 
-    /* 🖼️ Секция Изображения: ГАРАНТИЯ ЧЕТКОСТИ И КАДРИРОВАНИЯ */
+    /* Header Section */
+    .task-header {
+        text-align: center;
+        padding: 40px 20px;
+        margin-bottom: 30px;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.2s;
+    }
+
+    .task-title {
+        background: var(--gradient-primary);
+        
+        -webkit-text-fill-color: transparent;
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 15px;
+        line-height: 1.2;
+    }
+
+    .task-meta-header {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .meta-badge {
+        background: var(--light-secondary);
+        padding: 12px 24px;
+        border-radius: 25px;
+        font-weight: 600;
+        color: var(--text-medium);
+        border: 1px solid var(--light-border);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .meta-badge.price {
+        background: var(--gradient-primary);
+        color: white;
+    }
+
+    /* Image Section */
+    .image-section {
+        margin-bottom: 40px;
+    }
+
     .image-container {
         position: relative;
         overflow: hidden;
-        border-radius: 18px; /* Более сильное скругление */
-        margin-bottom: 30px;
-        /* Яркая, выразительная тень для эффекта "парения" */
-        box-shadow: 0 20px 50px rgba(49, 130, 206, 0.25); 
+        border-radius: 20px;
+        box-shadow: var(--shadow-large);
+        background: var(--light-secondary);
     }
 
     .post-image {
         width: 100%;
-        /* 🖼️ КЛЮЧ: Принудительное соотношение сторон 16:7 для идеального кадрирования */
-        aspect-ratio: 16 / 7; 
-        /* 🖼️ КЛЮЧ: object-fit: cover - гарантирует, что картинка не будет искажена, 
-           а заполнит контейнер, обрезая лишнее, но сохраняя ЧЕТКОСТЬ. */
-        object-fit: cover; 
+        aspect-ratio: 16 / 9;
+        object-fit: cover;
         display: block;
-        transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* Плавная анимация */
+        transition: transform 0.8s ease;
     }
     
     .image-container:hover .post-image {
-        /* Усиленный эффект масштабирования для динамизма */
-        transform: scale(1.05); 
+        transform: scale(1.05);
     }
 
-    /* 📝 Контентная Карточка: Эффект "ПЛАВАЮЩЕГО ЗАГОЛОВКА" */
-    .content-card {
-        background-color: #ffffff;
-        border-radius: 18px;
-        padding: 45px;
-        margin-top: -120px; /* СИЛЬНЕЕ поднимаем карточку на изображение */
-        position: relative;
-        z-index: 10;
-        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    .no-image {
+        width: 100%;
+        aspect-ratio: 16 / 9;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--gradient-primary);
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 600;
+        flex-direction: column;
+        gap: 15px;
     }
 
-    .content-card h1 {
-        color: #3182ce; /* Глубокий синий акцент */
-        font-size: 3.2em; /* Более крупный заголовок */
-        font-weight: 900; /* Очень жирный шрифт */
-        margin-top: 0;
-        padding-bottom: 15px;
-        /* Яркий, контрастный подчерк */
-        border-bottom: 5px solid #f6ad55; 
-        display: inline-block;
-        line-height: 1.1;
+    /* Content Section */
+    .content-section {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 40px;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid var(--light-border);
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .section-title::before {
+        content: '';
+        width: 6px;
+        height: 6px;
+        background: var(--gradient-primary);
+        border-radius: 50%;
     }
 
     .description-text {
-        font-size: 1.2em;
-        line-height: 1.8;
-        color: #4a5568;
-        margin-top: 30px;
-        margin-bottom: 40px;
+        font-size: 1.1rem;
+        line-height: 1.7;
+        color: var(--text-medium);
+        padding: 25px;
+        background: var(--light-secondary);
+        border-radius: 12px;
+        border-left: 4px solid var(--primary);
     }
 
-    /* 🏷️ Мета-Информация (Сетка) */
-    .meta-grid {
+    /* Details Grid */
+    .details-grid {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 30px;
-        margin-bottom: 30px;
-        padding: 25px 0;
-        border-top: 2px dashed #e2e8f0;
-        border-bottom: 2px dashed #e2e8f0;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin: 35px 0;
     }
 
-    .meta-item strong {
-        display: block;
-        font-size: 1em;
-        color: #718096;
-        margin-bottom: 6px;
+    .detail-card {
+        background: var(--light-secondary);
+        padding: 25px;
+        border-radius: 16px;
+        border: 1px solid var(--light-border);
+        transition: all 0.3s ease;
+    }
+
+    .detail-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-light);
+    }
+
+    .detail-card .icon {
+        width: 50px;
+        height: 50px;
+        background: var(--gradient-primary);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 15px;
+        color: white;
+        font-size: 1.2rem;
+    }
+
+    .detail-card h4 {
+        font-size: 1rem;
+        color: var(--text-light);
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        font-weight: 600;
     }
 
-    .meta-item span {
-        font-size: 1.6em;
-        font-weight: 800;
-        color: #2d3748;
+    .detail-card p {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
     }
 
-    .meta-item .price {
-        color: #e53e3e; /* Насыщенный красный для цены */
-        font-size: 1.8em;
+    .detail-card .price {
+        color: var(--secondary);
+        font-size: 1.5rem;
     }
-    
-    /* 🗺️ Секция Карты */
+
+    .detail-card .location {
+        color: var(--primary);
+        font-size: 1.2rem;
+        line-height: 1.4;
+    }
+
+    /* Map Section */
     .map-section {
-        background-color: #ffffff;
-        border-radius: 18px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-        padding: 35px;
-        margin-top: 30px;
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 40px;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid var(--light-border);
     }
 
-    .map-section h3 {
-        color: #2d3748;
-        font-size: 1.6em;
-        margin-top: 0;
-        margin-bottom: 25px;
-        border-left: 6px solid #3182ce;
-        padding-left: 20px;
+    .map-container {
+        border-radius: 16px;
+        border: 1px solid var(--light-border);
+        overflow: hidden;
+        box-shadow: var(--shadow-light);
+        margin-bottom: 20px;
     }
 
     #map {
+        width: 100%;
+        height: 400px;
+    }
+
+    .location-info {
+        background: var(--light-secondary);
+        padding: 20px;
         border-radius: 12px;
-        border: 2px solid #e2e8f0;
+        border: 1px solid var(--light-border);
+        margin-top: 20px;
+    }
+
+    .location-details {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .location-details i {
+        color: var(--primary);
+        font-size: 1.2rem;
+    }
+
+    .location-details span {
+        font-weight: 600;
+        color: var(--text-dark);
     }
 
     #distanceInfo {
-        margin-top: 20px;
-        font-size: 1.2em;
-        color: #38a169;
         padding: 15px;
-        background-color: #f0fff4;
+        background: white;
         border-radius: 10px;
-        border: 1px solid #c6f6d5;
-        font-weight: 700;
+        border: 1px solid var(--light-border);
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-top: 15px;
     }
 
-    /* 🔙 Кнопка */
-    .btn-primary {
-        background-color: #3182ce;
-        color: white;
-        padding: 18px 40px;
+    /* Action Buttons */
+    .action-section {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 40px;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid var(--light-border);
+        text-align: center;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary, .btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 16px 32px;
+        border-radius: 12px;
         text-decoration: none;
-        border-radius: 10px;
+        font-weight: 600;
         transition: all 0.3s ease;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-        box-shadow: 0 8px 25px rgba(49, 130, 206, 0.4);
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        min-width: 200px;
+        justify-content: center;
+    }
+
+    .btn-primary {
+        background: var(--gradient-primary);
+        color: white;
+        box-shadow: var(--shadow-light);
+    }
+
+    .btn-secondary {
+        background: white;
+        color: var(--text-dark);
+        border: 1px solid var(--light-border);
+        box-shadow: var(--shadow-light);
     }
 
     .btn-primary:hover {
-        background-color: #2c5282;
-        box-shadow: 0 10px 30px rgba(49, 130, 206, 0.6);
         transform: translateY(-2px);
+        box-shadow: var(--shadow-large);
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+        border-color: var(--primary-light);
+    }
+
+    /* Contact Section */
+    .contact-section {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        margin-bottom: 40px;
+        box-shadow: var(--shadow-medium);
+        border: 1px solid var(--light-border);
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 25px;
+        background: var(--light-secondary);
+        border-radius: 16px;
+        border: 1px solid var(--light-border);
+    }
+
+    .user-avatar {
+        width: 80px;
+        height: 80px;
+        background: var(--gradient-primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        font-weight: 600;
+    }
+
+    .user-details {
+        flex: 1;
+    }
+
+    .user-details h4 {
+        margin: 0 0 8px 0;
+        color: var(--text-dark);
+        font-size: 1.3rem;
+    }
+
+    .user-details p {
+        margin: 0;
+        color: var(--text-medium);
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .container {
+            padding: 15px;
+        }
+
+        .task-title {
+            font-size: 2.2rem;
+        }
+
+        .task-meta-header {
+            gap: 15px;
+        }
+
+        .content-section,
+        .map-section,
+        .action-section,
+        .contact-section {
+            padding: 25px;
+        }
+
+        .details-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .btn-primary, .btn-secondary {
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .user-info {
+            flex-direction: column;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .task-title {
+            font-size: 1.8rem;
+        }
+
+        .content-section,
+        .map-section,
+        .action-section,
+        .contact-section {
+            padding: 20px;
+        }
+
+        .description-text {
+            padding: 20px;
+            font-size: 1rem;
+        }
+
+        .detail-card {
+            padding: 20px;
+        }
+
+        .detail-card p {
+            font-size: 1.1rem;
+        }
     }
 </style>
 
 <main class="container">
-    {% if post.image %}
-        <div class="image-container">
-            <img src="{{ post.image.url }}" alt="{{ post.title }}" class="post-image">
+    <!-- Header Section -->
+    <section class="task-header">
+        <h1 class="task-title">{{ post.title }}</h1>
+        <div class="task-meta-header">
+            <div class="meta-badge price">
+                <i class="fas fa-dollar-sign"></i>
+                ${{ post.price }}
+            </div>
+            <div class="meta-badge">
+                <i class="fas fa-map-marker-alt"></i>
+                {{ post.state.name }}, {{ post.province.name }}
+            </div>
+            <div class="meta-badge">
+                <i class="fas fa-tag"></i>
+                {{ post.category.name }}
+            </div>
         </div>
-    {% endif %}
+    </section>
 
-    <div class="content-card">
-        <h1>{{ post.title }}</h1>
+    <!-- Image Section -->
+    <section class="image-section">
+        <div class="image-container">
+            {% if post.image %}
+                <img src="{{ post.image.url }}" alt="{{ post.title }}" class="post-image">
+            {% else %}
+                <div class="no-image">
+                    <i class="fas fa-tasks" style="font-size: 3rem;"></i>
+                    <span>{{ post.title }}</span>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Content Section -->
+    <section class="content-section">
+        <h3 class="section-title">
+            <i class="fas fa-align-left"></i>
+            Task Description
+        </h3>
+        <div class="description-text">
+            {{ post.description|linebreaks }}
+        </div>
+
+        <h3 class="section-title">
+            <i class="fas fa-info-circle"></i>
+            Task Details
+        </h3>
+        <div class="details-grid">
+            <div class="detail-card">
+                <div class="icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <h4>Price</h4>
+                <p class="price">${{ post.price }}</p>
+            </div>
+            <div class="detail-card">
+                <div class="icon">
+                    <i class="fas fa-user"></i>
+                </div>
+                <h4>Posted By</h4>
+                <p>{{ post.user.username }}</p>
+            </div>
+            <div class="detail-card">
+                <div class="icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h4>Location</h4>
+                <p class="location">{{ post.location }}</p>
+            </div>
+            <div class="detail-card">
+                <div class="icon">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                <h4>Posted On</h4>
+                <p>{{ post.created_at|date:"M d, Y" }}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Map Section -->
+    <section class="map-section">
+        <h3 class="section-title">
+            <i class="fas fa-map-marked-alt"></i>
+            Task Location
+        </h3>
         
-        <p class="description-text">{{ post.description }}</p>
+        <div class="map-container">
+            <div id="map"></div>
+        </div>
 
-        <div class="meta-grid">
-            <div class="meta-item">
-                <strong>Task Price</strong>
-                <span class="price">${{ post.price }}</span>
+        <div class="location-info">
+            <div class="location-details">
+                <i class="fas fa-map-pin"></i>
+                <span>Exact Address: {{ post.location }}</span>
             </div>
-            <div class="meta-item">
-                <strong>Posted by</strong>
-                <span>{{ post.user.username }}</span>
+            <div class="location-details">
+                <i class="fas fa-layer-group"></i>
+                <span>Area: {{ post.province.name }}, {{ post.state.name }}</span>
             </div>
-            <div class="meta-item">
-                <strong>Location</strong>
-                <span>{{ post.location }}</span>
+            <div id="distanceInfo">
+                <i class="fas fa-route"></i>
+                <span id="distanceText">Calculating distance from your location...</span>
             </div>
-            </div>
-    </div>
-    
-    <div class="map-section">
-        <h3>📍 Route from your location to this task</h3>
-        <div id="map" style="width: 100%; height: 400px;"></div>
-        <div id="distanceInfo"></div>
-    </div>
+        </div>
+    </section>
 
-    <a href="{% url 'home' %}" class="btn-primary" style="display:inline-block; margin-top:30px; margin-bottom: 50px;">
-        ← BACK TO ALL TASKS
-    </a>
+    <!-- Action Buttons -->
+    <section class="action-section">
+        <div class="action-buttons">
+            {% if post.user != user %}
+                <a href="{% url 'chat_room' post.user.id %}" class="btn-primary">
+                    <i class="fas fa-comment"></i>
+                    Contact Poster
+                </a>
+            {% endif %}
+            <a href="{% url 'home' %}" class="btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Browse More Tasks
+            </a>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    {% if post.user != user %}
+    <section class="contact-section">
+        <h3 class="section-title">
+            <i class="fas fa-user-circle"></i>
+            About the Poster
+        </h3>
+        <div class="user-info">
+            <div class="user-avatar">
+                {{ post.user.username|first|upper }}
+            </div>
+            <div class="user-details">
+                <h4>{{ post.user.username }}</h4>
+                {% if post.user.profile.full_name %}
+                    <p><strong>Name:</strong> {{ post.user.profile.full_name }}</p>
+                {% endif %}
+                <p><strong>Member since:</strong> {{ post.user.date_joined|date:"M Y" }}</p>
+                <p>Use the contact button above to message this user about the task.</p>
+            </div>
+        </div>
+    </section>
+    {% endif %}
 </main>
 
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9KO1U7_6JxlBuCpiLju_K0tXwBM4ISWE=&libraries=places"></script>
+<!-- Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9KO1U7_6JxlBuCpiLju_K0tXwBM4ISWE&libraries=places"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const taskLat = parseFloat('{{ post.latitude|default:"40.1792" }}');
-        const taskLng = parseFloat('{{ post.longitude|default:"44.4991" }}');
+document.addEventListener("DOMContentLoaded", function () {
+    const rawLat = "{{ post.latitude|default:'' }}";
+    const rawLng = "{{ post.longitude|default:'' }}";
+    const taskAddress = "{{ post.location|escapejs }}";
+    const taskTitle = "{{ post.title|escapejs }}";
+    const taskPrice = "{{ post.price|default:'N/A' }}";
 
-        const map = new google.maps.Map(document.getElementById('map'), {
-            center: { lat: taskLat, lng: taskLng },
-            zoom: 13,
-            disableDefaultUI: true, /* Более чистый вид карты */
-            zoomControl: true 
-        });
+    const mapElement = document.getElementById("map");
+    const distanceInfo = document.getElementById("distanceText");
+    if (!mapElement) {
+        console.error("Map element (#map) not found.");
+        return;
+    }
 
-        const directionsService = new google.maps.DirectionsService();
-        const directionsRenderer = new google.maps.DirectionsRenderer({ 
-            map: map,
-            polylineOptions: {
-                strokeColor: '#f6ad55', /* Оранжевый маршрут, контрастный акцент */
-                strokeOpacity: 0.9,
-                strokeWeight: 7
-            },
-            suppressMarkers: true 
-        });
+    const map = new google.maps.Map(mapElement, {
+        center: { lat: 40.1792, lng: 44.4991 },
+        zoom: 14
+    });
 
-        const taskMarker = new google.maps.Marker({
+    const geocoder = new google.maps.Geocoder();
+    let taskMarker = null;
+    let userMarker = null;
+    let directionsService = null;
+    let directionsRenderer = null;
+
+    // Draw the task marker
+    function placeTaskMarker(lat, lng) {
+        const taskLat = parseFloat(lat);
+        const taskLng = parseFloat(lng);
+
+        map.setCenter({ lat: taskLat, lng: taskLng });
+
+        taskMarker = new google.maps.Marker({
             position: { lat: taskLat, lng: taskLng },
             map: map,
-            title: '{{ post.title }}',
+            title: taskTitle,
+            animation: google.maps.Animation.DROP,
             icon: {
-                // Красивый, чистый значок задания
-                path: google.maps.SymbolPath.FLAG,
-                scale: 6,
-                fillColor: "#e53e3e", /* Красный маркер для задания */
-                fillOpacity: 1,
-                strokeWeight: 1,
-                strokeColor: "#ffffff"
+                url:
+                    "data:image/svg+xml;charset=UTF-8," +
+                    encodeURIComponent(`
+                    <svg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+                        <path fill="#6C63FF" d="M20 0C12.268 0 6 6.268 6 14c0 12 14 28 14 28s14-16 14-28c0-7.732-6.268-14-14-14zm0 20c-3.314 0-6-2.686-6-6s2.686-6 6-6 6 2.686 6 6-2.686 6-6 6z"/>
+                        <circle cx="20" cy="14" r="4" fill="white"/>
+                    </svg>`),
+                scaledSize: new google.maps.Size(40, 40),
+                anchor: new google.maps.Point(20, 40)
             }
         });
 
-        const distanceInfo = document.getElementById('distanceInfo');
-        let userMarker = null;
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="padding:10px;max-width:250px;">
+                    <h3 style="margin:0 0 8px 0;color:#6C63FF;font-size:16px;">${taskTitle}</h3>
+                    <p style="margin:0;color:#666;font-size:14px;">${taskAddress}</p>
+                    <p style="margin:8px 0 0 0;color:#888;font-size:12px;">
+                        <i class="fas fa-dollar-sign"></i> $${taskPrice}
+                    </p>
+                </div>`
+        });
 
-        function calculateRoute(userPos) {
-            directionsService.route({
-                origin: userPos,
-                destination: { lat: taskLat, lng: taskLng },
+        taskMarker.addListener("click", () => infoWindow.open(map, taskMarker));
+        infoWindow.open(map, taskMarker);
+
+        // Now get user's location and draw route
+        getUserLocation(taskLat, taskLng);
+    }
+
+    // Initialize directions
+    function initDirections() {
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: true,
+            polylineOptions: {
+                strokeColor: "#6C63FF",
+                strokeOpacity: 0.8,
+                strokeWeight: 5
+            }
+        });
+    }
+
+    // Draw route on the map
+    function drawRoute(userLat, userLng, destLat, destLng) {
+        if (!directionsService) initDirections();
+
+        const origin = { lat: userLat, lng: userLng };
+        const destination = { lat: destLat, lng: destLng };
+
+        directionsService.route(
+            {
+                origin: origin,
+                destination: destination,
                 travelMode: google.maps.TravelMode.DRIVING
-            }, (result, status) => {
-                if (status === 'OK') {
+            },
+            (result, status) => {
+                if (status === "OK") {
                     directionsRenderer.setDirections(result);
-                    const leg = result.routes[0].legs[0];
-                    distanceInfo.textContent = `🚗 Distance: ${leg.distance.text} | ⏱️ Duration: ${leg.duration.text}`;
-
-                    if (!userMarker) {
-                        userMarker = new google.maps.Marker({
-                            position: userPos,
-                            map: map,
-                            icon: {
-                                path: google.maps.SymbolPath.CIRCLE,
-                                scale: 8,
-                                fillColor: "#38a169", 
-                                fillOpacity: 1,
-                                strokeWeight: 2,
-                                strokeColor: "#fff"
-                            },
-                            title: "Your Location"
-                        });
-                    } else {
-                        userMarker.setPosition(userPos);
-                    }
-
-                    const bounds = new google.maps.LatLngBounds();
-                    bounds.extend(userPos);
-                    bounds.extend({ lat: taskLat, lng: taskLng });
-                    map.fitBounds(bounds);
                 } else {
                     console.error("Directions request failed:", status);
-                    distanceInfo.textContent = '❌ Could not calculate route from your location.';
                 }
-            });
+            }
+        );
+    }
+
+    // Get user's location, draw route, and show distance from backend
+    function getUserLocation(destLat, destLng) {
+        if (!navigator.geolocation) {
+            if (distanceInfo) distanceInfo.textContent = "Geolocation not supported.";
+            return;
         }
 
-        if (navigator.geolocation) {
-            navigator.geolocation.watchPosition(pos => {
-                const userPos = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-                calculateRoute(userPos);
-            }, err => {
-                console.error("Geolocation error:", err);
-                distanceInfo.textContent = '⚠️ Geolocation denied or unavailable. Showing task location only.';
-                map.setCenter({ lat: taskLat, lng: taskLng });
-            }, { enableHighAccuracy: true, maximumAge: 5000, timeout: 10000 });
-        } else {
-            distanceInfo.textContent = '⚠️ Geolocation not supported by this browser. Showing task location only.';
-            map.setCenter({ lat: taskLat, lng: taskLng });
-        }
-    });
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                const userLat = pos.coords.latitude;
+                const userLng = pos.coords.longitude;
+
+                // Add user marker
+                if (!userMarker) {
+                    userMarker = new google.maps.Marker({
+                        position: { lat: userLat, lng: userLng },
+                        map: map,
+                        title: "Your Location",
+                        icon: {
+                            url:
+                                "data:image/svg+xml;charset=UTF-8," +
+                                encodeURIComponent(`
+                                <svg width="30" height="30" viewBox="0 0 30 30" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="15" cy="15" r="12" fill="#36D1DC" opacity="0.9"/>
+                                    <circle cx="15" cy="15" r="5" fill="white"/>
+                                </svg>`),
+                            scaledSize: new google.maps.Size(30, 30),
+                            anchor: new google.maps.Point(15, 15)
+                        }
+                    });
+                } else {
+                    userMarker.setPosition({ lat: userLat, lng: userLng });
+                }
+
+                // Draw route
+                drawRoute(userLat, userLng, destLat, destLng);
+
+                // Fit map to both markers
+                const bounds = new google.maps.LatLngBounds();
+                bounds.extend({ lat: userLat, lng: userLng });
+                bounds.extend({ lat: destLat, lng: destLng });
+                map.fitBounds(bounds);
+
+                // Call Django backend to get distance info
+                fetch(`/calculate_distance/?user_lat=${userLat}&user_lng=${userLng}&dest_lat=${destLat}&dest_lng=${destLng}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.error) {
+                            console.error("Distance API error:", data.error);
+                            if (distanceInfo)
+                                distanceInfo.textContent = "Unable to calculate distance.";
+                        } else {
+                            if (distanceInfo) {
+                                distanceInfo.textContent = `Distance: ${data.distance_text} • Duration: ${data.duration_text}`;
+                                distanceInfo.style.color = "var(--primary)";
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Distance fetch failed:", err);
+                        if (distanceInfo)
+                            distanceInfo.textContent = "Failed to get route information.";
+                    });
+            },
+            err => {
+                console.warn("User denied location:", err);
+                if (distanceInfo)
+                    distanceInfo.textContent = "Enable location to calculate route.";
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    }
+
+    // Start: determine task coordinates
+    if (rawLat && rawLng) {
+        placeTaskMarker(rawLat, rawLng);
+    } else if (taskAddress) {
+        geocoder.geocode({ address: taskAddress }, function (results, status) {
+            if (status === "OK" && results[0]) {
+                const loc = results[0].geometry.location;
+                placeTaskMarker(loc.lat(), loc.lng());
+            } else {
+                console.error("Geocode failed:", status);
+                if (distanceInfo) distanceInfo.textContent = "Unable to locate task address.";
+            }
+        });
+    } else {
+        if (distanceInfo) distanceInfo.textContent = "No location available for this task.";
+    }
+});
 </script>
+
 {% endblock %}

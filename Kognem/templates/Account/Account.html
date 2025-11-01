@@ -4,42 +4,665 @@
 {% block title %}Kognem — Պրոֆիլ{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/Account.css' %}">
 <style>
-.account-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-.account-buttons a {
-    flex: 1;
-    text-align: center;
-    padding: 10px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 6px;
-    text-decoration: none;
-    color: #fff;
-    background: #6aa84f;
-    transition: 0.3s;
-}
-.account-buttons a:hover {
-    opacity: 0.85;
-}
+    :root {
+        --primary: #6C63FF;
+        --primary-dark: #5A52D5;
+        --primary-light: #8B85FF;
+        --secondary: #FF6584;
+        --secondary-dark: #E04F6D;
+        --secondary-light: #FF8BA0;
+        --accent: #36D1DC;
+        --light-bg: #FFFFFF;
+        --light-secondary: #F8F9FA;
+        --light-border: #E9ECEF;
+        --text-dark: #2D3748;
+        --text-medium: #4A5568;
+        --text-light: #718096;
+        --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
+        --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
+        --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, #FF9A3D 100%);
+    }
+
+    .page-main {
+        min-height: 80vh;
+        padding: 40px 20px;
+        background: var(--light-bg);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+    }
+
+    .profile-header {
+        text-align: center;
+        margin-bottom: 60px;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.2s;
+    }
+
+    .profile-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 15px;
+        color: var(--text-dark);
+        line-height: 1.2;
+    }
+
+    .profile-subtitle {
+        font-size: 1.2rem;
+        color: var(--text-medium);
+        font-weight: 500;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    .welcome-user {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 20px;
+        padding: 20px;
+        background: var(--light-secondary);
+        border-radius: 16px;
+        border: 1px solid var(--light-border);
+        max-width: 400px;
+        margin: 20px auto 0;
+        box-shadow: var(--shadow-light);
+    }
+
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        background: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: 700;
+        box-shadow: var(--shadow-medium);
+    }
+
+    .user-info h3 {
+        margin: 0 0 5px 0;
+        color: var(--text-dark);
+        font-size: 1.3rem;
+    }
+
+    .user-info p {
+        margin: 0;
+        color: var(--text-medium);
+        font-size: 0.95rem;
+    }
+
+    .account-buttons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px;
+        margin-bottom: 60px;
+    }
+
+    .account-button {
+        position: relative;
+        padding: 40px 30px;
+        text-decoration: none;
+        border-radius: 20px;
+        background: white;
+        border: 1px solid var(--light-border);
+        box-shadow: var(--shadow-light);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        overflow: hidden;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .account-button:nth-child(1) { animation-delay: 0.3s; }
+    .account-button:nth-child(2) { animation-delay: 0.5s; }
+    .account-button:nth-child(3) { animation-delay: 0.7s; }
+
+    .account-button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--primary);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
+    }
+
+    .account-button:hover::before {
+        transform: scaleX(1);
+    }
+
+    .account-button:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-large);
+        border-color: var(--primary-light);
+    }
+
+    .button-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 25px;
+        color: white;
+        font-size: 2rem;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-medium);
+    }
+
+    .account-button:hover .button-icon {
+        transform: scale(1.1);
+        background: var(--primary-dark);
+    }
+
+    .button-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+        color: var(--text-dark);
+        line-height: 1.3;
+    }
+
+    .button-description {
+        font-size: 1rem;
+        color: var(--text-medium);
+        line-height: 1.6;
+        max-width: 280px;
+        font-weight: 400;
+    }
+
+    .stats-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+        margin: 60px 0;
+    }
+
+    .stat-card {
+        background: white;
+        border: 1px solid var(--light-border);
+        border-radius: 16px;
+        padding: 30px 25px;
+        text-align: center;
+        transition: all 0.3s ease;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.9s;
+        box-shadow: var(--shadow-light);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--primary);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+        color: var(--primary);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 1rem;
+        color: var(--text-medium);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .recent-activity {
+        margin-top: 60px;
+        background: white;
+        border: 1px solid var(--light-border);
+        border-radius: 20px;
+        padding: 40px;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 1.1s;
+        box-shadow: var(--shadow-light);
+    }
+
+    .activity-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 35px;
+    }
+
+    .activity-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin: 0;
+    }
+
+    .view-all {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .view-all:hover {
+        color: var(--primary-dark);
+        transform: translateX(3px);
+    }
+
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 20px;
+        border-radius: 12px;
+        background: var(--light-secondary);
+        border: 1px solid var(--light-border);
+        transition: all 0.3s ease;
+    }
+
+    .activity-item:hover {
+        background: white;
+        transform: translateX(5px);
+        border-color: var(--primary-light);
+        box-shadow: var(--shadow-light);
+    }
+
+    .activity-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: white;
+        flex-shrink: 0;
+        box-shadow: var(--shadow-medium);
+    }
+
+    .activity-content {
+        flex: 1;
+    }
+
+    .activity-text {
+        color: var(--text-dark);
+        margin-bottom: 5px;
+        font-size: 1rem;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+
+    .activity-time {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+    @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin: 40px 0;
+    }
+
+    .quick-action {
+        background: white;
+        border: 1px solid var(--light-border);
+        border-radius: 12px;
+        padding: 20px;
+        text-align: center;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-light);
+    }
+
+    .quick-action:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-medium);
+        border-color: var(--primary-light);
+    }
+
+    .quick-action i {
+        font-size: 1.5rem;
+        color: var(--primary);
+        margin-bottom: 10px;
+        display: block;
+    }
+
+    .quick-action span {
+        color: var(--text-dark);
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    /* Enhanced Card Design */
+    .card-hover {
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-large);
+    }
+
+    /* Section Dividers */
+    .section-divider {
+        height: 2px;
+        background: linear-gradient(90deg, transparent, var(--light-border), transparent);
+        margin: 50px 0;
+        border: none;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .profile-title {
+            font-size: 2.2rem;
+        }
+        
+        .account-buttons {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        
+        .stats-container {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .button-title {
+            font-size: 1.3rem;
+        }
+        
+        .account-button {
+            padding: 30px 20px;
+        }
+
+        .activity-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .quick-actions {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .welcome-user {
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .profile-title {
+            font-size: 1.8rem;
+        }
+        
+        .button-title {
+            font-size: 1.2rem;
+        }
+        
+        .activity-title {
+            font-size: 1.5rem;
+        }
+        
+        .activity-item {
+            padding: 15px;
+        }
+
+        .quick-actions {
+            grid-template-columns: 1fr;
+        }
+
+        .page-main {
+            padding: 20px 15px;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block body %}
 <main class="page-main">
     <section class="profile-container">
-        <h1 class="profile-title">Իմ անձնական էջը</h1>
-
-        <!-- Three buttons -->
-        <div class="account-buttons">
-            <a href="{% url 'myinfo' %}">My Info</a>
-            <a href="{% url 'myposts' %}">My Posts</a>
-            <a href="{% url 'notifications' %}">Notifications</a>
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <h1 class="profile-title">Իմ անձնական էջը</h1>
+            <p class="profile-subtitle">Կառավարեք Ձեր տվյալները, հայտարարությունները և նախապատվությունները</p>
+            
+            <div class="welcome-user">
+                <div class="user-avatar">
+                    {{ user.username|first|upper }}
+                </div>
+                <div class="user-info">
+                    <h3>Բարի վերադարձ, {{ user.profile.full_name|default:user.username }}!</h3>
+                    <p>Ձեր հաշիվը ակտիվ է և պատրաստ է օգտագործման</p>
+                </div>
+            </div>
         </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <a href="{% url 'create_post' %}" class="quick-action card-hover">
+                <i class="fas fa-plus-circle"></i>
+                <span>Նոր հայտարարություն</span>
+            </a>
+            <a href="{% url 'messages_list' %}" class="quick-action card-hover">
+                <i class="fas fa-envelope"></i>
+                <span>Հաղորդագրություններ</span>
+            </a>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Profile Navigation Cards -->
+        <div class="account-buttons">
+            <a href="{% url 'myinfo' %}" class="account-button">
+                <div class="button-icon">
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <div class="button-title">Իմ Տվյալները</div>
+                <div class="button-description">Կառավարեք Ձեր անձնական տեղեկությունները և հաշվի կարգավորումները</div>
+            </a>
+            
+            <a href="{% url 'myposts' %}" class="account-button">
+                <div class="button-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="button-title">Իմ Հայտարարությունները</div>
+                <div class="button-description">Դիտեք և կառավարեք բոլոր Ձեր ստեղծված առաջադրանքներն ու հայտարարությունները</div>
+            </a>
+            
+            <a href="{% url 'notifications' %}" class="account-button">
+                <div class="button-icon">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="button-title">Ծանուցումներ</div>
+                <div class="button-description">Ստուգեք Ձեր վերջին ծանուցումներն ու հաղորդագրությունները</div>
+            </a>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stats-container">
+            <div class="stat-card card-hover">
+                <div class="stat-number">12</div>
+                <div class="stat-label">Ակտիվ Հայտարարություններ</div>
+            </div>
+            <div class="stat-card card-hover">
+                <div class="stat-number">47</div>
+                <div class="stat-label">Ընդհանուր Առաջադրանքներ</div>
+            </div>
+            <div class="stat-card card-hover">
+                <div class="stat-number">8</div>
+                <div class="stat-label">Նոր Հաղորդագրություններ</div>
+            </div>
+            <div class="stat-card card-hover">
+                <div class="stat-number">94%</div>
+                <div class="stat-label">Գնահատական</div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="recent-activity">
+            <div class="activity-header">
+                <h2 class="activity-title">Վերջին Գործունեություն</h2>
+                <a href="#" class="view-all">
+                    Տեսնել բոլորը
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+            <div class="activity-list">
+                <div class="activity-item card-hover">
+                    <div class="activity-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Ձեր «Կայքի դիզայն» առաջադրանքը ավարտված է</div>
+                        <div class="activity-time">2 ժամ առաջ</div>
+                    </div>
+                </div>
+                <div class="activity-item card-hover">
+                    <div class="activity-icon">
+                        <i class="fas fa-comment"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Նոր հաղորդագրություն Արմենից «Բջջային հավելվածի մշակում» առաջադրանքի մասին</div>
+                        <div class="activity-time">5 ժամ առաջ</div>
+                    </div>
+                </div>
+                <div class="activity-item card-hover">
+                    <div class="activity-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Դուք ստացել եք 5 աստղանի գնահատական «Լոգոյի դիզայն» առաջադրանքի համար</div>
+                        <div class="activity-time">1 օր առաջ</div>
+                    </div>
+                </div>
+                <div class="activity-item card-hover">
+                    <div class="activity-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-text">Ձեր «Սոցիալական մեդիայի կառավարում» հայտարարությունը թարմացվել է</div>
+                        <div class="activity-time">2 օր առաջ</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
 </main>
 
-{% endblock %} 
+<script>
+    // Interactive animations
+    document.addEventListener('DOMContentLoaded', () => {
+        // Add enhanced hover effects to all interactive elements
+        const interactiveElements = document.querySelectorAll('.account-button, .stat-card, .activity-item, .quick-action');
+        
+        interactiveElements.forEach(element => {
+            element.addEventListener('mouseenter', function() {
+                if (this.classList.contains('account-button')) {
+                    this.style.transform = 'translateY(-8px)';
+                } else if (this.classList.contains('stat-card')) {
+                    this.style.transform = 'translateY(-5px)';
+                } else if (this.classList.contains('quick-action')) {
+                    this.style.transform = 'translateY(-3px)';
+                } else {
+                    this.style.transform = 'translateX(5px)';
+                }
+            });
+            
+            element.addEventListener('mouseleave', function() {
+                if (this.classList.contains('account-button')) {
+                    this.style.transform = 'translateY(0)';
+                } else if (this.classList.contains('stat-card')) {
+                    this.style.transform = 'translateY(0)';
+                } else if (this.classList.contains('quick-action')) {
+                    this.style.transform = 'translateY(0)';
+                } else {
+                    this.style.transform = 'translateX(0)';
+                }
+            });
+        });
+
+        // Add scroll animations
+        const observerOptions = {
+            threshold: 0.05,
+            rootMargin: '0px 0px -30px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.account-button, .stat-card, .recent-activity, .quick-actions').forEach(element => {
+            element.style.animationPlayState = 'paused';
+            observer.observe(element);
+        });
+    });
+</script>
+{% endblock %}

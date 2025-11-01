@@ -4,84 +4,481 @@
 {% block title %}Kognem — Պրոֆիլ{% endblock %}
 
 {% block extra_head %}
-<link rel="stylesheet" href="{% static 'css/Account.css' %}">
 <style>
-.edit-input{display:none;width:100%;padding:5px;margin-top:3px;border:1px solid #ccc;border-radius:4px;}
-.error-msg{color:red;font-size:12px;margin-top:2px;display:none;}
-.success-msg{color:green;font-size:12px;margin-top:2px;display:none;}
-.controls button{margin-top:5px;margin-right:5px;}
-.invalid{border-color:red;}
-.controls button.save{background:linear-gradient(90deg,#2ecc71,#27ae60);color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;}
-.controls button.cancel{background:#ff4d4d;color:#fff;border:none;padding:6px 12px;border-radius:8px;cursor:pointer;}
-#logout-btn{display:block;width:100%;margin-top:20px;padding:10px;background:#ff4d4d;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer;}
+    :root {
+        --primary: #6C63FF;
+        --primary-dark: #5A52D5;
+        --primary-light: #8B85FF;
+        --secondary: #FF6584;
+        --secondary-dark: #E04F6D;
+        --secondary-light: #FF8BA0;
+        --accent: #36D1DC;
+        --light-bg: #FFFFFF;
+        --light-secondary: #F8F9FA;
+        --light-border: #E9ECEF;
+        --text-dark: #2D3748;
+        --text-medium: #4A5568;
+        --text-light: #718096;
+        --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
+        --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
+        --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    }
+
+    .page-main {
+        min-height: 80vh;
+        padding: 40px 20px;
+        background: var(--light-bg);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+    }
+
+    .profile-header {
+        text-align: center;
+        margin-bottom: 50px;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.2s;
+    }
+
+    .profile-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 15px;
+        background: var(--gradient-primary);
+        -webkit-text-fill-color: transparent;
+        line-height: 1.2;
+    }
+
+    .profile-subtitle {
+        font-size: 1.1rem;
+        color: var(--text-medium);
+        font-weight: 500;
+        line-height: 1.6;
+    }
+
+    /* Profile Form */
+    .profile-form {
+        background: white;
+        border: 1px solid var(--light-border);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: var(--shadow-light);
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.4s;
+    }
+
+    .profile-field {
+        display: flex;
+        align-items: flex-start;
+        gap: 30px;
+        padding: 25px 0;
+        border-bottom: 1px solid var(--light-border);
+        transition: all 0.3s ease;
+    }
+
+    .profile-field:last-child {
+        border-bottom: none;
+    }
+
+    .profile-field:hover {
+        background: var(--light-secondary);
+        margin: 0 -20px;
+        padding: 25px 20px;
+        border-radius: 12px;
+    }
+
+    .profile-field label {
+        min-width: 180px;
+        font-weight: 600;
+        color: var(--text-dark);
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .profile-field label i {
+        color: var(--primary);
+        font-size: 1.1rem;
+        width: 20px;
+    }
+
+    .field-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .current-value {
+        font-size: 1.1rem;
+        color: var(--text-dark);
+        font-weight: 500;
+        padding: 8px 0;
+        min-height: 40px;
+        display: flex;
+        align-items: center;
+    }
+
+    .edit-input {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid var(--light-border);
+        border-radius: 10px;
+        font-size: 1rem;
+        color: var(--text-dark);
+        background: white;
+        transition: all 0.3s ease;
+        display: none;
+    }
+
+    .edit-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+    }
+
+    .edit-input.invalid {
+        border-color: var(--secondary);
+        box-shadow: 0 0 0 3px rgba(255, 101, 132, 0.1);
+    }
+
+    .field-controls {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .edit-btn, .save-btn, .cancel-btn {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 80px;
+        justify-content: center;
+    }
+
+    .edit-btn {
+        background: var(--light-secondary);
+        color: var(--text-medium);
+        border: 1px solid var(--light-border);
+    }
+
+    .edit-btn:hover {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        transform: translateY(-1px);
+    }
+
+    .save-btn {
+        background: var(--gradient-primary);
+        color: white;
+        box-shadow: var(--shadow-light);
+    }
+
+    .save-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .cancel-btn {
+        background: var(--light-secondary);
+        color: var(--text-medium);
+        border: 1px solid var(--light-border);
+    }
+
+    .cancel-btn:hover {
+        background: var(--secondary-light);
+        color: white;
+        border-color: var(--secondary);
+    }
+
+    /* Messages */
+    .error-msg, .success-msg {
+        font-size: 0.85rem;
+        font-weight: 500;
+        padding: 8px 12px;
+        border-radius: 6px;
+        display: none;
+        align-items: center;
+        gap: 8px;
+        margin-top: 5px;
+    }
+
+    .error-msg {
+        background: rgba(255, 101, 132, 0.05);
+        color: var(--secondary);
+        border: 1px solid rgba(255, 101, 132, 0.2);
+    }
+
+    .success-msg {
+        background: rgba(16, 185, 129, 0.05);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .global-success {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        font-weight: 600;
+        display: none;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    /* Logout Button */
+    .logout-section {
+        margin-top: 50px;
+        text-align: center;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.6s;
+    }
+
+    .logout-btn {
+        background: var(--secondary);
+        color: white;
+        border: none;
+        padding: 14px 30px;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        box-shadow: var(--shadow-light);
+    }
+
+    .logout-btn:hover {
+        background: var(--secondary-dark);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .profile-container {
+            max-width: 100%;
+        }
+
+        .profile-form {
+            padding: 30px 25px;
+        }
+
+        .profile-field {
+            flex-direction: column;
+            gap: 15px;
+            align-items: stretch;
+        }
+
+        .profile-field label {
+            min-width: auto;
+        }
+
+        .field-controls {
+            justify-content: flex-end;
+        }
+
+        .profile-field:hover {
+            margin: 0 -10px;
+            padding: 25px 10px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .profile-title {
+            font-size: 2rem;
+        }
+
+        .profile-form {
+            padding: 25px 20px;
+        }
+
+        .field-controls {
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .edit-btn, .save-btn, .cancel-btn {
+            width: 100%;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block body %}
 <main class="page-main">
     <section class="profile-container">
-        <h1 class="profile-title">Իմ անձնական էջը</h1>
+        <!-- Header -->
+        <div class="profile-header">
+            <h1 class="profile-title">Իմ Տվյալները</h1>
+            <p class="profile-subtitle">Կառավարեք Ձեր անձնական տեղեկություններն ու հաշվի կարգավորումները</p>
+        </div>
 
+        <!-- Profile Form -->
         <form id="accountForm" method="POST" action="{% url 'Account' %}">
             {% csrf_token %}
-            <div id="globalSuccess" class="success-msg">✔ Պահպանված է</div>
-
-            <div class="profile-field" data-field="full_name">
-                <label>Անուն Ազգանուն</label>
-                <div class="values">
-                    <div class="current-value">{{ user.first_name }} {{ user.last_name }}</div>
-                    <input class="edit-input" name="full_name" type="text" value="{{ user.first_name }} {{ user.last_name }}">
-                    <div class="error-msg"></div>
-                </div>
-                <div class="controls"><button type="button" class="edit-btn">✏️</button></div>
+            
+            <div id="globalSuccess" class="global-success">
+                <i class="fas fa-check-circle"></i>
+                Տվյալները հաջողությամբ պահպանված են
             </div>
 
-            <div class="profile-field" data-field="username">
-                <label>Օգտագործանուն</label>
-                <div class="values">
-                    <div class="current-value">{{ user.username }}</div>
-                    <input class="edit-input" name="username" type="text" value="{{ user.username }}">
-                    <div class="error-msg"></div>
-                    <div class="success-msg">✔ Օգտագործանունը ազատ է</div>
+            <div class="profile-form">
+                <!-- Full Name -->
+                <div class="profile-field" data-field="full_name">
+                    <label>
+                        <i class="fas fa-user"></i>
+                        Անուն Ազգանուն
+                    </label>
+                    <div class="field-content">
+                        <div class="current-value">{{ user.first_name }} {{ user.last_name }}</div>
+                        <input class="edit-input" name="full_name" type="text" value="{{ user.first_name }} {{ user.last_name }}" placeholder="Մուտքագրեք Ձեր անունը և ազգանունը">
+                        <div class="error-msg">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span></span>
+                        </div>
+                    </div>
+                    <div class="field-controls">
+                        <button type="button" class="edit-btn">
+                            <i class="fas fa-edit"></i>
+                            Փոխել
+                        </button>
+                    </div>
                 </div>
-                <div class="controls"><button type="button" class="edit-btn">✏️</button></div>
-            </div>
 
-            <div class="profile-field" data-field="email">
-                <label>Էլ. հասցե</label>
-                <div class="values">
-                    <div class="current-value">{{ user.email }}</div>
-                    <input class="edit-input" name="email" type="email" value="{{ user.email }}">
-                    <div class="error-msg"></div>
+                <!-- Username -->
+                <div class="profile-field" data-field="username">
+                    <label>
+                        <i class="fas fa-at"></i>
+                        Օգտանուն
+                    </label>
+                    <div class="field-content">
+                        <div class="current-value">{{ user.username }}</div>
+                        <input class="edit-input" name="username" type="text" value="{{ user.username }}" placeholder="Մուտքագրեք նոր օգտանուն">
+                        <div class="error-msg">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span></span>
+                        </div>
+                        <div class="success-msg">
+                            <i class="fas fa-check-circle"></i>
+                            Օգտանունը հասանելի է
+                        </div>
+                    </div>
+                    <div class="field-controls">
+                        <button type="button" class="edit-btn">
+                            <i class="fas fa-edit"></i>
+                            Փոխել
+                        </button>
+                    </div>
                 </div>
-                <div class="controls"><button type="button" class="edit-btn">✏️</button></div>
-            </div>
 
-            <div class="profile-field" data-field="phone">
-                <label>Հեռախոսահամար</label>
-                <div class="values">
-                    <div class="current-value">{{ profile.phone }}</div>
-                    <input class="edit-input" name="phone" type="text" value="{{ profile.phone }}" placeholder="0XXXXXXXX">
-                    <div class="error-msg"></div>
+                <!-- Email -->
+                <div class="profile-field" data-field="email">
+                    <label>
+                        <i class="fas fa-envelope"></i>
+                        Էլ. հասցե
+                    </label>
+                    <div class="field-content">
+                        <div class="current-value">{{ user.email }}</div>
+                        <input class="edit-input" name="email" type="email" value="{{ user.email }}" placeholder="Մուտքագրեք Ձեր էլ. հասցեն">
+                        <div class="error-msg">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span></span>
+                        </div>
+                    </div>
+                    <div class="field-controls">
+                        <button type="button" class="edit-btn">
+                            <i class="fas fa-edit"></i>
+                            Փոխել
+                        </button>
+                    </div>
                 </div>
-                <div class="controls"><button type="button" class="edit-btn">✏️</button></div>
-            </div>
 
-            <div class="profile-field" data-field="verification_id">
-                <label>Հաստատման ID</label>
-                <div class="values">
-                    <div class="current-value">{{ profile.verification_id }}</div>
-                    <input class="edit-input" name="verification_id" type="text" value="{{ profile.verification_id }}">
-                    <div class="error-msg"></div>
+                <!-- Phone -->
+                <div class="profile-field" data-field="phone">
+                    <label>
+                        <i class="fas fa-phone"></i>
+                        Հեռախոսահամար
+                    </label>
+                    <div class="field-content">
+                        <div class="current-value">{{ profile.phone|default:"Չի նշված" }}</div>
+                        <input class="edit-input" name="phone" type="text" value="{{ profile.phone }}" placeholder="0XXXXXXXX">
+                        <div class="error-msg">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span></span>
+                        </div>
+                    </div>
+                    <div class="field-controls">
+                        <button type="button" class="edit-btn">
+                            <i class="fas fa-edit"></i>
+                            Փոխել
+                        </button>
+                    </div>
                 </div>
-                <div class="controls"><button type="button" class="edit-btn">✏️</button></div>
+
+                <!-- Verification ID -->
+                <div class="profile-field" data-field="verification_id">
+                    <label>
+                        <i class="fas fa-id-card"></i>
+                        Հաստատման ID
+                    </label>
+                    <div class="field-content">
+                        <div class="current-value">{{ profile.verification_id|default:"Չի նշված" }}</div>
+                        <input class="edit-input" name="verification_id" type="text" value="{{ profile.verification_id }}" placeholder="Մուտքագրեք հաստատման ID">
+                        <div class="error-msg">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span></span>
+                        </div>
+                    </div>
+                    <div class="field-controls">
+                        <button type="button" class="edit-btn">
+                            <i class="fas fa-edit"></i>
+                            Փոխել
+                        </button>
+                    </div>
+                </div>
             </div>
         </form>
 
-        <form id="logout-form" action="{% url 'logout' %}" method="post" style="margin-top: 30px;">
-            {% csrf_token %}
-            <button id="logout-btn" type="submit">Դուրս գալ</button>
-        </form>
+        <!-- Logout Section -->
+        <div class="logout-section">
+            <form id="logout-form" action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Դուրս գալ հաշվից
+                </button>
+            </form>
+        </div>
     </section>
 </main>
 
@@ -92,110 +489,141 @@ let editingField = null;
 
 function showError(fieldEl, msg){
     const err = fieldEl.querySelector('.error-msg');
-    err.textContent = msg;
-    err.style.display='block';
+    err.querySelector('span').textContent = msg;
+    err.style.display = 'flex';
     fieldEl.querySelector('.edit-input').classList.add('invalid');
 }
+
 function hideError(fieldEl){
     const err = fieldEl.querySelector('.error-msg');
-    err.style.display='none';
+    err.style.display = 'none';
     fieldEl.querySelector('.edit-input').classList.remove('invalid');
 }
+
 function showSuccess(fieldEl){
-    const msg = fieldEl.querySelector('.success-msg');
-    msg.style.display='block';
-    setTimeout(()=> msg.style.display='none', 2000);
+    const successMsg = fieldEl.querySelector('.success-msg');
+    if(successMsg){
+        successMsg.style.display = 'flex';
+        setTimeout(() => successMsg.style.display = 'none', 3000);
+    }
 }
 
-// ---------------- Edit Mode ----------------
+function showGlobalSuccess(){
+    const globalSuccess = document.getElementById('globalSuccess');
+    globalSuccess.style.display = 'flex';
+    setTimeout(() => globalSuccess.style.display = 'none', 3000);
+}
+
+// Edit Mode Management
 function enterEditMode(fieldEl){
     if(editingField) return;
     editingField = fieldEl;
-    document.querySelectorAll('.edit-btn').forEach(b=>b.style.display='none');
+    
+    // Hide all edit buttons
+    document.querySelectorAll('.edit-btn').forEach(btn => btn.style.display = 'none');
 
     const span = fieldEl.querySelector('.current-value');
     const input = fieldEl.querySelector('.edit-input');
-    span.style.display='none';
-    input.style.display='block';
+    span.style.display = 'none';
+    input.style.display = 'block';
     input.focus();
 
-    // hide error as soon as user types
-    input.addEventListener('input', ()=> hideError(fieldEl));
+    // Hide error on input
+    input.addEventListener('input', () => hideError(fieldEl));
 
-    const controls = fieldEl.querySelector('.controls');
+    const controls = fieldEl.querySelector('.field-controls');
+    controls.innerHTML = '';
 
     const saveBtn = document.createElement('button');
-    saveBtn.type='button';
-    saveBtn.textContent='💾';
-    saveBtn.classList.add('save');
+    saveBtn.type = 'button';
+    saveBtn.textContent = 'Պահպանել';
+    saveBtn.classList.add('save-btn');
+    saveBtn.innerHTML = '<i class="fas fa-save"></i>Պահպանել';
 
     const cancelBtn = document.createElement('button');
-    cancelBtn.type='button';
-    cancelBtn.textContent='❌';
-    cancelBtn.classList.add('cancel');
+    cancelBtn.type = 'button';
+    cancelBtn.textContent = 'Չեղարկել';
+    cancelBtn.classList.add('cancel-btn');
+    cancelBtn.innerHTML = '<i class="fas fa-times"></i>Չեղարկել';
 
     controls.appendChild(saveBtn);
     controls.appendChild(cancelBtn);
 
-    cancelBtn.addEventListener('click', ()=>{
+    cancelBtn.addEventListener('click', () => {
         input.value = span.textContent;
-        span.style.display='block';
-        input.style.display='none';
-        saveBtn.remove();
-        cancelBtn.remove();
+        span.style.display = 'block';
+        input.style.display = 'none';
+        controls.innerHTML = '<button type="button" class="edit-btn"><i class="fas fa-edit"></i>Փոխել</button>';
         editingField = null;
-        document.querySelectorAll('.edit-btn').forEach(b=>b.style.display='');
+        document.querySelectorAll('.edit-btn').forEach(btn => btn.style.display = '');
         hideError(fieldEl);
+        
+        // Re-attach event listener to the new edit button
+        controls.querySelector('.edit-btn').addEventListener('click', () => enterEditMode(fieldEl));
     });
 
-    saveBtn.addEventListener('click', async ()=>{
+    saveBtn.addEventListener('click', async () => {
         const value = input.value.trim();
         const field = fieldEl.dataset.field;
 
-        // CLIENT-SIDE VALIDATION
+        // Client-side validation
         if(field === 'username'){
-            if(value.length<3){
-                showError(fieldEl,'Օգտագործանունը պետք է լինի ≥3 նիշ');
+            if(value.length < 3){
+                showError(fieldEl, 'Օգտանունը պետք է պարունակի առնվազն 3 նիշ');
                 return;
             }
             const resp = await fetch(`/check-username/?username=${value}`);
             const data = await resp.json();
             if(data.exists && value !== "{{ user.username }}"){
-                showError(fieldEl,'Օգտագործանունը արդեն զբաղված է');
+                showError(fieldEl, 'Օգտանունը արդեն զբաղված է');
                 return;
-            } 
+            }
         }
         
-    if(field === 'email'){
-        const resp = await fetch(`/check-email/?email=${value}`);
-        const data = await resp.json();
-        if(data.exists && value !== "{{ user.email }}"){
-            showError(fieldEl,'Էլ. հասցեն արդեն օգտագործվում է');
-            return;
+        if(field === 'email'){
+            const resp = await fetch(`/check-email/?email=${value}`);
+            const data = await resp.json();
+            if(data.exists && value !== "{{ user.email }}"){
+                showError(fieldEl, 'Էլ. հասցեն արդեն օգտագործվում է');
+                return;
+            }
         }
-    }
 
-    if(field === 'phone'){
-        const resp = await fetch(`/check-phone/?phone=${value}`);
-        const data = await resp.json();
-        if(data.exists && value !== "{{ profile.phone }}"){
-            showError(fieldEl,'Այս հեռախոսահամարը օգտագործվում է այլ օգտատիրոջ կողմից');
-            return;
+        if(field === 'phone' && value){
+            if(!value.startsWith('0') || value.length !== 9){
+                showError(fieldEl, 'Հեռախոսահամարը պետք է սկսվի 0-ով և ունենա 9 թվանշան');
+                return;
+            }
+            const resp = await fetch(`/check-phone/?phone=${value}`);
+            const data = await resp.json();
+            if(data.exists && value !== "{{ profile.phone }}"){
+                showError(fieldEl, 'Այս հեռախոսահամարը օգտագործվում է այլ օգտատիրոջ կողմից');
+                return;
+            }
         }
-    }
 
-    if(field === 'verification_id'){
-        const resp = await fetch(`/check-id/?verification_id=${value}`);
-        const data = await resp.json();
-        if(data.exists && value !== "{{ profile.verification_id }}"){
-            showError(fieldEl,'Այս ID-ն օգտագործվում է այլ օգտատիրոջ կողմից');
+        if(field === 'verification_id' && value){
+            if(!/^[A-Z0-9]+$/.test(value)){
+                showError(fieldEl, 'Հաստատման ID-ն պետք է պարունակի միայն մեծատառ լատինական տառեր և թվեր');
+                return;
+            }
+            const resp = await fetch(`/check-id/?verification_id=${value}`);
+            const data = await resp.json();
+            if(data.exists && value !== "{{ profile.verification_id }}"){
+                showError(fieldEl, 'Այս ID-ն օգտագործվում է այլ օգտատիրոջ կողմից');
+                return;
+            }
+        }
+
+        if(field === 'full_name' && value.length < 3){
+            showError(fieldEl, 'Անունը և ազգանունը պարտադիր են');
             return;
         }
-    }
-        if(field==='full_name' && value.length<3){ showError(fieldEl,'Անունը պարտադիր է'); return; }
-        if(field==='email' && !value.includes('@')){ showError(fieldEl,'Սխալ էլ. հասցե'); return; }
-        if(field==='phone' && (!value.startsWith('0') || value.length!==9)){ showError(fieldEl,'Հեռախոսը պետք է սկսվի 0-ով և ունենա 9 թվանշան'); return; }
-        if(field==='verification_id' && !/^[A-Z0-9]+$/.test(value)){ showError(fieldEl,'Մեծատառ և նիշ, օրինակ ALO123'); return; }
+
+        if(field === 'email' && !value.includes('@')){
+            showError(fieldEl, 'Խնդրում ենք մուտքագրել վավեր էլ. հասցե');
+            return;
+        }
 
         // Save via AJAX
         const formData = new FormData();
@@ -203,29 +631,39 @@ function enterEditMode(fieldEl){
         formData.append('value', value);
         formData.append('csrfmiddlewaretoken', csrfToken);
 
-        const res = await fetch(accountForm.action,{
-            method:'POST',
-            body: formData,
-            headers: {'X-Requested-With': 'XMLHttpRequest'}
-        });
+        try {
+            const res = await fetch(accountForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {'X-Requested-With': 'XMLHttpRequest'}
+            });
 
-        if(res.ok){
-            fieldEl.querySelector('.current-value').textContent=value;
-            span.style.display='block';
-            input.style.display='none';
-            saveBtn.remove();
-            cancelBtn.remove();
-            editingField = null;
-            document.querySelectorAll('.edit-btn').forEach(b=>b.style.display='');
-            showSuccess(fieldEl);
+            if(res.ok){
+                fieldEl.querySelector('.current-value').textContent = value || 'Չի նշված';
+                span.style.display = 'block';
+                input.style.display = 'none';
+                controls.innerHTML = '<button type="button" class="edit-btn"><i class="fas fa-edit"></i>Փոխել</button>';
+                editingField = null;
+                document.querySelectorAll('.edit-btn').forEach(btn => btn.style.display = '');
+                showSuccess(fieldEl);
+                showGlobalSuccess();
+                
+                // Re-attach event listener
+                controls.querySelector('.edit-btn').addEventListener('click', () => enterEditMode(fieldEl));
+            }
+        } catch (error) {
+            showError(fieldEl, 'Սխալ։ Փորձեք կրկին');
         }
     });
 }
 
-document.querySelectorAll('.edit-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-        const fieldEl = btn.closest('.profile-field');
-        enterEditMode(fieldEl);
+// Initialize edit buttons
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const fieldEl = btn.closest('.profile-field');
+            enterEditMode(fieldEl);
+        });
     });
 });
 </script>

@@ -1,13 +1,266 @@
 {% extends "base.html" %}
 
 {% block body %}
-<h2>Start a Chat</h2>
-<ul>
-  {% for u in users %}
-    <li>
-      {{ u.profile.full_name }} (@{{ u.username }})
-      <a href="{% url 'chat_room' u.id %}" class="btn-primary">Message</a>
-    </li>
-  {% endfor %}
-</ul>
+<div class="container">
+    <header>
+        <h1>Your Chats</h1>
+    </header>
+    
+    <div class="search-container">
+        <div class="search-box">
+            <span class="search-icon"><i class="fas fa-search"></i></span>
+            <input type="text" id="searchInput" placeholder="Search chats...">
+        </div>
+    </div>
+    
+    <div class="chats-list" id="chatsList">
+        {% for u in users %}
+        <div class="chat-item">
+            <div class="avatar">
+                {{ u.profile.full_name|slice:":2"|upper }}
+                <div class="status-indicator 
+                    {% cycle 'online' 'offline' 'busy' 'online' 'offline' %}">
+                </div>
+            </div>
+            <div class="chat-info">
+                <div class="chat-name">{{ u.profile.full_name }}</div>
+                <div class="chat-username">@{{ u.username }}</div>
+            </div>
+            <a href="{% url 'chat_room' u.id %}" class="message-btn">Message</a>
+        </div>
+        {% empty %}
+        <div class="empty-state">
+            <i class="fas fa-comments"></i>
+            <h3>No chats yet</h3>
+            <p>Start a conversation by messaging someone!</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-color: #4361ee;
+        --primary-light: #4895ef;
+        --secondary-color: #3f37c9;
+        --dark-color: #1e1e2e;
+        --light-color: #f8f9fa;
+        --gray-color: #adb5bd;
+        --success-color: #4cc9f0;
+        --danger-color: #f72585;
+        --border-radius: 12px;
+        --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        --transition: all 0.3s ease;
+    }
+
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #eaeaea;
+    }
+
+    h1 {
+        color: var(--dark-color);
+        font-weight: 700;
+        font-size: 28px;
+    }
+
+    .search-container {
+        background-color: white;
+        border-radius: var(--border-radius);
+        padding: 20px;
+        margin-bottom: 25px;
+        box-shadow: var(--shadow);
+    }
+
+    .search-box {
+        position: relative;
+        width: 100%;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 12px 20px 12px 45px;
+        border-radius: 30px;
+        border: 1px solid #e0e0e0;
+        background-color: white;
+        font-size: 16px;
+        transition: var(--transition);
+    }
+
+    .search-box input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-color);
+    }
+
+    .chats-list {
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+
+    .chat-item {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        border-bottom: 1px solid #f0f0f0;
+        transition: var(--transition);
+    }
+
+    .chat-item:hover {
+        background-color: #f8f9ff;
+    }
+
+    .chat-item:last-child {
+        border-bottom: none;
+    }
+
+    .avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background-color: var(--primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 18px;
+        margin-right: 15px;
+        position: relative;
+    }
+
+    .status-indicator {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid white;
+    }
+
+    .online {
+        background-color: var(--success-color);
+    }
+
+    .offline {
+        background-color: var(--gray-color);
+    }
+
+    .busy {
+        background-color: var(--danger-color);
+    }
+
+    .chat-info {
+        flex: 1;
+    }
+
+    .chat-name {
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 4px;
+    }
+
+    .chat-username {
+        color: var(--gray-color);
+        font-size: 14px;
+    }
+
+    .message-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-block;
+        box-shadow: 0 2px 5px rgba(67, 97, 238, 0.3);
+    }
+
+    .message-btn:hover {
+        background-color: var(--secondary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(67, 97, 238, 0.4);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--gray-color);
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+        color: #e0e0e0;
+    }
+
+    @media (max-width: 600px) {
+        .container {
+            padding: 15px;
+        }
+        
+        h1 {
+            font-size: 24px;
+        }
+        
+        .chat-item {
+            padding: 12px 15px;
+        }
+        
+        .avatar {
+            width: 45px;
+            height: 45px;
+            font-size: 16px;
+        }
+    }
+</style>
+
+<script>
+    // Search functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const chatItems = document.querySelectorAll('.chat-item');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                
+                chatItems.forEach(item => {
+                    const chatName = item.querySelector('.chat-name').textContent.toLowerCase();
+                    const chatUsername = item.querySelector('.chat-username').textContent.toLowerCase();
+                    
+                    if (chatName.includes(searchTerm) || chatUsername.includes(searchTerm)) {
+                        item.style.display = 'flex';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
 {% endblock %}

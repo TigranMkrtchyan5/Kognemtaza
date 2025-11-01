@@ -48,12 +48,14 @@ INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'django.contrib.humanize',
     'django.contrib.sessions',
     'django.contrib.messages',
     'rest_framework',  
     'django.contrib.staticfiles',
     'Kognem.apps.KognemConfig',
     'channels',
+    'core',
     
 ]
 
@@ -148,6 +150,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+USE_THOUSAND_SEPARATOR = True
+USE_L10N = True 
 
 
 # Static files (CSS, JavaScript, Images)
