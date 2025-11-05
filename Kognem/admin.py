@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import Post, Category , State , Province, Logo
-
+from django.contrib import admin
+from .models import UserLoginHistory, UserRegistrationData
 # If Post was already registered, unregister it first
 try:
     admin.site.unregister(Post)
@@ -40,3 +41,18 @@ class ProvinceAdmin(admin.ModelAdmin):
     search_fields = ('name', 'state__name')
 
 admin.site.register(Logo)
+
+
+
+
+
+@admin.register(UserLoginHistory)
+class UserLoginHistoryAdmin(admin.ModelAdmin):
+    list_display = ['user', 'login_time', 'ip_address', 'device_type', 'country']
+    list_filter = ['login_time', 'device_type', 'country']
+    search_fields = ['user__username', 'ip_address']
+
+@admin.register(UserRegistrationData)
+class UserRegistrationDataAdmin(admin.ModelAdmin):
+    list_display = ['user', 'registration_date', 'registration_ip', 'registration_device_type']
+    search_fields = ['user__username', 'registration_ip']

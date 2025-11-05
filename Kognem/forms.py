@@ -8,7 +8,7 @@ from .models import Profile
 import re
 from django.contrib.auth import authenticate
 from django import forms
-from .models import Post
+from .models import Post,Review
 
 
 PHONE_RE = re.compile(r'^0\d{8}$')  # 9 digits starting with 0
@@ -105,8 +105,47 @@ class CustomAuthenticationForm(AuthenticationForm):
     password = forms.CharField(widget=forms.PasswordInput(attrs={'class':'form-control','placeholder':'Գաղտնաբառ'}))
 
 class EmailOrUsernameAuthenticationForm(forms.Form):
-    username = forms.CharField(label="Email or Username", widget=forms.TextInput(attrs={'class':'form-control','placeholder':'Email or Username'}))
-    password = forms.CharField(label="Password", widget=forms.PasswordInput(attrs={'class':'form-control','placeholder':'Password'}))
+    username = forms.CharField(
+        label="Email or Username", 
+        widget=forms.TextInput(attrs={
+            'class':'form-control',
+            'placeholder':'Email or Username'
+        })
+    )
+    password = forms.CharField(
+        label="Password", 
+        widget=forms.PasswordInput(attrs={
+            'class':'form-control',
+            'placeholder':'Password'
+        })
+    )
+    remember_me = forms.BooleanField(
+        required=False,
+        initial=True,
+        widget=forms.CheckboxInput(attrs={
+            'class': 'form-check-input'
+        }),
+        label='Remember Me'
+    )
+
+    def clean(self):
+        username_or_email = self.cleaned_data.get('username')
+        password = self.cleaned_data.get('password')
+        if username_or_email and password:
+            user = authenticate(username=username_or_email, password=password)
+            if not user:
+                try:
+                    user_obj = User.objects.get(email=username_or_email)
+                    user = authenticate(username=user_obj.username, password=password)
+                except User.DoesNotExist:
+                    user = None
+            if not user:
+                raise forms.ValidationError("Սխալ էլ. հասցե/օգտագործանուն կամ գաղտնաբառ")
+            self.user_cache = user
+        return self.cleaned_data
+
+    def get_user(self):
+        return getattr(self, 'user_cache', None)
 
     def clean(self):
         username_or_email = self.cleaned_data.get('username')
@@ -200,3 +239,83 @@ class PostForm(forms.ModelForm):
         self.fields['category'].empty_label = None
         self.fields['state'].empty_label = ''
         self.fields['province'].empty_label = None
+
+
+
+class PasswordResetRequestForm(forms.Form):
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter your email address'
+        }),
+        label='Email'
+    )
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if not User.objects.filter(email=email).exists():
+            raise forms.ValidationError("No user found with this email address.")
+        return email
+
+class SetNewPasswordForm(forms.Form):
+    new_password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter new password'
+        }),
+        label='New Password',
+        min_length=6
+    )
+    new_password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'Confirm new password'
+        }),
+        label='Confirm New Password'
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get('new_password1')
+        password2 = cleaned_data.get('new_password2')
+
+        if password1 and password2 and password1 != password2:
+            raise forms.ValidationError("Passwords don't match.")
+
+        # Add password strength validation
+        if password1:
+            if len(password1) < 6:
+                raise forms.ValidationError("Password must be at least 6 characters long.")
+            if not any(char.isupper() for char in password1):
+                raise forms.ValidationError("Password must contain at least one uppercase letter.")
+
+        return cleaned_data
+    
+
+
+class ReviewForm(forms.ModelForm):
+    rating = forms.IntegerField(
+        widget=forms.HiddenInput(),
+        min_value=1,
+        max_value=5
+    )
+    
+    class Meta:
+        model = Review
+        fields = ['rating', 'comment']
+        widgets = {
+            'comment': forms.Textarea(attrs={
+                'rows': 4,
+                'placeholder': 'Share your experience working with this person... (optional)',
+                'class': 'form-control'
+            }),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.review_type = kwargs.pop('review_type', None)
+        super().__init__(*args, **kwargs)
+        
+        if self.review_type == 'worker_to_owner':
+            self.fields['comment'].widget.attrs['placeholder'] = 'How was your experience with the task owner? (optional)'
+        elif self.review_type == 'owner_to_worker':
+            self.fields['comment'].widget.attrs['placeholder'] = 'How was your experience with the worker? (optional)'

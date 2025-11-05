@@ -1,0 +1,724 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Task Applications - {{ post.title }}{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary: #6C63FF;
+        --primary-dark: #5A52D5;
+        --primary-light: #8B85FF;
+        --secondary: #FF6584;
+        --secondary-dark: #E04F6D;
+        --accent: #36D1DC;
+        --success: #10B981;
+        --warning: #F59E0B;
+        --danger: #EF4444;
+        --light-bg: #FFFFFF;
+        --light-secondary: #F8F9FA;
+        --light-border: #E9ECEF;
+        --text-dark: #2D3748;
+        --text-medium: #4A5568;
+        --text-light: #718096;
+        --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
+        --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
+        --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+    }
+
+    .applications-container {
+        min-height: 100vh;
+        padding: 40px 20px;
+    }
+
+    .applications-card {
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        overflow: hidden;
+        backdrop-filter: blur(10px);
+    }
+
+    .applications-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        padding: 40px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .applications-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+    }
+
+    .header-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .post-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    }
+
+    .post-meta {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.95rem;
+        opacity: 0.9;
+    }
+
+    .applications-count {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .applications-body {
+        padding: 40px;
+    }
+
+    /* Application Cards */
+    .application-card {
+        background: white;
+        border: 1px solid var(--light-border);
+        border-radius: 16px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .application-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+        border-color: var(--primary-light);
+    }
+
+    .application-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+    }
+
+    .applicant-header {
+        display: flex;
+        justify-content: between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+
+    .applicant-info {
+        flex: 1;
+    }
+
+    .applicant-name {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 5px;
+    }
+
+    .applicant-meta {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .meta-badge {
+        background: var(--light-secondary);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        color: var(--text-medium);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .message-section {
+        background: var(--light-secondary);
+        padding: 20px;
+        border-radius: 12px;
+        margin: 15px 0;
+        border-left: 4px solid var(--primary);
+    }
+
+    .message-label {
+        font-weight: 600;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .message-content {
+        color: var(--text-medium);
+        line-height: 1.6;
+        font-size: 0.95rem;
+    }
+
+    .no-message {
+        color: var(--text-light);
+        font-style: italic;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .btn-assign {
+        background: var(--success);
+        color: white;
+    }
+
+    .btn-message {
+        background: var(--primary);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: var(--light-secondary);
+        color: var(--text-dark);
+        border: 1px solid var(--light-border);
+    }
+
+    .btn-secondary:hover {
+        background: var(--primary-light);
+        color: white;
+        border-color: var(--primary);
+    }
+
+    .btn-view-profile {
+        background: var(--accent);
+        color: white;
+    }
+
+    /* View Tracking Button */
+    .view-track-btn {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .view-track-btn::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    .view-track-btn:active::after {
+        width: 300px;
+        height: 300px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 40px;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--primary);
+        margin-bottom: 20px;
+        opacity: 0.7;
+    }
+
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 10px;
+    }
+
+    .empty-description {
+        color: var(--text-medium);
+        margin-bottom: 30px;
+        line-height: 1.6;
+    }
+
+    /* Stats Overview */
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        border-radius: 16px;
+        padding: 25px;
+        color: white;
+        text-align: center;
+        box-shadow: var(--shadow-medium);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 5px;
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        font-weight: 600;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .applications-container {
+            padding: 20px 15px;
+        }
+
+        .applications-header {
+            padding: 30px 25px;
+        }
+
+        .applications-body {
+            padding: 25px;
+        }
+
+        .post-title {
+            font-size: 1.8rem;
+        }
+
+        .post-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .applicant-header {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .action-buttons {
+            width: 100%;
+            justify-content: stretch;
+        }
+
+        .btn {
+            flex: 1;
+            justify-content: center;
+        }
+
+        .stats-overview {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .applications-header {
+            padding: 25px 20px;
+        }
+
+        .applications-body {
+            padding: 20px;
+        }
+
+        .post-title {
+            font-size: 1.5rem;
+        }
+
+        .application-card {
+            padding: 20px;
+        }
+
+        .applicant-meta {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="applications-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-lg-10">
+                <div class="applications-card">
+                    <!-- Header -->
+                    <div class="applications-header">
+                        <div class="header-content">
+                            <h1 class="post-title">{{ post.title }}</h1>
+                            <div class="post-meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-users"></i>
+                                    <span>Applications Review</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <span>Posted: {{ post.created_at|date:"M d, Y" }}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-eye"></i>
+                                    <span id="views-count">{{ post.views_count|default:"0" }}</span> Views
+                                </div>
+                                <div class="applications-count">
+                                    <i class="fas fa-file-alt"></i>
+                                    {{ applications.count }} Applications
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stats Overview -->
+               
+
+                    <!-- Applications Body -->
+                    <div class="applications-body">
+                        {% if applications %}
+                            <div class="applications-list">
+                                {% for application in applications %}
+                                <div class="application-card">
+                                    <div class="applicant-header">
+                                        <div class="applicant-info">
+                                            <div class="applicant-name">
+                                                {{ application.applicant.username }}
+                                            </div>
+                                            <div class="applicant-meta">
+                                                <div class="meta-badge">
+                                                    <i class="fas fa-clock"></i>
+                                                    Applied {{ application.applied_at|date:"M d, Y" }}
+                                                </div>
+                                                <div class="meta-badge">
+                                                    <i class="fas fa-envelope"></i>
+                                                    {{ application.applicant.email }}
+                                                </div>
+                                                <div class="meta-badge">
+                                                    <i class="fas fa-eye"></i>
+                                                    <span id="profile-views-{{ application.applicant.id }}">0</span> Profile Views
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="action-buttons">
+                                            <button onclick="assignTask({{ post.id }}, {{ application.applicant.id }})" 
+                                                    class="btn btn-assign">
+                                                <i class="fas fa-user-check"></i>
+                                                Assign Task
+                                            </button>
+                                            <button onclick="trackMessageAndRedirect('{{ application.applicant.username }}')" 
+                                                    class="btn btn-message view-track-btn">
+                                                <i class="fas fa-comment"></i>
+                                                Message
+                                            </button>
+                                            <button onclick="trackProfileViewAndRedirect({{ application.applicant.id }})" 
+                                                    class="btn btn-view-profile view-track-btn">
+                                                <i class="fas fa-user"></i>
+                                                View Profile
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {% if application.message %}
+                                    <div class="message-section">
+                                        <div class="message-label">
+                                            <i class="fas fa-quote-left"></i>
+                                            Applicant's Message
+                                        </div>
+                                        <div class="message-content">
+                                            {{ application.message }}
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="message-section">
+                                        <div class="message-label">
+                                            <i class="fas fa-quote-left"></i>
+                                            Applicant's Message
+                                        </div>
+                                        <div class="message-content no-message">
+                                            No message provided by the applicant.
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <h3 class="empty-title">No Applications Yet</h3>
+                                <p class="empty-description">
+                                    Your task hasn't received any applications yet. <br>
+                                    Share your post to get more visibility and attract applicants.
+                                </p>
+                                <a href="{% url 'myposts' %}" class="btn btn-secondary">
+                                    <i class="fas fa-arrow-left"></i>
+                                    Back to My Posts
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        <!-- Back Button -->
+                        {% if applications %}
+                        <div class="text-center mt-4">
+                            <button onclick="trackViewAndRedirectToPosts()" class="btn btn-secondary view-track-btn">
+                                <i class="fas fa-arrow-left"></i>
+                                Back to My Posts
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Track when user views applicant profile
+function trackProfileViewAndRedirect(applicantId) {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+    button.disabled = true;
+
+    // Track the profile view
+    fetch(`/api/track-profile-view/${applicantId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update profile views count
+            const profileViewsElement = document.getElementById(`profile-views-${applicantId}`);
+            if (profileViewsElement) {
+                const currentViews = parseInt(profileViewsElement.textContent) || 0;
+                profileViewsElement.textContent = currentViews + 1;
+            }
+            
+            // Redirect to user profile
+            setTimeout(() => {
+                window.location.href = `/user/${applicantId}/`;
+            }, 500);
+        } else {
+            console.error('Profile view tracking failed:', data.error);
+            window.location.href = `/user/${applicantId}/`;
+        }
+    })
+    .catch(error => {
+        console.error('Network error:', error);
+        window.location.href = `/user/${applicantId}/`;
+    });
+}
+
+// Track when user sends message
+function trackMessageAndRedirect(username) {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Opening...';
+    button.disabled = true;
+
+    // Track the message action
+    fetch(`/api/track-message-sent/{{ post.id }}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            recipient: username
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update messages sent count
+            const messagesElement = document.getElementById('messages-sent');
+            if (messagesElement) {
+                const currentMessages = parseInt(messagesElement.textContent) || 0;
+                messagesElement.textContent = currentMessages + 1;
+            }
+            
+            // Redirect to chat
+            setTimeout(() => {
+                window.location.href = `/chat/create/${username}/`;
+            }, 500);
+        } else {
+            console.error('Message tracking failed:', data.error);
+            window.location.href = `/chat/create/${username}/`;
+        }
+    })
+    .catch(error => {
+        console.error('Network error:', error);
+        window.location.href = `/chat/create/${username}/`;
+    });
+}
+
+// Track when user goes back to posts
+function trackViewAndRedirectToPosts() {
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+    button.disabled = true;
+
+    // Track the navigation back to posts
+    fetch(`/api/track-navigation/{{ post.id }}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            action: 'back_to_posts',
+            source: 'applications_page'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Always redirect to posts, even if tracking fails
+        setTimeout(() => {
+            window.location.href = "{% url 'myposts' %}";
+        }, 500);
+    })
+    .catch(error => {
+        console.error('Navigation tracking failed:', error);
+        window.location.href = "{% url 'myposts' %}";
+    });
+}
+
+// Existing assign task function
+function assignTask(postId, applicantId) {
+    if (confirm('Are you sure you want to assign this task to this applicant?')) {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Assigning...';
+        button.disabled = true;
+
+        fetch(`/task/${postId}/assign/${applicantId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                button.innerHTML = '<i class="fas fa-check"></i> Assigned!';
+                button.style.background = '#10B981';
+                
+                setTimeout(() => {
+                    window.location.href = "{% url 'myposts' %}";
+                }, 1500);
+            } else {
+                alert('Error: ' + data.error);
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
+        })
+        .catch(error => {
+            alert('Network error: ' + error);
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    }
+}
+
+// Add some interactive effects
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover effects to application cards
+    const cards = document.querySelectorAll('.application-card');
+    cards.forEach((card, index) => {
+        card.style.animationDelay = `${index * 0.1}s`;
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, 100);
+    });
+
+    // Load initial profile views (you would get this from your backend)
+    loadProfileViews();
+});
+
+// Function to load profile views (you would implement this based on your backend)
+function loadProfileViews() {
+    // This would be an API call to get profile view counts for each applicant
+    // For now, we'll set some mock data
+    const applicants = document.querySelectorAll('[id^="profile-views-"]');
+    applicants.forEach(element => {
+        const applicantId = element.id.split('-')[2];
+        // Mock data - replace with actual API call
+        const mockViews = Math.floor(Math.random() * 10);
+        element.textContent = mockViews;
+    });
+}
+</script>
+{% endblock %}

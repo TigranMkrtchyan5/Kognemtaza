@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Completed - Review</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .review-container {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .review-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .review-header h2 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 24px;
+        }
+        
+        .review-header p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .rating-section {
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        
+        .stars {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .star {
+            font-size: 40px;
+            color: #ddd;
+            cursor: pointer;
+            transition: color 0.2s, transform 0.2s;
+            margin: 0 5px;
+        }
+        
+        .star:hover {
+            transform: scale(1.2);
+        }
+        
+        .star.active {
+            color: #ffc107;
+        }
+        
+        .rating-text {
+            color: #666;
+            font-size: 16px;
+            margin-top: 10px;
+            min-height: 24px;
+        }
+        
+        .description-section {
+            margin-bottom: 25px;
+        }
+        
+        .description-section label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #6a11cb;
+            box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.2);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .submit-btn {
+            background-color: #6a11cb;
+            color: white;
+        }
+        
+        .submit-btn:hover {
+            background-color: #5a0db0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(106, 17, 203, 0.3);
+        }
+        
+        .skip-btn {
+            background-color: #f5f5f5;
+            color: #666;
+        }
+        
+        .skip-btn:hover {
+            background-color: #e9e9e9;
+        }
+        
+        .thank-you-message {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .thank-you-message h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 22px;
+        }
+        
+        .thank-you-message p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        @media (max-width: 480px) {
+            .review-container {
+                padding: 20px;
+            }
+            
+            .star {
+                font-size: 35px;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="review-container">
+        <div class="review-content" id="reviewContent">
+            <div class="review-header">
+                <h2>How was your experience?</h2>
+                <p>Please rate your completed work session</p>
+            </div>
+            
+            <div class="rating-section">
+                <div class="stars">
+                    <span class="star" data-rating="1">★</span>
+                    <span class="star" data-rating="2">★</span>
+                    <span class="star" data-rating="3">★</span>
+                    <span class="star" data-rating="4">★</span>
+                    <span class="star" data-rating="5">★</span>
+                </div>
+                <div class="rating-text" id="ratingText">Tap a star to rate</div>
+            </div>
+            
+            <div class="description-section">
+                <label for="reviewDescription">Tell us more (optional)</label>
+                <textarea id="reviewDescription" placeholder="E.g., Completed quickly, faced some challenges, etc."></textarea>
+            </div>
+            
+            <div class="button-group">
+                <button class="submit-btn" id="submitBtn">Submit Review</button>
+                <button class="skip-btn" id="skipBtn">Skip</button>
+            </div>
+        </div>
+        
+        <div class="thank-you-message" id="thankYouMessage">
+            <h3>Thank You!</h3>
+            <p>Your feedback has been submitted successfully.</p>
+            <button class="submit-btn" onclick="closeReview()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // Star rating functionality
+        const stars = document.querySelectorAll('.star');
+        const ratingText = document.getElementById('ratingText');
+        const submitBtn = document.getElementById('submitBtn');
+        const skipBtn = document.getElementById('skipBtn');
+        const reviewContent = document.getElementById('reviewContent');
+        const thankYouMessage = document.getElementById('thankYouMessage');
+        
+        let selectedRating = 0;
+        const ratingDescriptions = {
+            1: "Poor - Needs significant improvement",
+            2: "Fair - Could be better",
+            3: "Good - Met expectations",
+            4: "Very Good - Exceeded expectations",
+            5: "Excellent - Outstanding work!"
+        };
+        
+        // Add event listeners to stars
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                selectedRating = parseInt(star.getAttribute('data-rating'));
+                updateStars();
+                ratingText.textContent = ratingDescriptions[selectedRating];
+            });
+            
+            star.addEventListener('mouseover', () => {
+                const hoverRating = parseInt(star.getAttribute('data-rating'));
+                highlightStars(hoverRating);
+            });
+        });
+        
+        // Reset stars when mouse leaves the star container
+        document.querySelector('.stars').addEventListener('mouseleave', () => {
+            updateStars();
+        });
+        
+        function highlightStars(rating) {
+            stars.forEach(star => {
+                const starRating = parseInt(star.getAttribute('data-rating'));
+                if (starRating <= rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+        
+        function updateStars() {
+            stars.forEach(star => {
+                const starRating = parseInt(star.getAttribute('data-rating'));
+                if (starRating <= selectedRating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+        }
+        
+        // Submit review
+        submitBtn.addEventListener('click', () => {
+            if (selectedRating === 0) {
+                alert('Please select a rating before submitting.');
+                return;
+            }
+            
+            const description = document.getElementById('reviewDescription').value;
+            
+            // In a real application, you would send this data to your server
+            console.log('Rating:', selectedRating);
+            console.log('Description:', description);
+            
+            // Show thank you message
+            reviewContent.style.display = 'none';
+            thankYouMessage.style.display = 'block';
+        });
+        
+        // Skip review
+        skipBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to skip leaving a review?')) {
+                // In a real application, you might track skipped reviews
+                console.log('Review skipped');
+                
+                // Show thank you message (optional for skip)
+                reviewContent.style.display = 'none';
+                thankYouMessage.style.display = 'block';
+            }
+        });
+        
+        // Close review (for demo purposes)
+        function closeReview() {
+            alert('In a real application, this would close the popup or redirect the user.');
+            // For demo, let's reset the form
+            selectedRating = 0;
+            document.getElementById('reviewDescription').value = '';
+            ratingText.textContent = 'Tap a star to rate';
+            updateStars();
+            
+            thankYouMessage.style.display = 'none';
+            reviewContent.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

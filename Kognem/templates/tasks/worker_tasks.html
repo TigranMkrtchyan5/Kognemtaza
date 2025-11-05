@@ -1,0 +1,954 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kognem — Իմ Առաջադրանքները{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary: #6C63FF;
+        --primary-dark: #5A52D5;
+        --primary-light: #8B85FF;
+        --secondary: #FF6584;
+        --secondary-dark: #E04F6D;
+        --secondary-light: #FF8BA0;
+        --accent: #36D1DC;
+        --light-bg: #FFFFFF;
+        --light-secondary: #F8F9FA;
+        --light-border: #E9ECEF;
+        --text-dark: #2D3748;
+        --text-medium: #4A5568;
+        --text-light: #718096;
+        --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
+        --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
+        --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
+        --status-open: #10B981;
+        --status-in-progress: #F59E0B;
+        --status-completed: #3B82F6;
+        --status-cancelled: #6B7280;
+        --status-incomplete: #EF4444;
+        --status-waiting_approval: #8B5CF6;
+    }
+
+    .page-main {
+        min-height: 80vh;
+        padding: 40px 20px;
+        background: var(--light-bg);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+    }
+
+    .profile-header {
+        text-align: center;
+        margin-bottom: 50px;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.2s;
+    }
+
+    .profile-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 15px;
+        color: var(--primary);
+        line-height: 1.2;
+    }
+
+    .profile-subtitle {
+        font-size: 1.1rem;
+        color: var(--text-medium);
+        font-weight: 500;
+        line-height: 1.6;
+    }
+
+    .posts-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 40px;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.4s;
+    }
+
+    .stat-card {
+        background: white;
+        border: 1px solid var(--light-border);
+        border-radius: 16px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--primary);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .stat-number {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+        color: var(--primary);
+        line-height: 1;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-medium);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.6s;
+    }
+
+    .filter-tab {
+        padding: 12px 24px;
+        border: 2px solid var(--light-border);
+        border-radius: 12px;
+        background: white;
+        color: var(--text-medium);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+    }
+
+    .filter-tab:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .filter-tab.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    /* Posts Grid */
+    .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 30px;
+        margin-bottom: 40px;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.8s;
+    }
+
+    .post-card {
+        background: white;
+        border: 1px solid var(--light-border);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .post-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-large);
+        border-color: var(--primary-light);
+    }
+
+    .post-image-container {
+        position: relative;
+        height: 200px;
+        overflow: hidden;
+        background: var(--light-secondary);
+    }
+
+    .post-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .post-card:hover .post-image {
+        transform: scale(1.05);
+    }
+
+    .post-status {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        z-index: 2;
+    }
+
+    /* Status Colors */
+    .status-in_progress { background: rgba(245, 158, 11, 0.1); color: var(--status-in-progress); border: 1px solid rgba(245, 158, 11, 0.2); }
+    .status-completed { background: rgba(59, 130, 246, 0.1); color: var(--status-completed); border: 1px solid rgba(59, 130, 246, 0.2); }
+    .status-cancelled { background: rgba(107, 114, 128, 0.1); color: var(--status-cancelled); border: 1px solid rgba(107, 114, 128, 0.2); }
+    .status-incomplete { background: rgba(239, 68, 68, 0.1); color: var(--status-incomplete); border: 1px solid rgba(239, 68, 68, 0.2); }
+    .status-waiting_approval { background: rgba(139, 92, 246, 0.1); color: var(--status-waiting_approval); border: 1px solid rgba(139, 92, 246, 0.2); }
+
+    .post-content {
+        padding: 25px;
+    }
+
+    .post-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 12px;
+        line-height: 1.4;
+        display: -webkit-box;
+        
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .post-description {
+        color: var(--text-medium);
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 20px;
+        display: -webkit-box;
+       
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Task Owner Info */
+    .task-owner {
+        background: rgba(108, 99, 255, 0.05);
+        border: 1px solid rgba(108, 99, 255, 0.2);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+        color: var(--text-dark);
+    }
+
+    .task-owner strong {
+        color: var(--primary);
+    }
+
+    /* Waiting Approval Notice */
+    .waiting-approval-notice {
+        background: rgba(139, 92, 246, 0.05);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 15px;
+        font-size: 0.9rem;
+        color: var(--text-dark);
+    }
+
+    .waiting-approval-notice strong {
+        color: var(--status-waiting_approval);
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    /* Task Info */
+    .task-info {
+        background: var(--light-secondary);
+        padding: 15px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .task-assigned {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.9rem;
+        color: var(--text-medium);
+    }
+
+    .task-assigned strong {
+        color: var(--text-dark);
+    }
+
+    .post-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-top: 15px;
+        border-top: 1px solid var(--light-border);
+    }
+
+    .post-price {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--primary);
+    }
+
+    .post-date {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+    /* Worker Actions */
+    .worker-actions {
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid var(--light-border);
+    }
+
+    .worker-actions h4 {
+        font-size: 0.9rem;
+        color: var(--text-dark);
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .task-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .task-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .task-btn.complete {
+        background: var(--status-completed);
+        color: white;
+    }
+
+    .task-btn.incomplete {
+        background: var(--status-incomplete);
+        color: white;
+    }
+
+    .task-btn.cancel {
+        background: var(--status-cancelled);
+        color: white;
+    }
+
+    .task-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .post-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .action-btn {
+        flex: 1;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+
+    .view-btn {
+        background: var(--primary);
+        color: white;
+        box-shadow: var(--shadow-light);
+    }
+
+    .view-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .message-btn {
+        background: var(--secondary);
+        color: white;
+        box-shadow: var(--shadow-light);
+    }
+
+    .message-btn:hover {
+        background: var(--secondary-dark);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 40px;
+        background: white;
+        border: 1px solid var(--light-border);
+        border-radius: 20px;
+        box-shadow: var(--shadow-light);
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 1s;
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--text-light);
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 15px;
+    }
+
+    .empty-description {
+        color: var(--text-medium);
+        margin-bottom: 30px;
+        line-height: 1.6;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .search-tasks-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 28px;
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-light);
+    }
+
+    .search-tasks-btn:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-large);
+    }
+
+    /* Help Section */
+    .help-section {
+        background: rgba(108, 99, 255, 0.05);
+        border: 1px solid rgba(108, 99, 255, 0.2);
+        border-radius: 16px;
+        padding: 30px;
+        margin-top: 40px;
+        text-align: center;
+    }
+
+    .help-icon {
+        font-size: 3rem;
+        color: var(--primary);
+        margin-bottom: 20px;
+        opacity: 0.7;
+    }
+
+    .help-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 15px;
+    }
+
+    .help-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin: 25px 0;
+    }
+
+    .help-step {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--light-border);
+        text-align: center;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        background: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        margin: 0 auto 15px;
+    }
+
+    .step-text {
+        color: var(--text-medium);
+        font-size: 0.9rem;
+        line-height: 1.5;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .posts-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .profile-title {
+            font-size: 2rem;
+        }
+
+        .posts-stats {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .filter-tabs {
+            flex-direction: column;
+        }
+
+        .task-buttons {
+            flex-direction: column;
+        }
+
+        .post-actions {
+            flex-direction: column;
+        }
+
+        .post-content {
+            padding: 20px;
+        }
+
+        .help-steps {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .posts-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-title {
+            font-size: 1.8rem;
+        }
+
+        .empty-state {
+            padding: 40px 20px;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+        }
+
+        .post-meta {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .help-section {
+            padding: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="page-main">
+    <section class="profile-container">
+        <!-- Header -->
+        <div class="profile-header">
+            <h1 class="profile-title">Իմ Առաջադրանքները</h1>
+            <p class="profile-subtitle">Կառավարեք Ձեր վերագրված բոլոր առաջադրանքները</p>
+        </div>
+
+        <!-- Statistics for Worker -->
+        <div class="posts-stats">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_assigned }}</div>
+                <div class="stat-label">Ընդհանուր Վերագրված</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ in_progress_count }}</div>
+                <div class="stat-label">Ընթացիկ Առաջադրանքներ</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ waiting_approval_count }}</div>
+                <div class="stat-label">Սպասում Հաստատման</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ completed_count }}</div>
+                <div class="stat-label">Ավարտված Առաջադրանքներ</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ incomplete_count }}</div>
+                <div class="stat-label">Անավարտ Առաջադրանքներ</div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs for Worker -->
+        <div class="filter-tabs">
+            <a href="?filter=all" class="filter-tab {% if current_filter == 'all' %}active{% endif %}">
+                <i class="fas fa-layer-group"></i> Բոլորը
+            </a>
+            <a href="?filter=in_progress" class="filter-tab {% if current_filter == 'in_progress' %}active{% endif %}">
+                <i class="fas fa-tasks"></i> Ընթացիկ
+            </a>
+            <a href="?filter=waiting_approval" class="filter-tab {% if current_filter == 'waiting_approval' %}active{% endif %}">
+                <i class="fas fa-clock"></i> Սպասում
+            </a>
+            <a href="?filter=completed" class="filter-tab {% if current_filter == 'completed' %}active{% endif %}">
+                <i class="fas fa-check-circle"></i> Ավարտված
+            </a>
+            <a href="?filter=incomplete" class="filter-tab {% if current_filter == 'incomplete' %}active{% endif %}">
+                <i class="fas fa-exclamation-circle"></i> Անավարտ
+            </a>
+            <a href="?filter=cancelled" class="filter-tab {% if current_filter == 'cancelled' %}active{% endif %}">
+                <i class="fas fa-ban"></i> Չեղարկված
+            </a>
+        </div>
+
+        {% if tasks %}
+            <!-- Tasks Grid -->
+            <div class="posts-grid">
+                {% for task in tasks %}
+                <div class="post-card">
+                    <!-- Image -->
+                    <div class="post-image-container">
+                        {% if task.image %}
+                            <img src="{{ task.image.url }}" alt="{{ task.title }}" class="post-image">
+                        {% else %}
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: var(--primary); color: white; font-size: 3rem;">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Status Badge -->
+                        <div class="post-status status-{{ task.task_status }}">
+                            {% if task.task_status == 'in_progress' %}
+                                Ընթացիկ
+                            {% elif task.task_status == 'completed' %}
+                                Ավարտված
+                            {% elif task.task_status == 'incomplete' %}
+                                Անավարտ
+                            {% elif task.task_status == 'cancelled' %}
+                                Չեղարկված
+                            {% elif task.task_status == 'waiting_approval' %}
+                                Սպասում Հաստատման
+                            {% else %}
+                                {{ task.get_task_status_display }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="post-content">
+                        <h3 class="post-title">{{ task.title }}</h3>
+                        
+                        <p class="post-description">
+                            {{ task.description|default:"Նկարագրություն չկա"|truncatewords:20 }}
+                        </p>
+
+                        <!-- Task Owner Info -->
+                        <div class="task-owner">
+                            <i class="fas fa-user-tie"></i>
+                            <strong>Հայտարարության սեփականատեր:</strong> {{ task.user.username }}
+                        </div>
+
+                        <!-- Waiting Approval Notice -->
+                        {% if task.task_status == 'waiting_approval' %}
+                        <div class="waiting-approval-notice">
+                            <i class="fas fa-clock"></i>
+                            <strong>Սպասում եք սեփականատիրոջ հաստատմանը</strong>
+                            <br>Դուք նշել եք այս առաջադրանքը որպես ավարտված։ Սպասեք սեփականատիրոջ հաստատմանը։
+                        </div>
+                        {% endif %}
+
+                        <!-- Task Timeline -->
+                        <div class="task-info">
+                            <div class="task-assigned">
+                                <i class="fas fa-calendar-alt"></i>
+                                <div>
+                                    <strong>Վերագրման ամսաթիվ:</strong> {{ task.assigned_at|date:"M d, Y" }}
+                                    {% if task.worker_started_at %}
+                                    <br><strong>Սկսված է:</strong> {{ task.worker_started_at|date:"M d, Y H:i" }}
+                                    {% endif %}
+                                    {% if task.worker_completed_at %}
+                                    <br><strong>Ավարտված է:</strong> {{ task.worker_completed_at|date:"M d, Y H:i" }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Meta Information -->
+                        <div class="post-meta">
+                            <div class="post-price">
+                                {% if task.price %}
+                                    ${{ task.price }}
+                                {% else %}
+                                    Գին չկա
+                                {% endif %}
+                            </div>
+                            <div class="post-date">
+                                <i class="fas fa-calendar"></i>
+                                {{ task.created_at|date:"M d, Y" }}
+                            </div>
+                        </div>
+
+                        <!-- Worker Actions for In Progress Tasks -->
+                        {% if task.task_status == 'in_progress' %}
+                        <div class="worker-actions">
+                            <h4><i class="fas fa-cogs"></i> Կառավարել առաջադրանքը:</h4>
+                            <div class="task-buttons">
+                                <button onclick="workerCompleteTask({{ task.id }})" class="task-btn complete">
+                                    <i class="fas fa-check"></i> Ավարտել
+                                </button>
+                                <button onclick="workerMarkIncomplete({{ task.id }})" class="task-btn incomplete">
+                                    <i class="fas fa-times"></i> Անավարտ
+                                </button>
+                                <button onclick="workerCancelTask({{ task.id }})" class="task-btn cancel">
+                                    <i class="fas fa-ban"></i> Չեղարկել
+                                </button>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Regular Actions -->
+                        <div class="post-actions">
+                            <a href="{% url 'task_detail' task.id %}" class="action-btn view-btn">
+                                <i class="fas fa-eye"></i>
+                                Դիտել
+                            </a>
+                            <a href="{% url 'create_room' task.user.username %}" class="action-btn message-btn">
+                                <i class="fas fa-comment"></i>
+                                Նամակ
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h3 class="empty-title">
+                    {% if current_filter == 'all' %}Վերագրված Առաջադրանքներ Չկան
+                    {% elif current_filter == 'in_progress' %}Ընթացիկ Առաջադրանքներ Չկան
+                    {% elif current_filter == 'waiting_approval' %}Հաստատման Սպասող Առաջադրանքներ Չկան
+                    {% elif current_filter == 'completed' %}Ավարտված Առաջադրանքներ Չկան
+                    {% elif current_filter == 'incomplete' %}Անավարտ Առաջադրանքներ Չկան
+                    {% elif current_filter == 'cancelled' %}Չեղարկված Առաջադրանքներ Չկան
+                    {% else %}Առաջադրանքներ Չկան{% endif %}
+                </h3>
+                <p class="empty-description">
+                    {% if current_filter == 'all' %}
+                    Դուք դեռ չունեք վերագրված առաջադրանքներ։ Դիմեք առաջադրանքների և սպասեք, որ Ձեզ վերագրեն։
+                    {% else %}
+                    Այս կատեգորիայում առաջադրանքներ չկան։
+                    {% endif %}
+                </p>
+                <a href="{% url 'ashxatanq' %}" class="search-tasks-btn">
+                    <i class="fas fa-search"></i>
+                    Փնտրել Առաջադրանքներ
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- Help Section for New Workers -->
+        {% if total_assigned == 0 %}
+        <div class="help-section">
+            <div class="help-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h3 class="help-title">Ինչպե՞ս ստանալ առաջադրանքներ</h3>
+            <div class="help-steps">
+                <div class="help-step">
+                    <div class="step-number">1</div>
+                    <p class="step-text">Անցեք "Աշխատանք" բաժին և գտեք հետաքրքրող առաջադրանքներ</p>
+                </div>
+                <div class="help-step">
+                    <div class="step-number">2</div>
+                    <p class="step-text">Դիմեք առաջադրանքներին սեղմելով "Դիմել" կոճակը</p>
+                </div>
+                <div class="help-step">
+                    <div class="step-number">3</div>
+                    <p class="step-text">Սպասեք, որ առաջադրանքի սեփականատերը Ձեզ վերագրի առաջադրանքը</p>
+                </div>
+                <div class="help-step">
+                    <div class="step-number">4</div>
+                    <p class="step-text">Վերագրված առաջադրանքները կհայտնվեն այս էջում</p>
+                </div>
+            </div>
+            <a href="{% url 'ashxatanq' %}" class="search-tasks-btn">
+                <i class="fas fa-search"></i>
+                Փնտրել Առաջադրանքներ
+            </a>
+        </div>
+        {% endif %}
+    </section>
+</main>
+
+<script>
+    // Worker Task Management Functions
+    function workerCompleteTask(taskId) {
+        if (confirm('Հաստատեք, որ առաջադրանքը ավարտված է? Այն կուղարկվի սեփականատիրոջը հաստատման:')) {
+            fetch(`/task/${taskId}/worker/complete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function workerMarkIncomplete(taskId) {
+        if (confirm('Հաստատեք, որ առաջադրանքը անավարտ է?')) {
+            fetch(`/task/${taskId}/worker/incomplete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function workerCancelTask(taskId) {
+        if (confirm('Հաստատեք առաջադրանքի չեղարկումը?')) {
+            fetch(`/task/${taskId}/worker/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    // Add scroll animations
+    document.addEventListener('DOMContentLoaded', () => {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -30px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                }
+            });
+        }, observerOptions);
+
+        // Observe all animated elements
+        document.querySelectorAll('.posts-stats, .filter-tabs, .posts-grid, .empty-state, .help-section').forEach(element => {
+            element.style.animationPlayState = 'paused';
+            observer.observe(element);
+        });
+
+        // Add hover effects to task cards
+        const taskCards = document.querySelectorAll('.post-card');
+        taskCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+{% endblock %}

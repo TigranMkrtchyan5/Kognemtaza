@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dispute Resolution</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-color: #ecf0f1;
+            --dark-color: #34495e;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        h1 {
+            color: var(--dark-color);
+            font-size: 24px;
+        }
+        
+        .stats {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .stat-box {
+            background: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #7f8c8d;
+        }
+        
+        .dispute-list {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .dispute-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .dispute-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .dispute-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dispute-id {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .dispute-date {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .dispute-content {
+            padding: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .user-box {
+            flex: 1;
+            padding: 15px;
+            border-radius: 6px;
+            background: var(--light-color);
+        }
+        
+        .user-box.worker {
+            border-left: 4px solid var(--success-color);
+        }
+        
+        .user-box.owner {
+            border-left: 4px solid var(--warning-color);
+        }
+        
+        .user-role {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+        }
+        
+        .user-name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .dispute-message {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .message-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--danger-color);
+        }
+        
+        .evidence-section {
+            margin: 20px 0;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--dark-color);
+        }
+        
+        .evidence-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        
+        .evidence-item {
+            border-radius: 6px;
+            overflow: hidden;
+            height: 120px;
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .evidence-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .evidence-placeholder {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+        
+        .btn-approve {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .btn-deny {
+            background: var(--danger-color);
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .modal-title {
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: flex-end;
+        }
+        
+        .btn-cancel {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .btn-confirm {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state-icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .user-info {
+                flex-direction: column;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <h1>Dispute Resolution Center</h1>
+                <div class="stats">
+                    <div class="stat-box">
+                        <div class="stat-value" id="pending-count">3</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value" id="resolved-count">12</div>
+                        <div class="stat-label">Resolved</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="dispute-list" id="dispute-list">
+            <!-- Dispute cards will be dynamically inserted here -->
+        </div>
+        
+        <div class="empty-state" id="empty-state" style="display: none;">
+            <div class="empty-state-icon">✅</div>
+            <h3>No pending disputes</h3>
+            <p>All disputes have been resolved. Check back later for new disputes.</p>
+        </div>
+    </div>
+    
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmation-modal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="modal-title">Confirm Decision</h3>
+            <p id="modal-message">Are you sure you want to mark this task as completed?</p>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="cancel-btn">Cancel</button>
+                <button class="btn btn-confirm" id="confirm-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Evidence Modal -->
+    <div class="modal" id="evidence-modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Evidence</h3>
+            <img id="evidence-image" src="" alt="Evidence" style="width: 100%; border-radius: 5px;">
+            <div class="modal-actions">
+                <button class="btn btn-cancel" id="close-evidence-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample dispute data
+        const disputes = [
+            {
+                id: "D-2023-001",
+                date: "2023-10-15",
+                task: "Website Redesign",
+                worker: {
+                    name: "Alex Johnson",
+                    role: "Worker"
+                },
+                owner: {
+                    name: "Sarah Miller",
+                    role: "Post Owner"
+                },
+                disputeMessage: "The worker claims the website redesign is complete, but I can see several pages are missing and the mobile version is not responsive.",
+                evidence: [
+                    "evidence1.jpg",
+                    "evidence2.jpg"
+                ]
+            },
+            {
+                id: "D-2023-002",
+                date: "2023-10-14",
+                task: "Logo Design",
+                worker: {
+                    name: "Michael Chen",
+                    role: "Worker"
+                },
+                owner: {
+                    name: "Robert Williams",
+                    role: "Post Owner"
+                },
+                disputeMessage: "I've submitted the final logo files as requested, but the owner is refusing to mark the task as complete and release payment.",
+                evidence: [
+                    "evidence3.jpg"
+                ]
+            },
+            {
+                id: "D-2023-003",
+                date: "2023-10-13",
+                task: "Content Writing",
+                worker: {
+                    name: "Emily Davis",
+                    role: "Worker"
+                },
+                owner: {
+                    name: "James Wilson",
+                    role: "Post Owner"
+                },
+                disputeMessage: "The worker delivered content that doesn't match the requirements we discussed. It's poorly researched and has grammatical errors.",
+                evidence: []
+            }
+        ];
+        
+        // DOM elements
+        const disputeList = document.getElementById('dispute-list');
+        const emptyState = document.getElementById('empty-state');
+        const confirmationModal = document.getElementById('confirmation-modal');
+        const evidenceModal = document.getElementById('evidence-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalMessage = document.getElementById('modal-message');
+        const cancelBtn = document.getElementById('cancel-btn');
+        const confirmBtn = document.getElementById('confirm-btn');
+        const closeEvidenceBtn = document.getElementById('close-evidence-btn');
+        const evidenceImage = document.getElementById('evidence-image');
+        
+        // Track current dispute being acted upon
+        let currentDisputeId = null;
+        let currentAction = null;
+        
+        // Initialize the page
+        function init() {
+            renderDisputes();
+            setupEventListeners();
+        }
+        
+        // Render all disputes
+        function renderDisputes() {
+            disputeList.innerHTML = '';
+            
+            if (disputes.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            disputes.forEach(dispute => {
+                const disputeCard = createDisputeCard(dispute);
+                disputeList.appendChild(disputeCard);
+            });
+            
+            updateStats();
+        }
+        
+        // Create a dispute card
+        function createDisputeCard(dispute) {
+            const card = document.createElement('div');
+            card.className = 'dispute-card';
+            card.innerHTML = `
+                <div class="dispute-header">
+                    <div class="dispute-id">${dispute.id} - ${dispute.task}</div>
+                    <div class="dispute-date">${dispute.date}</div>
+                </div>
+                <div class="dispute-content">
+                    <div class="user-info">
+                        <div class="user-box worker">
+                            <div class="user-role">${dispute.worker.role}</div>
+                            <div class="user-name">${dispute.worker.name}</div>
+                        </div>
+                        <div class="user-box owner">
+                            <div class="user-role">${dispute.owner.role}</div>
+                            <div class="user-name">${dispute.owner.name}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="dispute-message">
+                        <div class="message-label">Dispute Message from Post Owner:</div>
+                        <div>${dispute.disputeMessage}</div>
+                    </div>
+                    
+                    <div class="evidence-section">
+                        <div class="section-title">Evidence Submitted:</div>
+                        <div class="evidence-grid">
+                            ${dispute.evidence.length > 0 
+                                ? dispute.evidence.map((evidence, index) => 
+                                    `<div class="evidence-item" data-index="${index}">
+                                        <img src="https://via.placeholder.com/150?text=Evidence+${index+1}" alt="Evidence">
+                                    </div>`
+                                ).join('')
+                                : '<div class="evidence-item evidence-placeholder">No evidence submitted</div>'
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <button class="btn btn-approve" data-id="${dispute.id}">Approve Completion</button>
+                        <button class="btn btn-deny" data-id="${dispute.id}">Deny Completion</button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Action buttons
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('btn-approve')) {
+                    currentDisputeId = e.target.getAttribute('data-id');
+                    currentAction = 'approve';
+                    showConfirmationModal(
+                        'Approve Completion', 
+                        'Are you sure you want to approve this task as completed? This will release payment to the worker.'
+                    );
+                }
+                
+                if (e.target.classList.contains('btn-deny')) {
+                    currentDisputeId = e.target.getAttribute('data-id');
+                    currentAction = 'deny';
+                    showConfirmationModal(
+                        'Deny Completion', 
+                        'Are you sure you want to deny this task completion? This will return funds to the post owner.'
+                    );
+                }
+                
+                // Evidence items
+                if (e.target.classList.contains('evidence-item') || 
+                    e.target.parentElement.classList.contains('evidence-item')) {
+                    const evidenceItem = e.target.classList.contains('evidence-item') 
+                        ? e.target 
+                        : e.target.parentElement;
+                    showEvidenceModal(evidenceItem.querySelector('img').src);
+                }
+            });
+            
+            // Modal buttons
+            cancelBtn.addEventListener('click', closeConfirmationModal);
+            confirmBtn.addEventListener('click', handleDecision);
+            closeEvidenceBtn.addEventListener('click', closeEvidenceModal);
+            
+            // Close modals when clicking outside
+            window.addEventListener('click', function(e) {
+                if (e.target === confirmationModal) {
+                    closeConfirmationModal();
+                }
+                if (e.target === evidenceModal) {
+                    closeEvidenceModal();
+                }
+            });
+        }
+        
+        // Show confirmation modal
+        function showConfirmationModal(title, message) {
+            modalTitle.textContent = title;
+            modalMessage.textContent = message;
+            confirmationModal.style.display = 'flex';
+        }
+        
+        // Close confirmation modal
+        function closeConfirmationModal() {
+            confirmationModal.style.display = 'none';
+            currentDisputeId = null;
+            currentAction = null;
+        }
+        
+        // Show evidence modal
+        function showEvidenceModal(src) {
+            evidenceImage.src = src;
+            evidenceModal.style.display = 'flex';
+        }
+        
+        // Close evidence modal
+        function closeEvidenceModal() {
+            evidenceModal.style.display = 'none';
+        }
+        
+        // Handle admin decision
+        function handleDecision() {
+            if (!currentDisputeId || !currentAction) return;
+            
+            // In a real application, you would send this to the server
+            console.log(`Admin decided to ${currentAction} dispute ${currentDisputeId}`);
+            
+            // Remove the dispute from the list (simulating resolution)
+            const index = disputes.findIndex(d => d.id === currentDisputeId);
+            if (index !== -1) {
+                disputes.splice(index, 1);
+            }
+            
+            // Update the UI
+            renderDisputes();
+            closeConfirmationModal();
+            
+            // Show success message
+            alert(`Dispute ${currentDisputeId} has been resolved.`);
+        }
+        
+        // Update statistics
+        function updateStats() {
+            document.getElementById('pending-count').textContent = disputes.length;
+            // In a real app, you would fetch the resolved count from the server
+        }
+        
+        // Initialize the application
+        init();
+    </script>
+</body>
+</html>

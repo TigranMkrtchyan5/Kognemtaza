@@ -15,66 +15,99 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-LOGIN_REDIRECT_URL = '/home/'  # or the name of your home URL pattern: 'home'
+# Authentication URLs
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = '/home/'
 LOGOUT_REDIRECT_URL = '/'
 
-# session cookie names
-USER_SESSION_COOKIE_NAME = "user_sessionid"      # default for normal website users
-ADMIN_SESSION_COOKIE_NAME = "admin_sessionid"    # cookie used for admin/staff-panel
-# default (will be used unless middleware switches it)
+# Session settings
+SESSION_COOKIE_AGE = 1209600  # 2 weeks in seconds (for "Remember Me")
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Session persists when browser closes
+
+# Session cookie names
+USER_SESSION_COOKIE_NAME = "user_sessionid"
+ADMIN_SESSION_COOKIE_NAME = "admin_sessionid"
 SESSION_COOKIE_NAME = USER_SESSION_COOKIE_NAME
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-zvj+59^u!25-))*%pkz0(5@vehr1y%4l7ofc$@ce+wr7=sshfm'
-
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
 ALLOWED_HOSTS = []
 
+# Authentication backends
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
-    'core.backends.EmailOrUsernameBackend',        #es avelacrel em vor mailov log in lini   
+    'core.backends.EmailOrUsernameBackend',
 ]
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'daphne',  # Daphne ASGI server
+    
+    # Django core apps
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
-    'django.contrib.humanize',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'rest_framework',  
     'django.contrib.staticfiles',
-    'Kognem.apps.KognemConfig',
-    'channels',
-    'core',
     
+    # Third-party apps
+    'django_user_agents',
+    'django.contrib.humanize',
+    'rest_framework',
+    'channels',
+    
+    # Your apps
+    'Kognem.apps.KognemConfig',
+    'core',
 ]
+
+# Email configuration for password reset
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # For development - shows emails in console
+# For production, uncomment and configure:
+"""
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your-email@gmail.com'
+EMAIL_HOST_PASSWORD = 'your-app-password'
+DEFAULT_FROM_EMAIL = 'your-email@gmail.com'
+"""
 
 MIDDLEWARE = [
     'core.middleware.AdminSessionMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django_user_agents.middleware.UserAgentMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  # ← ДОЛЖЕН БЫТЬ ДО BanCheckMiddleware
+    'core.middleware.BanCheckMiddleware',  # ← ПЕРЕМЕСТИТЕ ПОСЛЕ AuthenticationMiddleware
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
-    
 ]
 
-
-
-
+# Logging configuration
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'debug.log',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
 
 ROOT_URLCONF = 'core.urls'
 
@@ -87,6 +120,7 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -97,9 +131,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core.wsgi.application'
 
+# ASGI configuration for Channels
 ASGI_APPLICATION = "core.asgi.application"
-
-
 CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
@@ -110,9 +143,8 @@ CHANNEL_LAYERS = {
 }
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -120,10 +152,7 @@ DATABASES = {
     }
 }
 
-
 # Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -139,30 +168,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
+TIME_ZONE = 'Asia/Yerevan'  # Change this to your local timezone
 USE_I18N = True
-
-USE_TZ = True
+USE_TZ = True  # This should be True for timezone support
 USE_THOUSAND_SEPARATOR = True
-USE_L10N = True 
-
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
+USE_L10N = True
+# Static files
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR/'static'
-
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR/'media'
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
+# Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

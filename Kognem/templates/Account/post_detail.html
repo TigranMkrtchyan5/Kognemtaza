@@ -22,7 +22,6 @@
         --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
         --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
         --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
-        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
     }
 
     .page-main {
@@ -57,8 +56,7 @@
         font-size: 2.2rem;
         font-weight: 800;
         margin-bottom: 15px;
-        background: var(--gradient-primary);
-        -webkit-text-fill-color: transparent;
+        color: var(--text-dark);
         line-height: 1.3;
     }
 
@@ -94,6 +92,18 @@
         background: rgba(239, 68, 68, 0.1);
         color: #ef4444;
         border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .status-worker {
+        background: rgba(59, 130, 246, 0.1);
+        color: #3b82f6;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+
+    .status-active {
+        background: rgba(16, 185, 129, 0.1);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
     .post-date {
@@ -137,7 +147,7 @@
 
     .no-image {
         height: 300px;
-        background: var(--gradient-primary);
+        background: #6C63FF;
         border-radius: 16px;
         display: flex;
         align-items: center;
@@ -172,7 +182,7 @@
     .info-icon {
         width: 40px;
         height: 40px;
-        background: var(--gradient-primary);
+        background: #6C63FF;
         border-radius: 10px;
         display: flex;
         align-items: center;
@@ -222,7 +232,7 @@
         content: '';
         width: 6px;
         height: 6px;
-        background: var(--gradient-primary);
+        background: #6C63FF;
         border-radius: 50%;
     }
 
@@ -265,26 +275,45 @@
         border-radius: 12px;
     }
 
-    .map-placeholder {
-        height: 100%;
+    .map-controls {
+        margin-top: 15px;
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: var(--gradient-primary);
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .map-btn {
+        padding: 8px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--light-border);
+        background: white;
+        color: var(--text-dark);
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+    }
+
+    .map-btn:hover {
+        background: var(--primary);
         color: white;
-        text-align: center;
-        padding: 20px;
     }
 
-    .map-placeholder i {
-        font-size: 3rem;
-        margin-bottom: 15px;
+    .map-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
-    .map-placeholder p {
-        font-size: 1rem;
-        opacity: 0.9;
+    .route-info {
+        margin-top: 10px;
+        padding: 10px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid var(--light-border);
+        font-size: 0.9rem;
+    }
+
+    .route-info.hidden {
+        display: none;
     }
 
     /* Location Info */
@@ -353,7 +382,7 @@
     }
 
     .message-btn {
-        background: var(--gradient-primary);
+        background: #6C63FF;
         color: white;
         box-shadow: var(--shadow-light);
     }
@@ -361,6 +390,7 @@
     .message-btn:hover {
         transform: translateY(-2px);
         box-shadow: var(--shadow-medium);
+        background: #5A52D5;
     }
 
     .call-btn {
@@ -400,7 +430,7 @@
     }
 
     .back-btn {
-        background: var(--gradient-primary);
+        background: #6C63FF;
         color: white;
         box-shadow: var(--shadow-light);
     }
@@ -408,6 +438,7 @@
     .back-btn:hover {
         transform: translateY(-2px);
         box-shadow: var(--shadow-medium);
+        background: #5A52D5;
     }
 
     .edit-btn {
@@ -434,10 +465,86 @@
         box-shadow: var(--shadow-medium);
     }
 
+    /* Modal Styles */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 16px;
+        max-width: 500px;
+        width: 90%;
+        box-shadow: var(--shadow-large);
+        text-align: center;
+    }
+
+    .modal-actions {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border-radius: 10px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .btn-secondary {
+        background: var(--text-light);
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: var(--text-medium);
+    }
+
+    .btn-danger {
+        background: var(--secondary);
+        color: white;
+    }
+
+    .btn-danger:hover {
+        background: var(--secondary-dark);
+    }
+
+    .delete-form {
+        margin: 0;
+        padding: 0;
+        display: inline;
+    }
+
     /* Animations */
     @keyframes fadeInUp {
         0% { opacity: 0; transform: translateY(30px); }
         100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
+    }
+
+    .action-btn, .contact-btn {
+        position: relative;
+        overflow: hidden;
     }
 
     /* Responsive Design */
@@ -491,6 +598,10 @@
             width: 100%;
             justify-content: center;
         }
+
+        .modal-actions {
+            flex-direction: column;
+        }
     }
 
     @media (max-width: 480px) {
@@ -524,9 +635,7 @@
     }
 </style>
 
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-</head>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9KO1U7_6JxlBuCpiLju_K0tXwBM4ISWE&libraries=geometry,places&language=hy"></script>
 {% endblock %}
 
 {% block body %}
@@ -536,8 +645,12 @@
         <div class="post-header">
             <h1 class="post-title">{{ post.title }}</h1>
             <div class="post-meta">
-                <div class="post-status status-{{ post.status }}">
-                    {{ post.get_status_display }}
+                <div class="post-status status-{% if post.assigned_to == request.user %}worker{% else %}{{ post.status }}{% endif %}">
+                    {% if post.assigned_to == request.user %}
+                        Աշխատող
+                    {% else %}
+                        {{ post.get_status_display }}
+                    {% endif %}
                 </div>
                 <div class="post-date">
                     <i class="fas fa-calendar"></i>
@@ -573,12 +686,12 @@
 
                     <div class="info-card">
                         <div class="info-icon">
-                            <i class="fas fa-dollar-sign"></i>
+                            <i class="fas fa-money-bill-wave"></i>
                         </div>
                         <div class="info-label">Գին</div>
                         <div class="info-value price">
                             {% if post.price %}
-                                ${{ post.price }}
+                                {{ post.price }} դրամ
                             {% else %}
                                 Չի նշված
                             {% endif %}
@@ -626,7 +739,7 @@
                             <i class="fas fa-eye"></i>
                         </div>
                         <div class="info-label">Դիտումներ</div>
-                        <div class="info-value">0</div>
+                        <div class="info-value">{{ post.views_count }}</div>
                     </div>
 
                     <div class="info-card">
@@ -649,6 +762,24 @@
                     </h3>
                     <div class="map-container">
                         <div id="post-map"></div>
+                    </div>
+                    <div class="map-controls">
+                        <button id="get-route-btn" class="map-btn" disabled>
+                            <i class="fas fa-route"></i>
+                            Ցույց տալ երթուղին
+                        </button>
+                        <button id="locate-me-btn" class="map-btn">
+                            <i class="fas fa-location-arrow"></i>
+                            Գտնել իմ տեղը
+                        </button>
+                        <button id="clear-route-btn" class="map-btn" style="display: none;">
+                            <i class="fas fa-times"></i>
+                            Մաքրել երթուղին
+                        </button>
+                    </div>
+                    <div id="route-info" class="route-info hidden">
+                        <div id="route-distance"></div>
+                        <div id="route-duration"></div>
                     </div>
                 </div>
 
@@ -693,109 +824,347 @@
                 <i class="fas fa-arrow-left"></i>
                 Վերադառնալ Իմ Հայտարարություններին
             </a>
-            <a href="#" class="action-btn edit-btn">
+            
+            {% if post.user == request.user %}
+            <!-- Кнопка редактирования -->
+            <a href="{% url 'edit_post' post.id %}" class="action-btn edit-btn">
                 <i class="fas fa-edit"></i>
                 Խմբագրել Հայտարարությունը
             </a>
-            <a href="#" class="action-btn delete-btn">
-                <i class="fas fa-trash"></i>
-                Ջնջել Հայտարարությունը
-            </a>
+            
+            <!-- Кнопка удаления с подтверждением -->
+            <form method="post" action="{% url 'delete_post' post.id %}" class="delete-form">
+                {% csrf_token %}
+                <button type="button" class="action-btn delete-btn" onclick="confirmDelete()">
+                    <i class="fas fa-trash"></i>
+                    Ջնջել Հայտարարությունը
+                </button>
+            </form>
+            {% endif %}
         </div>
     </section>
 </main>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Модальное окно подтверждения удаления -->
+<div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <h3>Հաստատել ջնջումը</h3>
+        <p>Դուք վստահ եք, որ ցանկանում եք ջնջել «<strong>{{ post.title }}</strong>» հայտարարությունը:</p>
+        <p style="color: var(--secondary); font-weight: 600; margin: 15px 0;">⚠️ Այս գործողությունը հնարավոր չէ հետարկել</p>
+        <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" onclick="closeModal()">Չեղարկել</button>
+            <button type="button" class="btn btn-danger" onclick="submitDelete()">Հաստատել ջնջումը</button>
+        </div>
+    </div>
+</div>
 
 <script>
-    // Initialize map
+    let map;
+    let directionsService;
+    let directionsRenderer;
+    let userMarker;
+    let destinationMarker;
+    let userLocation = null;
+    let destinationLocation = null;
+
+    // Initialize Google Map
     function initMap() {
         // Default coordinates (Yerevan, Armenia)
-        const defaultLat = 40.1792;
-        const defaultLng = 44.4991;
+        const defaultLocation = { lat: 40.1792, lng: 44.4991 };
         
         // Create map
-        const map = L.map('post-map').setView([defaultLat, defaultLng], 12);
-        
-        // Add tile layer
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-        
+        map = new google.maps.Map(document.getElementById('post-map'), {
+            zoom: 12,
+            center: defaultLocation,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            styles: [
+                {
+                    featureType: 'poi',
+                    elementType: 'labels',
+                    stylers: [{ visibility: 'on' }]
+                }
+            ]
+        });
+
+        directionsService = new google.maps.DirectionsService();
+        directionsRenderer = new google.maps.DirectionsRenderer({
+            map: map,
+            suppressMarkers: false,
+            polylineOptions: {
+                strokeColor: '#6C63FF',
+                strokeOpacity: 0.8,
+                strokeWeight: 6
+            }
+        });
+
         // Try to geocode the location if available
         const location = "{{ post.location }}";
         if (location && location !== "Չի նշված") {
-            geocodeLocation(location, map);
+            geocodeLocation(location);
         } else {
-            // Show default marker with post title
-            const marker = L.marker([defaultLat, defaultLng]).addTo(map);
-            marker.bindPopup(`
-                <div style="text-align: center;">
-                    <strong>{{ post.title }}</strong><br>
-                    <small>Տեղակայությունը չի նշված</small>
-                </div>
-            `).openPopup();
+            // Show default marker
+            createDestinationMarker(defaultLocation, '{{ post.title }}');
+            destinationLocation = defaultLocation;
         }
+
+        // Add event listeners for buttons
+        document.getElementById('get-route-btn').addEventListener('click', calculateRoute);
+        document.getElementById('locate-me-btn').addEventListener('click', locateUser);
+        document.getElementById('clear-route-btn').addEventListener('click', clearRoute);
+
+        // Add interactive animations
+        addInteractiveAnimations();
     }
     
-    // Geocode location using OpenStreetMap Nominatim
-    function geocodeLocation(location, map) {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`;
+    // Geocode location using Google Geocoding API
+    function geocodeLocation(location) {
+        const geocoder = new google.maps.Geocoder();
         
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
-                if (data && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    
-                    // Update map view
-                    map.setView([lat, lon], 14);
-                    
-                    // Add marker
-                    const marker = L.marker([lat, lon]).addTo(map);
-                    marker.bindPopup(`
-                        <div style="text-align: center;">
-                            <strong>{{ post.title }}</strong><br>
-                            <small>${location}</small>
-                        </div>
-                    `).openPopup();
-                } else {
-                    // Location not found, show default
-                    showDefaultMap(map);
+        geocoder.geocode({ 
+            address: location + ', Armenia',
+            region: 'am'
+        }, function(results, status) {
+            if (status === 'OK' && results[0]) {
+                const location = results[0].geometry.location;
+                destinationLocation = {
+                    lat: location.lat(),
+                    lng: location.lng()
+                };
+                
+                // Update map view
+                map.setCenter(destinationLocation);
+                map.setZoom(14);
+                
+                // Create destination marker
+                createDestinationMarker(destinationLocation, '{{ post.title }}');
+                
+            } else {
+                console.error('Geocode was not successful for the following reason: ' + status);
+                showDefaultMap();
+            }
+        });
+    }
+    
+    function showDefaultMap() {
+        const defaultLocation = { lat: 40.1792, lng: 44.4991 };
+        map.setCenter(defaultLocation);
+        map.setZoom(10);
+        createDestinationMarker(defaultLocation, '{{ post.title }} - Տեղակայությունը չի գտնվել');
+        destinationLocation = defaultLocation;
+    }
+
+    function createDestinationMarker(location, title) {
+        if (destinationMarker) {
+            destinationMarker.setMap(null);
+        }
+        
+        destinationMarker = new google.maps.Marker({
+            position: location,
+            map: map,
+            title: title,
+            icon: {
+                url: 'data:image/svg+xml;base64,' + btoa(`
+                    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="16" cy="16" r="14" fill="#6C63FF" stroke="white" stroke-width="2"/>
+                        <circle cx="16" cy="16" r="6" fill="white"/>
+                    </svg>
+                `),
+                scaledSize: new google.maps.Size(32, 32),
+                anchor: new google.maps.Point(16, 16)
+            }
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: `
+                <div style="text-align: center; padding: 8px;">
+                    <strong>${title}</strong><br>
+                    <small>{{ post.location|default:"Տեղակայությունը չի նշված" }}</small>
+                </div>
+            `
+        });
+
+        destinationMarker.addListener('click', () => {
+            infoWindow.open(map, destinationMarker);
+        });
+        
+        infoWindow.open(map, destinationMarker);
+    }
+
+    function createUserMarker(location) {
+        if (userMarker) {
+            userMarker.setMap(null);
+        }
+        
+        userMarker = new google.maps.Marker({
+            position: location,
+            map: map,
+            title: 'Ձեր տեղակայությունը',
+            icon: {
+                url: 'data:image/svg+xml;base64,' + btoa(`
+                    <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="16" cy="16" r="14" fill="#FF6584" stroke="white" stroke-width="2"/>
+                        <circle cx="16" cy="16" r="6" fill="white"/>
+                    </svg>
+                `),
+                scaledSize: new google.maps.Size(32, 32),
+                anchor: new google.maps.Point(16, 16)
+            }
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+            content: '<strong>Ձեր տեղակայությունը</strong>'
+        });
+
+        userMarker.addListener('click', () => {
+            infoWindow.open(map, userMarker);
+        });
+        
+        infoWindow.open(map, userMarker);
+    }
+
+    // Locate user
+    function locateUser() {
+        if (!navigator.geolocation) {
+            alert('Ձեր բրաուզերը չի աջակցում գեոլոկացիան');
+            return;
+        }
+
+        const locateBtn = document.getElementById('locate-me-btn');
+        locateBtn.disabled = true;
+        locateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Որոնում...';
+
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+                
+                // Create user marker
+                createUserMarker(userLocation);
+                
+                // Center map on user location
+                map.setCenter(userLocation);
+                map.setZoom(14);
+                
+                locateBtn.disabled = false;
+                locateBtn.innerHTML = '<i class="fas fa-location-arrow"></i> Գտնել իմ տեղը';
+                
+                // Enable route calculation if destination is available
+                if (destinationLocation) {
+                    document.getElementById('get-route-btn').disabled = false;
                 }
-            })
-            .catch(error => {
-                console.error('Geocoding error:', error);
-                showDefaultMap(map);
-            });
+            },
+            function(error) {
+                let errorMessage = 'Չհաջողվեց գտնել ձեր տեղակայությունը: ';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage += 'Հասցեի թույլտվությունը մերժվել է:';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage += 'Տեղեկատվությունը հասանելի չէ:';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage += 'Հարցման ժամանակը սպառվել է:';
+                        break;
+                    default:
+                        errorMessage += 'Անհայտ սխալ:';
+                        break;
+                }
+                alert(errorMessage);
+                locateBtn.disabled = false;
+                locateBtn.innerHTML = '<i class="fas fa-location-arrow"></i> Գտնել իմ տեղը';
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            }
+        );
     }
-    
-    function showDefaultMap(map) {
-        const defaultLat = 40.1792;
-        const defaultLng = 44.4991;
+
+    // Calculate route using Google Directions API
+    function calculateRoute() {
+        if (!userLocation) {
+            alert('Խնդրում ենք նախ գտնել ձեր տեղակայությունը');
+            return;
+        }
+
+        if (!destinationLocation) {
+            alert('Հայտարարության տեղակայությունը չի գտնվել');
+            return;
+        }
+
+        const routeBtn = document.getElementById('get-route-btn');
+        routeBtn.disabled = true;
+        routeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Հաշվարկում...';
+
+        const request = {
+            origin: userLocation,
+            destination: destinationLocation,
+            travelMode: google.maps.TravelMode.DRIVING,
+            unitSystem: google.maps.UnitSystem.METRIC,
+            language: 'hy'
+        };
+
+        directionsService.route(request, function(result, status) {
+            if (status === 'OK') {
+                directionsRenderer.setDirections(result);
+                
+                // Display route information
+                const route = result.routes[0].legs[0];
+                const distance = (route.distance.value / 1000).toFixed(1);
+                const duration = Math.round(route.duration.value / 60);
+                
+                document.getElementById('route-distance').textContent = `Հեռավորություն: ${distance} կմ`;
+                document.getElementById('route-duration').textContent = `Տևողություն: ${duration} րոպե`;
+                document.getElementById('route-info').classList.remove('hidden');
+                
+                document.getElementById('clear-route-btn').style.display = 'block';
+                
+                routeBtn.disabled = false;
+                routeBtn.innerHTML = '<i class="fas fa-route"></i> Ցույց տալ երթուղին';
+            } else {
+                alert('Չհաջողվեց հաշվարկել երթուղին: ' + status);
+                routeBtn.disabled = false;
+                routeBtn.innerHTML = '<i class="fas fa-route"></i> Ցույց տալ երթուղին';
+            }
+        });
+    }
+
+    // Clear route
+    function clearRoute() {
+        directionsRenderer.setDirections({ routes: [] });
+        document.getElementById('route-info').classList.add('hidden');
+        document.getElementById('clear-route-btn').style.display = 'none';
         
-        map.setView([defaultLat, defaultLng], 10);
-        const marker = L.marker([defaultLat, defaultLng]).addTo(map);
-        marker.bindPopup(`
-            <div style="text-align: center;">
-                <strong>{{ post.title }}</strong><br>
-                <small>Տեղակայությունը չի գտնվել</small>
-            </div>
-        `).openPopup();
+        if (userLocation && destinationLocation) {
+            document.getElementById('get-route-btn').disabled = false;
+        }
     }
     
     // Contact info modal
     function showContactInfo() {
         alert('Կոնտակտային տվյալներ:\n\nՕգտատեր: {{ post.user.username }}\nԷլ. փոստ: {{ post.user.email }}\n\nԽնդրում ենք օգտագործել հաղորդագրությունների համակարգը կապ հաստատելու համար։');
     }
-    
+
+    // Delete confirmation functions
+    function confirmDelete() {
+        document.getElementById('deleteModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+    }
+
+    function submitDelete() {
+        document.querySelector('.delete-form').submit();
+    }
+
     // Add interactive animations
-    document.addEventListener('DOMContentLoaded', () => {
-        // Initialize map
-        initMap();
-        
+    function addInteractiveAnimations() {
         // Add hover effects to info cards
         const infoCards = document.querySelectorAll('.info-card');
         infoCards.forEach(card => {
@@ -839,22 +1208,72 @@
                 }, 600);
             });
         });
+    }
+    
+    // Initialize when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize map when Google Maps API is loaded
+        if (typeof google !== 'undefined') {
+            initMap();
+        } else {
+            console.error('Google Maps API not loaded');
+        }
+        
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('deleteModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
 
-        // Add CSS for ripple animation
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes ripple {
-                to {
-                    transform: scale(4);
-                    opacity: 0;
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // Track post view
+        trackPostView();
+    });
+
+    // Track post view
+    function trackPostView() {
+        const postId = {{ post.id }};
+        
+        fetch(`/task/${postId}/track-view/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('View tracked successfully');
+            }
+        })
+        .catch(error => {
+            console.error('Error tracking view:', error);
+        });
+    }
+
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
                 }
             }
-            .action-btn, .contact-btn {
-                position: relative;
-                overflow: hidden;
-            }
-        `;
-        document.head.appendChild(style);
-    });
+        }
+        return cookieValue;
+    }
 </script>
 {% endblock %}

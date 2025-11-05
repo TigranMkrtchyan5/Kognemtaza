@@ -25,8 +25,6 @@
         --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
         --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
         --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
-        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
-        --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, #FF9A3D 100%);
     }
 
     * {
@@ -62,7 +60,6 @@
     .floating-element {
         position: absolute;
         border-radius: 50%;
-        background: var(--gradient-primary);
         opacity: 0.05;
         filter: blur(40px);
         animation: float 20s infinite linear;
@@ -73,6 +70,7 @@
         height: 300px;
         top: 10%;
         left: 5%;
+        background: var(--primary);
         animation-delay: 0s;
     }
 
@@ -81,7 +79,7 @@
         height: 200px;
         top: 60%;
         left: 80%;
-        background: var(--gradient-secondary);
+        background: var(--secondary);
         animation-delay: -5s;
         animation-duration: 25s;
     }
@@ -91,7 +89,7 @@
         height: 150px;
         top: 80%;
         left: 10%;
-        background: linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%);
+        background: var(--accent);
         animation-delay: -10s;
         animation-duration: 30s;
     }
@@ -136,7 +134,7 @@
         left: 0;
         width: 100%;
         height: 4px;
-        background: var(--gradient-primary);
+        background: var(--primary);
     }
 
     @keyframes fadeInUp {
@@ -149,9 +147,7 @@
         font-weight: 800;
         text-align: center;
         margin-bottom: 10px;
-        background: var(--gradient-primary);
-        
-        -webkit-text-fill-color: transparent;
+        color: var(--primary);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -237,7 +233,7 @@
         padding: 16px 30px;
         border: none;
         border-radius: 12px;
-        background: var(--gradient-primary);
+        background: var(--primary);
         color: white;
         font-size: 1.1rem;
         font-weight: 600;
@@ -254,6 +250,7 @@
     .btn-primary:hover {
         transform: translateY(-2px);
         box-shadow: var(--shadow-large);
+        background: var(--primary-dark);
     }
 
     .btn-primary:active {
@@ -374,57 +371,6 @@
         color: var(--primary-dark);
     }
 
-    /* Divider */
-    .divider {
-        display: flex;
-        align-items: center;
-        margin: 20px 0;
-        color: var(--text-light);
-        font-size: 0.9rem;
-    }
-
-    .divider::before,
-    .divider::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: var(--light-border);
-    }
-
-    .divider span {
-        padding: 0 15px;
-    }
-
-    /* Social Login */
-    .social-login {
-        display: flex;
-        gap: 15px;
-        margin-bottom: 20px;
-    }
-
-    .social-btn {
-        flex: 1;
-        padding: 12px;
-        border: 1px solid var(--light-border);
-        border-radius: 10px;
-        background: white;
-        color: var(--text-medium);
-        font-size: 0.9rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-
-    .social-btn:hover {
-        border-color: var(--primary-light);
-        color: var(--primary);
-        transform: translateY(-1px);
-    }
-
     /* Responsive Design */
     @media (max-width: 768px) {
         .login-container {
@@ -446,10 +392,6 @@
         
         .form-control {
             padding: 14px 20px 14px 44px;
-        }
-
-        .social-login {
-            flex-direction: column;
         }
     }
 
@@ -556,10 +498,10 @@
         <!-- Form Options -->
         <div class="form-options">
             <label class="remember-me">
-                <input type="checkbox" name="remember">
+                <input type="checkbox" name="remember_me" id="id_remember_me" checked>
                 Հիշել ինձ
             </label>
-            <a href="#" class="forgot-password">Մոռացե՞լ եք գաղտնաբառը</a>
+            <a href="{% url 'password_reset_request' %}" class="forgot-password">Մոռացե՞լ եք գաղտնաբառը</a>
         </div>
 
         <!-- Non-field errors -->
@@ -574,23 +516,6 @@
             <i class="fas fa-sign-in-alt"></i>
             ՄՈՒՏՔ ԳՈՐԾԵԼ
         </button>
-
-        <!-- Divider -->
-        <div class="divider">
-            <span>կամ</span>
-        </div>
-
-        <!-- Social Login -->
-        <div class="social-login">
-            <button type="button" class="social-btn">
-                <i class="fab fa-google" style="color: #DB4437;"></i>
-                Google
-            </button>
-            <button type="button" class="social-btn">
-                <i class="fab fa-facebook" style="color: #4267B2;"></i>
-                Facebook
-            </button>
-        </div>
 
         <div class="guest-login">
             <a href="{% url 'home' %}" class="btn-guest">
@@ -621,18 +546,18 @@
             const delay = Math.random() * 20;
             const duration = 15 + Math.random() * 20;
             
-            const gradients = [
-                'var(--gradient-primary)',
-                'var(--gradient-secondary)',
-                'linear-gradient(135deg, var(--accent) 0%, var(--primary) 100%)'
+            const colors = [
+                'var(--primary)',
+                'var(--secondary)',
+                'var(--accent)'
             ];
-            const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
             
             element.style.width = `${size}px`;
             element.style.height = `${size}px`;
             element.style.top = `${top}%`;
             element.style.left = `${left}%`;
-            element.style.background = randomGradient;
+            element.style.background = randomColor;
             element.style.animationDelay = `-${delay}s`;
             element.style.animationDuration = `${duration}s`;
             
@@ -668,18 +593,6 @@
             });
         }
 
-        // Social button interactions
-        const socialButtons = document.querySelectorAll('.social-btn');
-        socialButtons.forEach(button => {
-            button.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateY(-1px)';
-            });
-            
-            button.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateY(0)';
-            });
-        });
-
         // Guest link interaction
         const guestLink = document.querySelector('.btn-guest');
         if (guestLink) {
@@ -689,6 +602,18 @@
             
             guestLink.addEventListener('mouseleave', function() {
                 this.style.transform = 'translateY(0)';
+            });
+        }
+
+        // Remember Me checkbox styling
+        const rememberCheckbox = document.getElementById('id_remember_me');
+        if (rememberCheckbox) {
+            rememberCheckbox.addEventListener('change', function() {
+                if (this.checked) {
+                    this.parentElement.style.color = 'var(--primary)';
+                } else {
+                    this.parentElement.style.color = 'var(--text-medium)';
+                }
             });
         }
     });

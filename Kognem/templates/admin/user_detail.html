@@ -61,6 +61,7 @@
             font-size: 1.8rem;
             font-weight: 800;
             background: var(--gradient-primary);
+   
             -webkit-text-fill-color: transparent;
             display: flex;
             align-items: center;
@@ -419,6 +420,37 @@
             padding: 5px;
         }
 
+        /* Copy button styling */
+        .copy-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            margin-left: 8px;
+            font-size: 0.9rem;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: var(--light-secondary);
+        }
+
+        /* Fingerprint styling */
+        .fingerprint {
+            font-family: monospace;
+            font-size: 0.8rem;
+            background: var(--light-secondary);
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             main {
@@ -583,6 +615,142 @@
                             {% endif %}
                         </td>
                     </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Registration Information Section -->
+    <section class="section">
+        <div class="section-header">
+            <i class="fas fa-user-plus"></i>
+            <h2>Registration Information</h2>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <tbody>
+                    {% if target_user.registration_data %}
+                    <tr>
+                        <th>Registration Date</th>
+                        <td>{{ target_user.registration_data.registration_date|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <th>Registration IP</th>
+                        <td>
+                            {{ target_user.registration_data.registration_ip }}
+                            <button class="copy-btn" onclick="copyToClipboard('{{ target_user.registration_data.registration_ip }}')" title="Copy IP">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Registration Location</th>
+                        <td>
+                            {% if target_user.registration_data.registration_city and target_user.registration_data.registration_country %}
+                                {{ target_user.registration_data.registration_city }}, {{ target_user.registration_data.registration_country }}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th>Registration Device</th>
+                        <td>{{ target_user.registration_data.registration_device_type }}</td>
+                    </tr>
+                    <tr>
+                        <th>Registration Browser</th>
+                        <td>{{ target_user.registration_data.registration_browser }}</td>
+                    </tr>
+                    <tr>
+                        <th>Registration OS</th>
+                        <td>{{ target_user.registration_data.registration_os }}</td>
+                    </tr>
+                    <tr>
+                        <th>Device Fingerprint</th>
+                        <td>
+                            <span class="fingerprint" title="{{ target_user.registration_data.registration_device_fingerprint }}">
+                                {{ target_user.registration_data.registration_device_fingerprint|truncatechars:30 }}
+                            </span>
+                            <button class="copy-btn" onclick="copyToClipboard('{{ target_user.registration_data.registration_device_fingerprint }}')" title="Copy fingerprint">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2" class="empty-state">
+                            <i class="fas fa-user-plus"></i>
+                            <p>No registration data available</p>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Login History Section -->
+    <section class="section">
+        <div class="section-header">
+            <i class="fas fa-sign-in-alt"></i>
+            <h2>Login History (Last 20 logins)</h2>
+        </div>
+        
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Login Time</th>
+                        <th>IP Address</th>
+                        <th>Location</th>
+                        <th>Device Type</th>
+                        <th>Browser</th>
+                        <th>OS</th>
+                        <th>Fingerprint</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for login in target_user.login_history.all|slice:":20" %}
+                    <tr>
+                        <td>{{ login.login_time|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            {{ login.ip_address }}
+                            <button class="copy-btn" onclick="copyToClipboard('{{ login.ip_address }}')" title="Copy IP">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </td>
+                        <td>
+                            {% if login.city and login.country %}
+                                {{ login.city }}, {{ login.country }}
+                            {% else %}
+                                Unknown
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="status-badge {% if login.device_type == 'Mobile' %}status-active{% elif login.device_type == 'Tablet' %}status-pending{% else %}role-badge{% endif %}">
+                                {{ login.device_type|default:"Unknown" }}
+                            </span>
+                        </td>
+                        <td>{{ login.browser|truncatewords:2 }}</td>
+                        <td>{{ login.os|truncatewords:2 }}</td>
+                        <td>
+                            <span class="fingerprint" title="{{ login.device_fingerprint }}">
+                                {{ login.device_fingerprint|truncatechars:20 }}
+                            </span>
+                            <button class="copy-btn" onclick="copyToClipboard('{{ login.device_fingerprint }}')" title="Copy fingerprint">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="empty-state">
+                            <i class="fas fa-sign-in-alt"></i>
+                            <p>No login history available</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
@@ -776,7 +944,44 @@ window.onclick = function(event) {
     }
 }
 
-// Ban user function - Updated to match your view
+// Copy to clipboard function
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show a small notification
+        showNotification('Copied to clipboard!');
+    }, function(err) {
+        console.error('Could not copy text: ', err);
+        showNotification('Failed to copy!', 'error');
+    });
+}
+
+// Show notification function
+function showNotification(message, type = 'success') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.position = 'fixed';
+    notification.style.top = '20px';
+    notification.style.right = '20px';
+    notification.style.padding = '12px 20px';
+    notification.style.background = type === 'success' ? '#48bb78' : '#e53e3e';
+    notification.style.color = 'white';
+    notification.style.borderRadius = '8px';
+    notification.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+    notification.style.zIndex = '10000';
+    notification.style.fontWeight = '500';
+    
+    document.body.appendChild(notification);
+    
+    // Remove notification after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+
+// Ban user function
 async function confirmBan(userId) {
     const reason = document.getElementById('banReason').value.trim();
     const hours = document.getElementById('banHours').value.trim();
@@ -821,7 +1026,7 @@ async function confirmBan(userId) {
     }
 }
 
-// Reset password function - Updated to match your view
+// Reset password function
 async function confirmResetPassword(userId) {
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;

@@ -69,3 +69,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
             recipient=self.other_user,
             content=text
         )
+
+class GlobalConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        await self.channel_layer.group_add("global", self.channel_name)
+        await self.accept()
+
+    async def disconnect(self, close_code):
+        await self.channel_layer.group_discard("global", self.channel_name)
+
+    async def receive(self, text_data):
+        data = json.loads(text_data)
+        await self.channel_layer.group_send(
+            "global",
+            {"type": "broadcast_message", "message": data.get("message", "")}
+        )
+
+    async def broadcast_message(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "broadcast",
+            "message": event["message"],
+        }))

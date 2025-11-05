@@ -26,6 +26,12 @@
             --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
             --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
             --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            --review-color: #FFA500;
+            --review-dark: #CC8400;
+            --review-light: #FFB733;
+            --dispute-color: #FF6B6B;
+            --dispute-dark: #E04F4F;
+            --dispute-light: #FF8B8B;
         }
 
         * {
@@ -63,7 +69,7 @@
             font-size: 2rem;
             font-weight: 800;
             background: var(--gradient-primary);
-            
+           
             -webkit-text-fill-color: transparent;
             display: flex;
             align-items: center;
@@ -99,17 +105,6 @@
             box-shadow: var(--shadow-medium);
         }
 
-        .header-btn.banned {
-            background: rgba(255, 101, 132, 0.1);
-            color: var(--secondary);
-            border-color: rgba(255, 101, 132, 0.2);
-        }
-
-        .header-btn.banned:hover {
-            background: var(--secondary);
-            color: white;
-        }
-
         .header-btn.posts {
             background: rgba(108, 99, 255, 0.1);
             color: var(--primary);
@@ -121,165 +116,163 @@
             color: white;
         }
 
-        .header-btn.active {
-            background: rgba(72, 187, 120, 0.1);
-            color: #38a169;
-            border-color: rgba(72, 187, 120, 0.2);
+        .header-btn.reviews {
+            background: rgba(255, 165, 0, 0.1);
+            color: var(--review-color);
+            border-color: rgba(255, 165, 0, 0.2);
         }
 
-        .header-btn.active:hover {
-            background: #38a169;
+        .header-btn.reviews:hover {
+            background: var(--review-color);
             color: white;
         }
 
-        /* Dropdown Menu */
-        .dropdown {
-            position: relative;
-            display: inline-block;
+        .header-btn.disputes {
+            background: rgba(255, 107, 107, 0.1);
+            color: var(--dispute-color);
+            border-color: rgba(255, 107, 107, 0.2);
         }
 
-        .dropbtn {
-            display: inline-flex;
+        .header-btn.disputes:hover {
+            background: var(--dispute-color);
+            color: white;
+        }
+
+        .dispute-badge {
+            background: var(--dispute-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 12px 20px;
-            background: var(--gradient-primary);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            justify-content: center;
+            margin-left: 5px;
         }
 
-        .dropbtn:hover {
-            transform: translateY(-2px);
+        /* Rest of your existing CSS remains the same */
+        /* ... (all your existing CSS for sections, tables, stats, etc.) ... */
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--light-border);
+            box-shadow: var(--shadow-light);
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
             box-shadow: var(--shadow-medium);
         }
 
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background: white;
-            min-width: 200px;
-            box-shadow: var(--shadow-large);
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--gradient-primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .stat-icon.dispute {
+            background: linear-gradient(135deg, var(--dispute-color) 0%, #FF8B8B 100%);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Add dispute-specific styles */
+        .dispute-count {
+            color: var(--dispute-color);
+            font-weight: 700;
+        }
+
+        .dispute-alert {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.2);
             border-radius: 12px;
-            border: 1px solid var(--light-border);
-            z-index: 1000;
-            margin-top: 8px;
-            overflow: hidden;
-        }
-
-        .dropdown-content.show {
-            display: block;
-            animation: fadeInUp 0.3s ease;
-        }
-
-        .dropdown-content a {
+            padding: 15px;
+            margin: 15px 0;
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 14px 20px;
+        }
+
+        .dispute-alert i {
+            color: var(--dispute-color);
+            font-size: 1.2rem;
+        }
+
+        .dispute-alert p {
+            margin: 0;
             color: var(--text-dark);
-            text-decoration: none;
-            transition: all 0.3s ease;
-            border-bottom: 1px solid var(--light-border);
-        }
-
-        .dropdown-content a:last-child {
-            border-bottom: none;
-        }
-
-        .dropdown-content a:hover {
-            background: var(--light-secondary);
-            color: var(--primary);
-        }
-
-        .dropdown-content a.rejected {
-            color: var(--secondary);
-        }
-
-        .dropdown-content a.rejected:hover {
-            background: rgba(255, 101, 132, 0.1);
-        }
-
-        /* Filter Section */
-        .filter-section {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid var(--light-border);
-            margin-bottom: 20px;
-            box-shadow: var(--shadow-light);
-        }
-
-        .filter-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
-        .filter-header h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: var(--text-dark);
-        }
-
-        .filter-options {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            padding: 12px 20px;
-            border: 1px solid var(--light-border);
-            background: var(--light-secondary);
-            color: var(--text-medium);
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
             font-weight: 500;
+        }
+
+        .dispute-alert a {
+            color: var(--dispute-color);
+            font-weight: 600;
             text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            margin-left: auto;
         }
 
-        .filter-btn:hover {
-            background: var(--primary-light);
-            color: white;
-            transform: translateY(-2px);
+        .dispute-alert a:hover {
+            text-decoration: underline;
         }
 
-        .filter-btn.active {
-            background: var(--primary);
-            color: white;
-            border-color: var(--primary);
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            .header-actions {
+                justify-content: center;
             }
         }
 
-        /* Main Content */
-        main {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 30px;
+        @media (max-width: 768px) {
+            .header-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .header-btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
 
-        /* Section Styling */
+        /* The rest of your existing CSS continues below... */
         .section {
             background: white;
             border-radius: 20px;
@@ -311,6 +304,10 @@
             font-size: 1.3rem;
         }
 
+        .section-title.reviews i {
+            color: var(--review-color);
+        }
+
         .section-title h2 {
             font-size: 1.5rem;
             font-weight: 700;
@@ -323,7 +320,6 @@
             font-weight: 500;
         }
 
-        /* Table Styling */
         .table-container {
             overflow-x: auto;
             border-radius: 12px;
@@ -362,7 +358,6 @@
             background: var(--light-secondary);
         }
 
-        /* Status Badges */
         .status-badge {
             padding: 6px 12px;
             border-radius: 20px;
@@ -391,7 +386,42 @@
             color: var(--primary);
         }
 
-        /* Action Buttons */
+        .rating-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(255, 165, 0, 0.1);
+            color: var(--review-color);
+        }
+
+        .star-rating {
+            color: #FFD700;
+            font-size: 1rem;
+        }
+
+        .star-rating .empty {
+            color: #E0E0E0;
+        }
+
+        .review-type-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .review-type-worker {
+            background: rgba(108, 99, 255, 0.1);
+            color: var(--primary);
+        }
+
+        .review-type-owner {
+            background: rgba(255, 165, 0, 0.1);
+            color: var(--review-color);
+        }
+
         .action-buttons {
             display: flex;
             gap: 8px;
@@ -417,22 +447,20 @@
             box-shadow: var(--shadow-light);
         }
 
-        .btn-approve {
-            background: #48bb78;
-            color: white;
-        }
-
-        .btn-reject {
-            background: var(--secondary);
-            color: white;
-        }
-
         .btn-unban {
             background: #1b5e20;
             color: white;
         }
 
-        /* User Link */
+        .btn-review {
+            background: var(--review-color);
+            color: white;
+        }
+
+        .btn-review:hover {
+            background: var(--review-dark);
+        }
+
         .user-link {
             color: var(--primary);
             text-decoration: none;
@@ -445,7 +473,6 @@
             text-decoration: underline;
         }
 
-        /* Empty State */
         .empty-state {
             text-align: center;
             padding: 60px 20px;
@@ -463,100 +490,146 @@
             font-weight: 500;
         }
 
-        /* Stats Cards */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+        .comment-preview {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
-        .stat-card {
+        /* Filter Section */
+        .filter-section {
             background: white;
             padding: 25px;
             border-radius: 16px;
             border: 1px solid var(--light-border);
+            margin-bottom: 25px;
             box-shadow: var(--shadow-light);
-            text-align: center;
-            transition: all 0.3s ease;
-            cursor: pointer;
         }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
+        .filter-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .filter-header h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .filter-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+
+        .filter-select, .filter-input {
+            padding: 12px 15px;
+            border: 2px solid var(--light-border);
+            border-radius: 10px;
+            background: var(--light-bg);
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .filter-select:focus, .filter-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            padding-top: 15px;
+            border-top: 1px solid var(--light-border);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
             box-shadow: var(--shadow-medium);
         }
 
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            background: var(--gradient-primary);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 15px;
-            color: white;
-            font-size: 1.5rem;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 800;
-            color: var(--text-dark);
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: var(--text-light);
+        .btn-secondary {
+            background: var(--light-secondary);
+            color: var(--text-medium);
+            border: 1px solid var(--light-border);
+            padding: 12px 24px;
+            border-radius: 10px;
             font-weight: 600;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* Loading indicator */
-        .loading {
-            opacity: 0.6;
-            pointer-events: none;
+        .btn-secondary:hover {
+            background: var(--light-border);
+            transform: translateY(-2px);
         }
 
-        .btn.loading {
-            position: relative;
+        .filter-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
         }
 
-        .btn.loading::after {
-            content: '';
-            position: absolute;
-            width: 16px;
-            height: 16px;
-            border: 2px solid transparent;
-            border-top: 2px solid currentColor;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            right: 8px;
+        .filter-badge {
+            background: rgba(108, 99, 255, 0.1);
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .filter-badge i {
+            font-size: 0.7rem;
+            cursor: pointer;
         }
 
-        /* Responsive Design */
-        @media (max-width: 1024px) {
-            .header-content {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .header-actions {
-                justify-content: center;
-            }
-            
-            .section-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
+        .filter-badge i:hover {
+            color: var(--secondary);
         }
 
         @media (max-width: 768px) {
@@ -587,14 +660,8 @@
                 grid-template-columns: 1fr;
             }
 
-            .filter-options {
-                flex-direction: column;
-            }
-
-            .filter-btn {
-                width: 100%;
-                text-align: center;
-                justify-content: center;
+            .filter-form {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -615,7 +682,7 @@
                 font-size: 1.6rem;
             }
 
-            .header-btn, .dropbtn {
+            .header-btn {
                 padding: 10px 16px;
                 font-size: 0.9rem;
             }
@@ -635,13 +702,26 @@
             Admin Dashboard
         </div>
         <div class="header-actions">
-            <!-- New Posts Button -->
+            <!-- Posts Button -->
             <a href="{% url 'post_management' %}" class="header-btn posts">
                 <i class="fas fa-tasks"></i>
                 All Posts
             </a>
             
-            
+            <!-- Reviews Button -->
+            <a href="{% url 'admin_review_list' %}" class="header-btn reviews">
+                <i class="fas fa-star"></i>
+                Reviews
+            </a>
+
+            <!-- Disputes Button -->
+            <a href="{% url 'admin_disputes' %}" class="header-btn disputes">
+                <i class="fas fa-gavel"></i>
+                Disputes
+                {% if pending_disputes_count %}
+                <span class="dispute-badge">{{ pending_disputes_count }}</span>
+                {% endif %}
+            </a>
         </div>
     </div>
 </header>
@@ -649,60 +729,183 @@
 <main>
     <!-- Stats Section -->
     <div class="stats-grid">
-        <div class="stat-card" onclick="location.href='{% url 'all_users' %}'">
+        <div class="stat-card">
             <div class="stat-icon">
                 <i class="fas fa-users"></i>
             </div>
             <div class="stat-number">{{ all_users_count }}</div>
             <div class="stat-label">Total Users</div>
         </div>
-        <div class="stat-card" onclick="location.href='{% url 'active_users' %}'">
+        <div class="stat-card">
             <div class="stat-icon">
                 <i class="fas fa-user-check"></i>
             </div>
             <div class="stat-number">{{ active_users_count }}</div>
             <div class="stat-label">Active Users</div>
         </div>
-        <div class="stat-card" onclick="location.href='{% url 'banned_users' %}'">
+        <div class="stat-card">
             <div class="stat-icon">
                 <i class="fas fa-user-slash"></i>
             </div>
             <div class="stat-number">{{ banned_users_count }}</div>
             <div class="stat-label">Banned Users</div>
         </div>
+        <div class="stat-card">
+            <div class="stat-icon review">
+                <i class="fas fa-star"></i>
+            </div>
+            <div class="stat-number">{{ total_reviews_count }}</div>
+            <div class="stat-label">Total Reviews</div>
+        </div>
+        <!-- New Dispute Stat Card -->
+        <div class="stat-card" onclick="window.location.href='{% url 'admin_disputes' %}'">
+            <div class="stat-icon dispute">
+                <i class="fas fa-gavel"></i>
+            </div>
+            <div class="stat-number dispute-count">
+                {{ pending_disputes_count|default:"0" }}
+            </div>
+            <div class="stat-label">Pending Disputes</div>
+        </div>
     </div>
+
+    <!-- Dispute Alert (only show if there are pending disputes) -->
+    {% if pending_disputes_count %}
+    <div class="dispute-alert">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>
+            <strong>{{ pending_disputes_count }} dispute{{ pending_disputes_count|pluralize }}</strong> 
+            waiting for review. These involve conflicts between task owners and workers.
+        </p>
+        <a href="{% url 'admin_disputes' %}">
+            Review Now <i class="fas fa-arrow-right"></i>
+        </a>
+    </div>
+    {% endif %}
 
     <!-- Users Section -->
     <section class="section">
-        <!-- Filter Section -->
+        <!-- Backend Filter Section -->
         <div class="filter-section">
             <div class="filter-header">
                 <i class="fas fa-filter"></i>
-                <h3>Filter Users by Status</h3>
+                <h3>Filter Users</h3>
             </div>
-            <div class="filter-options">
-                <a href="{% url 'all_users' %}" class="filter-btn {% if current_filter == 'all' %}active{% endif %}">
-                    <i class="fas fa-users"></i>
-                    All Users ({{ all_users_count }})
-                </a>
-                <a href="{% url 'active_users' %}" class="filter-btn {% if current_filter == 'active' %}active{% endif %}">
-                    <i class="fas fa-user-check"></i>
-                    Active Users ({{ active_users_count }})
-                </a>
-                <a href="{% url 'banned_users' %}" class="filter-btn {% if current_filter == 'banned' %}active{% endif %}">
-                    <i class="fas fa-ban"></i>
-                    Banned Users ({{ banned_users_count }})
-                </a>
+            
+            <form method="get" class="filter-form">
+                <!-- User Status Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">User Status</label>
+                    <select name="user_filter" class="filter-select">
+                        {% for value, label in user_filters %}
+                            <option value="{{ value }}" {% if current_user_filter == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Date Range Filter -->
+                <div class="filter-group">
+                    <label class="filter-label">Date Joined</label>
+                    <select name="date_range" class="filter-select">
+                        {% for value, label in date_ranges %}
+                            <option value="{{ value }}" {% if current_date_range == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Sort By -->
+                <div class="filter-group">
+                    <label class="filter-label">Sort By</label>
+                    <select name="sort_by" class="filter-select">
+                        {% for value, label in sort_options %}
+                            <option value="{{ value }}" {% if current_sort == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Search -->
+                <div class="filter-group">
+                    <label class="filter-label">Search Users</label>
+                    <input type="text" name="search" class="filter-input" 
+                           placeholder="Username, email, name..." value="{{ current_search }}">
+                </div>
+                
+                <!-- Filter Actions -->
+                <div class="filter-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-filter"></i>
+                        Apply Filters
+                    </button>
+                    <a href="{% url 'admin_dashboard' %}" class="btn-secondary">
+                        <i class="fas fa-refresh"></i>
+                        Reset
+                    </a>
+                    
+                    <div style="margin-left: auto; display: flex; align-items: center; gap: 10px;">
+                        <span class="user-count">
+                            Showing <strong>{{ users|length }}</strong> of <strong>{{ filtered_users_count }}</strong> users
+                        </span>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Active Filter Badges -->
+            {% if current_user_filter != 'all' or current_date_range != 'all' or current_search or current_sort != '-date_joined' %}
+            <div class="filter-badges">
+                <small style="color: var(--text-light); margin-right: 8px;">Active filters:</small>
+                {% if current_user_filter != 'all' %}
+                    <span class="filter-badge">
+                        Status: 
+                        {% for value, label in user_filters %}
+                            {% if value == current_user_filter %}{{ label }}{% endif %}
+                        {% endfor %}
+                        <i class="fas fa-times" onclick="removeFilter('user_filter')"></i>
+                    </span>
+                {% endif %}
+                
+                {% if current_date_range != 'all' %}
+                    <span class="filter-badge">
+                        Date: 
+                        {% for value, label in date_ranges %}
+                            {% if value == current_date_range %}{{ label }}{% endif %}
+                        {% endfor %}
+                        <i class="fas fa-times" onclick="removeFilter('date_range')"></i>
+                    </span>
+                {% endif %}
+                
+                {% if current_search %}
+                    <span class="filter-badge">
+                        Search: "{{ current_search }}"
+                        <i class="fas fa-times" onclick="removeFilter('search')"></i>
+                    </span>
+                {% endif %}
+                
+                {% if current_sort != '-date_joined' %}
+                    <span class="filter-badge">
+                        Sorted by: 
+                        {% for value, label in sort_options %}
+                            {% if value == current_sort %}{{ label }}{% endif %}
+                        {% endfor %}
+                        <i class="fas fa-times" onclick="removeFilter('sort_by')"></i>
+                    </span>
+                {% endif %}
             </div>
+            {% endif %}
         </div>
         
         <div class="section-header">
             <div class="section-title">
                 <i class="fas fa-users"></i>
-                <h2>{{ page_title }}</h2>
+                <h2>User Management</h2>
             </div>
             <div class="user-count">
-                Showing: <strong>{{ users|length }}</strong> users
+                Total Filtered: <strong>{{ filtered_users_count }}</strong> users
             </div>
         </div>
         
@@ -715,6 +918,8 @@
                         <th>Full Name</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Rating</th>
+                        <th>Reviews</th>
                         <th>Status</th>
                         <th>Ban Reason</th>
                         <th>Banned Until</th>
@@ -733,6 +938,31 @@
                         <td>{{ user.profile.full_name|default:user.get_full_name|default:"-" }}</td>
                         <td>{{ user.email }}</td>
                         <td><span class="role-badge">{{ user.profile.role|capfirst }}</span></td>
+                        <td>
+                            {% if user.avg_rating %}
+                                <div class="star-rating">
+                                    {% for i in "12345" %}
+                                        {% if forloop.counter <= user.avg_rating %}
+                                            ★
+                                        {% else %}
+                                            <span class="empty">★</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <span style="margin-left: 5px; font-size: 0.8rem; color: var(--text-medium);">
+                                        ({{ user.avg_rating|floatformat:1 }})
+                                    </span>
+                                </div>
+                            {% else %}
+                                <span style="color: var(--text-light);">No ratings</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if user.review_count %}
+                                <span class="rating-badge">{{ user.review_count }} review{{ user.review_count|pluralize }}</span>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
                         <td>
                             {% if user.is_active %}
                                 <span class="status-badge status-active">Active</span>
@@ -765,32 +995,79 @@
                                     <i class="fas fa-edit"></i>
                                     Manage
                                 </a>
+                                {% if user.review_count %}
+                                <a href="{% url 'admin_review_list' %}?user_id={{ user.id }}" class="btn btn-review">
+                                    <i class="fas fa-star"></i>
+                                    Reviews
+                                </a>
+                                {% endif %}
                             {% endif %}
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="9" class="empty-state">
+                        <td colspan="11" class="empty-state">
                             <i class="fas fa-users"></i>
-                            <p>No users found</p>
+                            <p>No users found matching your filters</p>
+                            {% if current_user_filter != 'all' or current_date_range != 'all' or current_search %}
+                                <a href="{% url 'admin_dashboard' %}" class="btn-secondary" style="margin-top: 10px;">
+                                    <i class="fas fa-refresh"></i>
+                                    Clear Filters
+                                </a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        <!-- Pagination -->
+        {% if users.has_other_pages %}
+        <div style="display: flex; justify-content: center; margin-top: 20px;">
+            <div style="display: flex; gap: 8px; align-items: center;">
+                {% if users.has_previous %}
+                    <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ users.previous_page_number }}" 
+                       class="btn-secondary" style="padding: 8px 12px;">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                {% endif %}
+                
+                <span style="padding: 8px 16px; color: var(--text-medium); font-weight: 500;">
+                    Page {{ users.number }} of {{ users.paginator.num_pages }}
+                </span>
+                
+                {% if users.has_next %}
+                    <a href="?{% if request.GET %}{{ request.GET.urlencode }}&{% endif %}page={{ users.next_page_number }}" 
+                       class="btn-secondary" style="padding: 8px 12px;">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
     </section>
 
-    <!-- Pending Posts Section -->
-    {% if posts %}
+    <!-- Recent Reviews Section -->
     <section class="section">
         <div class="section-header">
-            <div class="section-title">
-                <i class="fas fa-clock"></i>
-                <h2>Pending Posts</h2>
+            <div class="section-title reviews">
+                <i class="fas fa-star"></i>
+                <h2>Recent Reviews</h2>
             </div>
             <div class="user-count">
-                <strong>{{ posts|length }}</strong> posts awaiting approval
+                <a href="{% url 'admin_review_list' %}" class="header-btn reviews">
+                    <i class="fas fa-list"></i>
+                    View All Reviews
+                </a>
+                <!-- Add Disputes button here as well for easy access -->
+                <a href="{% url 'admin_disputes' %}" class="header-btn disputes" style="margin-left: 10px;">
+                    <i class="fas fa-gavel"></i>
+                    Manage Disputes
+                    {% if pending_disputes_count %}
+                    <span class="dispute-badge">{{ pending_disputes_count }}</span>
+                    {% endif %}
+                </a>
             </div>
         </div>
         
@@ -798,37 +1075,69 @@
             <table>
                 <thead>
                     <tr>
-                        <th>ID</th>
-                        <th>Title</th>
-                        <th>User</th>
-                        <th>Price</th>
-                        <th>Location</th>
-                        <th>Created</th>
+                        <th>Task</th>
+                        <th>Reviewer</th>
+                        <th>Reviewed User</th>
+                        <th>Type</th>
+                        <th>Rating</th>
+                        <th>Comment</th>
+                        <th>Date</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for post in posts %}
+                    {% for review in recent_reviews %}
                     <tr>
-                        <td>{{ post.id }}</td>
-                        <td>{{ post.title|truncatewords:5 }}</td>
                         <td>
-                            <a href="{% url 'user_detail' post.user.id %}" class="user-link">
-                                {{ post.user.username }}
+                            <strong>{{ review.post.title|truncatewords:5 }}</strong>
+                        </td>
+                        <td>
+                            <a href="{% url 'user_detail' review.reviewer.id %}" class="user-link">
+                                {{ review.reviewer.username }}
                             </a>
                         </td>
-                        <td>${{ post.price }}</td>
-                        <td>{{ post.location|truncatewords:2 }}</td>
-                        <td>{{ post.created_at|date:"Y-m-d" }}</td>
+                        <td>
+                            <a href="{% url 'user_detail' review.reviewed_user.id %}" class="user-link">
+                                {{ review.reviewed_user.username }}
+                            </a>
+                        </td>
+                        <td>
+                            {% if review.review_type == 'worker_to_owner' %}
+                                <span class="review-type-badge review-type-worker">Worker → Owner</span>
+                            {% else %}
+                                <span class="review-type-badge review-type-owner">Owner → Worker</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="star-rating">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= review.rating %}
+                                        ★
+                                    {% else %}
+                                        <span class="empty">★</span>
+                                    {% endif %}
+                                {% endfor %}
+                                <span style="margin-left: 5px; color: var(--text-medium);">
+                                    ({{ review.rating }}/5)
+                                </span>
+                            </div>
+                        </td>
+                        <td class="comment-preview">
+                            {{ review.comment|default:"No comment"|truncatewords:10 }}
+                        </td>
+                        <td>{{ review.created_at|date:"M j, Y" }}</td>
                         <td class="action-buttons">
-                            <button class="btn btn-approve" onclick="approvePost('{{ post.id }}')">
-                                <i class="fas fa-check"></i>
-                                Approve
-                            </button>
-                            <button class="btn btn-reject" onclick="showRejectModal('{{ post.id }}')">
-                                <i class="fas fa-times"></i>
-                                Reject
-                            </button>
+                            <a href="{% url 'admin_review_list' %}?review_id={{ review.id }}" class="btn" style="background: var(--primary); color: white;">
+                                <i class="fas fa-eye"></i>
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <i class="fas fa-star"></i>
+                            <p>No reviews yet</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -836,52 +1145,18 @@
             </table>
         </div>
     </section>
-    {% endif %}
+
 </main>
 
-<!-- Reject Modal -->
-<div id="rejectModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center;">
-    <div style="background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 500px;">
-        <h3 style="margin-bottom: 15px;">Reject Post</h3>
-        <textarea id="rejectReason" placeholder="Enter rejection reason..." style="width: 100%; height: 120px; padding: 12px; border: 1px solid var(--light-border); border-radius: 8px; resize: vertical;"></textarea>
-        <div style="display: flex; gap: 10px; margin-top: 20px;">
-            <button onclick="confirmRejectPost()" class="btn btn-reject" style="flex: 1;">
-                Confirm Reject
-            </button>
-            <button onclick="closeRejectModal()" class="btn" style="flex: 1; background: var(--text-light); color: white;">
-                Cancel
-            </button>
-        </div>
-    </div>
-</div>
-
 <script>
-// ----------------- Dropdown Logic -----------------
-const dropdownEl = document.querySelector('.dropdown');
-const dropdownContent = document.querySelector('.dropdown-content');
-let closeTimeout;
-const delay = 300;
-
-if(dropdownEl && dropdownContent) {
-    dropdownEl.addEventListener('mouseover', () => {
-        clearTimeout(closeTimeout); 
-        dropdownContent.classList.add('show');
-    });
-
-    dropdownEl.addEventListener('mouseout', () => {
-        closeTimeout = setTimeout(() => {
-            dropdownContent.classList.remove('show');
-        }, delay);
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!dropdownEl.contains(e.target)) {
-            dropdownContent.classList.remove('show');
-        }
-    });
+// Remove individual filter
+function removeFilter(filterName) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete(filterName);
+    window.location.href = url.toString();
 }
 
-// ----------------- Unban User Function -----------------
+// Unban User Function
 async function unbanUser(userId) {
     if (!confirm("Are you sure you want to unban this user?")) return;
     
@@ -912,85 +1187,16 @@ async function unbanUser(userId) {
     }
 }
 
-// ----------------- Post Approval/Rejection Functions -----------------
-let currentPostId = null;
-
-function showRejectModal(postId) {
-    currentPostId = postId;
-    document.getElementById('rejectModal').style.display = 'flex';
-}
-
-function closeRejectModal() {
-    document.getElementById('rejectModal').style.display = 'none';
-    document.getElementById('rejectReason').value = '';
-    currentPostId = null;
-}
-
-async function approvePost(postId) {
-    if (!confirm('Are you sure you want to approve this post?')) return;
+// Auto-submit form when certain filters change for better UX
+document.addEventListener('DOMContentLoaded', function() {
+    const autoSubmitSelects = document.querySelectorAll('select[name="user_filter"], select[name="date_range"], select[name="sort_by"]');
     
-    try {
-        const response = await fetch(`/approve-post/${postId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
-            }
+    autoSubmitSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
         });
-        
-        const data = await response.json();
-        if (response.ok && data.success) {
-            alert('Post approved successfully');
-            location.reload();
-        } else {
-            alert(data.error || 'Error approving post');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Network error occurred');
-    }
-}
-
-async function confirmRejectPost() {
-    const reason = document.getElementById('rejectReason').value.trim();
-    
-    if (!reason) {
-        alert('Please enter a rejection reason');
-        return;
-    }
-    
-    try {
-        const response = await fetch(`/reject-post/${currentPostId}/`, {
-            method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                reason: reason
-            })
-        });
-        
-        const data = await response.json();
-        if (response.ok && data.success) {
-            alert('Post rejected successfully');
-            closeRejectModal();
-            location.reload();
-        } else {
-            alert(data.error || 'Error rejecting post');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Network error occurred');
-    }
-}
-
-// ----------------- Close Modal When Clicking Outside -----------------
-window.onclick = function(event) {
-    const modal = document.getElementById('rejectModal');
-    if (event.target === modal) {
-        closeRejectModal();
-    }
-}
+    });
+});
 </script>
 
 </body>

@@ -485,34 +485,10 @@
 {% block body %}
 <main class="page-main">
     <section class="profile-container">
-        <!-- Profile Header -->
-        <div class="profile-header">
-            <h1 class="profile-title">Իմ անձնական էջը</h1>
-            <p class="profile-subtitle">Կառավարեք Ձեր տվյալները, հայտարարությունները և նախապատվությունները</p>
-            
-            <div class="welcome-user">
-                <div class="user-avatar">
-                    {{ user.username|first|upper }}
-                </div>
-                <div class="user-info">
-                    <h3>Բարի վերադարձ, {{ user.profile.full_name|default:user.username }}!</h3>
-                    <p>Ձեր հաշիվը ակտիվ է և պատրաստ է օգտագործման</p>
-                </div>
-            </div>
-        </div>
+      
+       
 
         <!-- Quick Actions -->
-        <div class="quick-actions">
-            <a href="{% url 'create_post' %}" class="quick-action card-hover">
-                <i class="fas fa-plus-circle"></i>
-                <span>Նոր հայտարարություն</span>
-            </a>
-            <a href="{% url 'messages_list' %}" class="quick-action card-hover">
-                <i class="fas fa-envelope"></i>
-                <span>Հաղորդագրություններ</span>
-            </a>
-        </div>
-
         <hr class="section-divider">
 
         <!-- Profile Navigation Cards -->

@@ -1,0 +1,662 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Խմբագրել Հայտարարություն - {{ post.title }}{% endblock %}
+
+{% block body %}
+<style>
+    :root {
+        --primary: #4A6FA5;
+        --primary-dark: #3A5984;
+        --primary-light: #6B8DC3;
+        --secondary: #FF6B8B;
+        --secondary-dark: #E04F6D;
+        --secondary-light: #FF8BA0;
+        --accent: #36D1DC;
+        --dark-bg: #0A0A0F;
+        --navy-bg: #1A1F35;
+        --card-bg: #252A40;
+        --border-dark: #2D3748;
+        --border-light: #4A5568;
+        --text-white: #FFFFFF;
+        --text-light: #E2E8F0;
+        --text-muted: #A0AEC0;
+        --glass: rgba(74, 111, 165, 0.1);
+        --glass-border: rgba(74, 111, 165, 0.2);
+        --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.3);
+        --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.4);
+        --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.5);
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        --gradient-secondary: linear-gradient(135deg, var(--secondary) 0%, #FF9A3D 100%);
+        --gradient-dark: linear-gradient(135deg, var(--navy-bg) 0%, var(--dark-bg) 100%);
+    }
+
+    body {
+        background: var(--dark-bg);
+        color: var(--text-white);
+        min-height: 100vh;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background: var(--dark-bg);
+    }
+
+    /* Header Section */
+    .header-section {
+        text-align: center;
+        padding: 40px 20px;
+        margin-bottom: 30px;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.2s;
+        background: var(--gradient-dark);
+        border-radius: 20px;
+        border: 1px solid var(--border-dark);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .main-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 15px;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-light);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* Form Section */
+    .form-section {
+        background: var(--card-bg);
+        padding: 40px;
+        border-radius: 20px;
+        border: 1px solid var(--border-dark);
+        box-shadow: var(--shadow-light);
+        margin-bottom: 40px;
+        transform: translateY(30px);
+        opacity: 0;
+        animation: fadeInUp 1s forwards 0.4s;
+    }
+
+    .post-form {
+        display: flex;
+        flex-direction: column;
+        gap: 25px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .form-group label {
+        font-weight: 600;
+        color: var(--text-white);
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 14px 16px;
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--navy-bg);
+        color: var(--text-white);
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+        color: var(--text-muted);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.3);
+        background: var(--navy-bg);
+    }
+
+    .form-group textarea {
+        min-height: 120px;
+        resize: vertical;
+        font-family: inherit;
+    }
+
+    /* File Upload */
+    .file-input-wrapper {
+        position: relative;
+        margin-bottom: 10px;
+    }
+
+    .file-input {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .file-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 24px;
+        background: var(--navy-bg);
+        border: 2px dashed var(--border-light);
+        border-radius: 12px;
+        color: var(--text-light);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        justify-content: center;
+    }
+
+    .file-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(74, 111, 165, 0.2);
+    }
+
+    .file-text {
+        display: block;
+        margin-top: 8px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        font-style: italic;
+    }
+
+    /* Current Image */
+    .current-image {
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .current-image img {
+        max-width: 300px;
+        max-height: 200px;
+        border-radius: 10px;
+        border: 2px solid var(--primary);
+        box-shadow: var(--shadow-light);
+    }
+
+    .image-preview {
+        margin-top: 10px;
+        text-align: center;
+    }
+
+    .image-preview img {
+        max-width: 300px;
+        max-height: 200px;
+        border-radius: 10px;
+        border: 2px dashed var(--primary);
+    }
+
+    /* Status Info */
+    .status-info {
+        background: rgba(255, 107, 139, 0.1);
+        padding: 20px;
+        border-radius: 12px;
+        border: 1px solid var(--secondary);
+        margin-bottom: 25px;
+    }
+
+    .status-info h4 {
+        color: var(--secondary-light);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .status-info p {
+        color: var(--text-light);
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Submit Button */
+    .submit-btn {
+        background: var(--gradient-primary);
+        color: var(--text-white);
+        border: none;
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-large);
+        background: var(--gradient-primary);
+    }
+
+    .submit-btn:active {
+        transform: translateY(0);
+    }
+
+    .btn-cancel {
+        background: var(--navy-bg);
+        color: var(--text-white);
+        border: 1px solid var(--border-light);
+        padding: 16px 32px;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        margin-top: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        text-decoration: none;
+        text-align: center;
+    }
+
+    .btn-cancel:hover {
+        background: var(--border-light);
+        border-color: var(--secondary);
+        color: var(--secondary-light);
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+
+    .form-actions .submit-btn {
+        flex: 2;
+    }
+
+    .form-actions .btn-cancel {
+        flex: 1;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        0% { opacity: 0; transform: translateY(30px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .container {
+            padding: 15px;
+        }
+
+        .header-section {
+            padding: 30px 15px;
+        }
+
+        .main-title {
+            font-size: 2rem;
+        }
+
+        .form-section {
+            padding: 25px;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .current-image img,
+        .image-preview img {
+            max-width: 100%;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .main-title {
+            font-size: 1.8rem;
+        }
+
+        .form-section {
+            padding: 20px;
+        }
+
+        .submit-btn,
+        .btn-cancel {
+            padding: 14px 24px;
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<main class="container">
+
+    <!-- HEADER -->
+    <section class="header-section">
+        <h1 class="main-title">
+            <i class="fas fa-edit"></i>
+            Խմբագրել Հայտարարություն
+        </h1>
+        <p class="subtitle">Թարմացրեք ձեր հայտարարության տվյալները</p>
+    </section>
+
+    <!-- FORM -->
+    <section class="form-section">
+        <!-- Status Information -->
+        <div class="status-info">
+            <h4>
+                <i class="fas fa-info-circle"></i>
+                Կարևոր Տեղեկատվություն
+            </h4>
+            <p>
+                Հայտարարության խմբագրումից հետո այն կրկին կուղարկվի ադմինիստրացիա ստուգման համար 
+                և կստանա "սպասվող" կարգավիճակ: Ադմինիստրացիան կստուգի փոփոխությունները 
+                և կհաստատի հայտարարությունը:
+            </p>
+        </div>
+
+        <form method="POST" enctype="multipart/form-data" class="post-form" id="editForm">
+            {% csrf_token %}
+
+            <!-- Title -->
+            <div class="form-group">
+                <label for="id_title">
+                    <i class="fas fa-heading"></i>
+                    Վերնագիր
+                </label>
+                <input type="text" name="title" id="id_title" class="form-control" 
+                       value="{{ form.title.value|default:post.title }}" required
+                       placeholder="Մուտքագրեք հայտարարության վերնագիր">
+            </div>
+
+            <!-- Current Image -->
+            {% if post.image %}
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-image"></i>
+                    Ընթացիկ Նկար
+                </label>
+                <div class="current-image">
+                    <img src="{{ post.image.url }}" alt="Current image" id="currentImage">
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- New Image Upload -->
+            <div class="form-group">
+                <label>
+                    <i class="fas fa-image"></i>
+                    Նոր Նկար (ընտրովի)
+                </label>
+                <div class="file-input-wrapper">
+                    <input type="file" name="image" id="image" class="file-input" accept="image/*"/>
+                    <label for="image" class="file-btn">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        Փոխարինել Նկարը
+                    </label>
+                    <span class="file-text" id="file-text">Նկար ընտրված չէ</span>
+                </div>
+                <div class="image-preview" id="imagePreview" style="display: none;">
+                    <img id="previewImg" src="#" alt="Image preview">
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label for="id_description">
+                    <i class="fas fa-align-left"></i>
+                    Նկարագրություն
+                </label>
+                <textarea name="description" id="id_description" class="form-control" 
+                          required placeholder="Մանրամասն նկարագրեք ձեր հայտարարությունը">{{ form.description.value|default:post.description }}</textarea>
+            </div>
+
+            <!-- Price -->
+            <div class="form-group">
+                <label for="id_price">
+                    <i class="fas fa-dollar-sign"></i>
+                    Գին
+                </label>
+                <input type="number" name="price" id="id_price" class="form-control" 
+                       value="{{ form.price.value|default:post.price }}" step="0.01" min="0" required
+                       placeholder="Մուտքագրեք գինը դրամով">
+            </div>
+
+            <!-- Category -->
+            <div class="form-group">
+                <label for="id_category">
+                    <i class="fas fa-tags"></i>
+                    Կատեգորիա
+                </label>
+                <select name="category" id="id_category" class="form-control" required>
+                    <option value="">Ընտրեք կատեգորիա</option>
+                    {% for category in form.category.field.queryset %}
+                        <option value="{{ category.id }}" 
+                                {% if form.category.value == category.id or post.category.id == category.id %}selected{% endif %}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- State -->
+            <div class="form-group">
+                <label for="state-select">
+                    <i class="fas fa-map-marker-alt"></i>
+                    Մարզ
+                </label>
+                <select name="state" id="state-select" class="form-control" required>
+                    <option value="">Ընտրեք մարզ</option>
+                    {% for state in form.state.field.queryset %}
+                        <option value="{{ state.id }}" 
+                                {% if form.state.value == state.id or post.state.id == state.id %}selected{% endif %}>
+                            {{ state.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Province -->
+            <div class="form-group">
+                <label for="province-select">
+                    <i class="fas fa-map-pin"></i>
+                    Շրջան
+                </label>
+                <select name="province" id="province-select" class="form-control" required>
+                    <option value="">Ընտրեք շրջան</option>
+                    {% if post.province %}
+                        <option value="{{ post.province.id }}" selected>{{ post.province.name }}</option>
+                    {% endif %}
+                </select>
+            </div>
+
+            <!-- Location -->
+            <div class="form-group">
+                <label for="id_location">
+                    <i class="fas fa-home"></i>
+                    Հասցե
+                </label>
+                <input type="text" name="location" id="id_location" class="form-control" 
+                       value="{{ form.location.value|default:post.location }}" required
+                       placeholder="Մուտքագրեք մանրամասն հասցե">
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <i class="fas fa-save"></i>
+                    Պահպանել և Ուղարկել Ստուգման
+                </button>
+                <a href="{% url 'view_post' post.id %}" class="btn-cancel">
+                    <i class="fas fa-times"></i>
+                    Չեղարկել
+                </a>
+            </div>
+        </form>
+    </section>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const fileBtn = document.querySelector('.file-btn');
+    const fileInput = document.getElementById('image');
+    const fileText = document.getElementById('file-text');
+    const form = document.getElementById('editForm');
+    const stateSelect = document.getElementById('state-select');
+    const provinceSelect = document.getElementById('province-select');
+    const submitBtn = document.getElementById('submitBtn');
+    const currentImage = document.getElementById('currentImage');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+
+    let resizedFileReady = false;
+
+    // Image preview function
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+                
+                // Hide current image when new image is selected
+                if (currentImage) {
+                    currentImage.style.display = 'none';
+                }
+            }
+            
+            reader.readAsDataURL(input.files[0]);
+        } else {
+            imagePreview.style.display = 'none';
+            if (currentImage) {
+                currentImage.style.display = 'block';
+            }
+        }
+    }
+
+    // File input handling
+    fileBtn.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        fileText.textContent = file.name;
+        fileText.style.color = 'var(--primary-light)';
+        resizedFileReady = false;
+
+        // Show preview
+        previewImage(this);
+
+        // Resize image
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 600;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                canvas.toBlob(blob => {
+                    const newFile = new File([blob], file.name, { type: 'image/jpeg' });
+                    const dataTransfer = new DataTransfer();
+                    dataTransfer.items.add(newFile);
+                    fileInput.files = dataTransfer.files;
+                    resizedFileReady = true;
+                }, 'image/jpeg', 0.8);
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // Cascading state -> province
+    stateSelect.addEventListener('change', async () => {
+        provinceSelect.innerHTML = '<option value="">Ընտրել Շրջան</option>';
+        if (!stateSelect.value) return;
+        
+        provinceSelect.disabled = true;
+        const loadingOption = document.createElement('option');
+        loadingOption.textContent = 'Բեռնվում է...';
+        provinceSelect.appendChild(loadingOption);
+
+        try {
+            const resp = await fetch(`/get_provinces/${stateSelect.value}/`);
+            const data = await resp.json();
+            
+            provinceSelect.innerHTML = '<option value="">Ընտրել Շրջան</option>';
+            data.provinces.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = p.name;
+                provinceSelect.appendChild(option);
+            });
+
+            // Try to select the previously selected province
+            const currentProvinceId = {{ post.province.id|default:"null" }};
+            if (currentProvinceId) {
+                const option = provinceSelect.querySelector(`option[value="${currentProvinceId}"]`);
+                if (option) {
+                    option.selected = true;
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching provinces:', error);
+            provinceSelect.innerHTML = '<option value="">Սխալ բեռնման ժամանակ</option>';
+        } finally {
+            provinceSelect.disabled = false;
+        }
+    });
+
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        if (!resizedFileReady && fileInput.files.length > 0) {
+            e.preventDefault();
+            alert('Խնդրում ենք սպասել, նկարը մշակվում է...');
+            return;
+        }
+
+        if (!stateSelect.value || !provinceSelect.value) {
+            e.preventDefault();
+            alert('Խնդրում ենք ընտրել մարզն ու շրջանը:');
+            return;
+        }
+
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Պահպանվում է...';
+        submitBtn.disabled = true;
+    });
+
+    // Load provinces if state is already selected
+    const currentStateId = {{ post.state.id|default:"null" }};
+    if (currentStateId) {
+        stateSelect.value = currentStateId;
+        stateSelect.dispatchEvent(new Event('change'));
+    }
+});
+</script>
+
+{% endblock %}

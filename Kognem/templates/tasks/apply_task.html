@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Apply for Task - {{ post.title }}{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Apply for Task: {{ post.title }}</h4>
+                </div>
+                <div class="card-body">
+                    <div class="task-info mb-4 p-3 bg-light rounded">
+                        <h5>Task Details:</h5>
+                        <p><strong>Description:</strong> {{ post.description }}</p>
+                        <p><strong>Price:</strong> ${{ post.price }}</p>
+                        <p><strong>Location:</strong> {{ post.location }}</p>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="message" class="form-label">Application Message (Optional):</label>
+                            <textarea name="message" id="message" class="form-control" rows="4" 
+                                      placeholder="Tell the task owner why you're the right person for this job..."></textarea>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Application
+                            </button>
+                            <a href="{% url 'task_detail' post.id %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Task
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

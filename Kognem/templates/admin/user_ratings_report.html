@@ -1,0 +1,896 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Ratings Report - Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6C63FF;
+            --primary-dark: #5A52D5;
+            --primary-light: #8B85FF;
+            --secondary: #FF6584;
+            --secondary-dark: #E04F6D;
+            --secondary-light: #FF8BA0;
+            --accent: #36D1DC;
+            --light-bg: #FFFFFF;
+            --light-secondary: #F8F9FA;
+            --light-border: #E9ECEF;
+            --text-dark: #2D3748;
+            --text-medium: #4A5568;
+            --text-light: #718096;
+            --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
+            --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
+            --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--light-secondary);
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header Styles */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--light-border);
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .page-title h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        .page-title i {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .btn-secondary {
+            background: var(--light-bg);
+            color: var(--text-dark);
+            border: 1px solid var(--light-border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--light-secondary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Section Styles */
+        .section {
+            background: var(--light-bg);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--light-border);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title h2, .section-title h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-dark);
+        }
+
+        .section-title i {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .user-count {
+            background: var(--primary);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--light-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--light-border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-icon.review {
+            background: var(--primary);
+        }
+
+        .stat-icon.rating {
+            background: var(--accent);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--text-medium);
+            font-weight: 500;
+        }
+
+        /* Rating Distribution */
+        .rating-distribution-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .rating-item {
+            background: var(--light-secondary);
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .rating-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .rating-bar-container {
+            height: 8px;
+            background: var(--light-border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .rating-bar {
+            height: 100%;
+        }
+
+        .rating-5 .rating-bar { background: #48bb78; }
+        .rating-4 .rating-bar { background: #68d391; }
+        .rating-3 .rating-bar { background: #f6e05e; }
+        .rating-2 .rating-bar { background: #ed8936; }
+        .rating-1 .rating-bar { background: #e53e3e; }
+
+        /* Filter Section */
+        .filter-section {
+            background: var(--light-bg);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--light-border);
+        }
+
+        .filter-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .filter-header i {
+            color: var(--primary);
+        }
+
+        .filter-header h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .filter-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-form select {
+            padding: 10px;
+            border: 1px solid var(--light-border);
+            border-radius: 8px;
+            background: white;
+            color: var(--text-dark);
+            font-size: 0.9rem;
+        }
+
+        .filter-form select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.2);
+        }
+
+        .filter-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .clear-btn {
+            background: var(--light-secondary);
+            color: var(--text-dark);
+            border: 1px solid var(--light-border);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: var(--light-border);
+            transform: translateY(-2px);
+        }
+
+        /* Table Styles */
+        .table-container {
+            background: var(--light-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-light);
+            border: 1px solid var(--light-border);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: var(--light-secondary);
+        }
+
+        th {
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-dark);
+            border-bottom: 1px solid var(--light-border);
+        }
+
+        td {
+            padding: 15px;
+            border-bottom: 1px solid var(--light-border);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: rgba(108, 99, 255, 0.02);
+        }
+
+        .user-link {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .user-link:hover {
+            text-decoration: underline;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .rating-badge, .role-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .rating-badge {
+            background: rgba(108, 99, 255, 0.1);
+            color: var(--primary);
+        }
+
+        .role-badge {
+            background: rgba(54, 209, 220, 0.1);
+            color: var(--accent);
+        }
+
+        .star-rating {
+            color: #FFD700;
+            font-size: 1rem;
+        }
+
+        .star-rating .empty {
+            color: #E0E0E0;
+        }
+
+        .user-rating-distribution {
+            display: flex;
+            height: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: var(--light-border);
+            margin-bottom: 4px;
+        }
+
+        .user-rating-bar {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .user-rating-bar:hover {
+            transform: scaleY(1.3);
+        }
+
+        .user-rating-bar:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--text-dark);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            z-index: 1000;
+            margin-bottom: 5px;
+        }
+
+        .rating-5 { background: #48bb78; }
+        .rating-4 { background: #68d391; }
+        .rating-3 { background: #f6e05e; }
+        .rating-2 { background: #ed8936; }
+        .rating-1 { background: #e53e3e; }
+
+        .reliability-score {
+            text-align: center;
+        }
+
+        .reliability-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-review {
+            background: rgba(255, 215, 0, 0.1);
+            color: #B8860B;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .btn-review:hover {
+            background: rgba(255, 215, 0, 0.2);
+        }
+
+        .btn-profile {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-profile:hover {
+            background: var(--primary-dark);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-light);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--light-border);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 1000px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .filter-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-form select, .filter-btn, .clear-btn {
+                width: 100%;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .rating-distribution-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .section {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="page-title">
+                <i class="fas fa-trophy"></i>
+                <h1>User Ratings Report</h1>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Return to Dashboard
+                </a>
+                <a href="{% url 'admin_review_list' %}" class="btn btn-primary">
+                    <i class="fas fa-star"></i>
+                    View All Reviews
+                </a>
+            </div>
+        </div>
+
+        <!-- User Count -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-users"></i>
+                    <h2>User Statistics</h2>
+                </div>
+                <div class="user-count">
+                    <strong>{{ total_rated_users }}</strong> users with ratings
+                </div>
+            </div>
+
+            <!-- Platform Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card" onclick="location.href='{% url 'admin_review_list' %}'">
+                    <div class="stat-icon review">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-number">{{ platform_stats.platform_avg_rating|floatformat:1 }}</div>
+                    <div class="stat-label">Platform Avg</div>
+                </div>
+                <div class="stat-card" onclick="location.href='{% url 'admin_review_list' %}?rating=5'">
+                    <div class="stat-icon review">
+                        <i class="fas fa-crown"></i>
+                    </div>
+                    <div class="stat-number">{{ platform_stats.five_star_count }}</div>
+                    <div class="stat-label">5★ Reviews</div>
+                </div>
+            </div>
+
+            <!-- Platform Rating Distribution -->
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">
+                        <i class="fas fa-chart-pie"></i>
+                        <h3>Platform Rating Distribution</h3>
+                    </div>
+                </div>
+                <div class="rating-distribution-grid">
+                    <div class="rating-item rating-5">
+                        <div class="rating-header">
+                            <span>5 Stars</span>
+                            <strong>{{ platform_stats.five_star_percent|floatformat:1 }}%</strong>
+                        </div>
+                        <div class="rating-bar-container">
+                            <div class="rating-bar" style="width: {{ platform_stats.five_star_percent }}%;"></div>
+                        </div>
+                    </div>
+                    <div class="rating-item rating-4">
+                        <div class="rating-header">
+                            <span>4 Stars</span>
+                            <strong>{{ platform_stats.four_star_percent|floatformat:1 }}%</strong>
+                        </div>
+                        <div class="rating-bar-container">
+                            <div class="rating-bar" style="width: {{ platform_stats.four_star_percent }}%;"></div>
+                        </div>
+                    </div>
+                    <div class="rating-item rating-3">
+                        <div class="rating-header">
+                            <span>3 Stars</span>
+                            <strong>{{ platform_stats.three_star_percent|floatformat:1 }}%</strong>
+                        </div>
+                        <div class="rating-bar-container">
+                            <div class="rating-bar" style="width: {{ platform_stats.three_star_percent }}%;"></div>
+                        </div>
+                    </div>
+                    <div class="rating-item rating-2">
+                        <div class="rating-header">
+                            <span>2 Stars</span>
+                            <strong>{{ platform_stats.two_star_percent|floatformat:1 }}%</strong>
+                        </div>
+                        <div class="rating-bar-container">
+                            <div class="rating-bar" style="width: {{ platform_stats.two_star_percent }}%;"></div>
+                        </div>
+                    </div>
+                    <div class="rating-item rating-1">
+                        <div class="rating-header">
+                            <span>1 Star</span>
+                            <strong>{{ platform_stats.one_star_percent|floatformat:1 }}%</strong>
+                        </div>
+                        <div class="rating-bar-container">
+                            <div class="rating-bar" style="width: {{ platform_stats.one_star_percent }}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-header">
+                <i class="fas fa-filter"></i>
+                <h3>Filter & Sort Users</h3>
+            </div>
+            <div class="filter-options">
+                <form method="get" class="filter-form">
+                    <!-- Minimum Rating -->
+                    <select name="min_rating">
+                        <option value="">All Ratings</option>
+                        <option value="4.5" {% if current_filters.min_rating == "4.5" %}selected{% endif %}>4.5+ Stars</option>
+                        <option value="4.0" {% if current_filters.min_rating == "4.0" %}selected{% endif %}>4.0+ Stars</option>
+                        <option value="3.5" {% if current_filters.min_rating == "3.5" %}selected{% endif %}>3.5+ Stars</option>
+                        <option value="3.0" {% if current_filters.min_rating == "3.0" %}selected{% endif %}>3.0+ Stars</option>
+                    </select>
+
+                    <!-- Minimum Reviews -->
+                    <select name="min_reviews">
+                        <option value="">Any Reviews</option>
+                        <option value="5" {% if current_filters.min_reviews == "5" %}selected{% endif %}>5+ Reviews</option>
+                        <option value="10" {% if current_filters.min_reviews == "10" %}selected{% endif %}>10+ Reviews</option>
+                        <option value="20" {% if current_filters.min_reviews == "20" %}selected{% endif %}>20+ Reviews</option>
+                    </select>
+
+                    <!-- Sort By -->
+                    <select name="sort_by">
+                        {% for value, label in sort_options %}
+                            <option value="{{ value }}" {% if current_filters.sort_by == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+
+                    <!-- Sort Order -->
+                    <select name="sort_order">
+                        <option value="desc" {% if current_filters.sort_order == "desc" %}selected{% endif %}>Descending</option>
+                        <option value="asc" {% if current_filters.sort_order == "asc" %}selected{% endif %}>Ascending</option>
+                    </select>
+
+                    <button type="submit" class="filter-btn">
+                        <i class="fas fa-filter"></i>
+                        Apply Filters
+                    </button>
+
+                    <!-- Clear Filters -->
+                    <a href="{% url 'user_ratings_report' %}" class="clear-btn">
+                        <i class="fas fa-times"></i>
+                        Clear Filters
+                    </a>
+                </form>
+            </div>
+        </div>
+
+        <!-- User Ratings Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>User</th>
+                        <th>Avg Rating</th>
+                        <th>Total Reviews</th>
+                        <th>Completed Tasks</th>
+                        <th>Rating Distribution</th>
+                        <th>Reliability</th>
+                        <th>Last Review</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>
+                            {% if current_filters.sort_by == 'avg_rating' and current_filters.sort_order == 'desc' %}
+                                <strong>#{{ forloop.counter }}</strong>
+                            {% else %}
+                                {{ forloop.counter }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="user-avatar">
+                                    {{ user.username|first|upper }}
+                                </div>
+                                <div>
+                                    <a href="{% url 'user_detail' user.id %}" class="user-link">
+                                        {{ user.username }}
+                                    </a>
+                                    <br>
+                                    <small style="color: var(--text-light);">
+                                        {{ user.profile.full_name|default:user.get_full_name|default:"-" }}
+                                        {% if user.profile.role %}
+                                            • {{ user.profile.role|capfirst }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="star-rating">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= user.avg_rating %}
+                                        ★
+                                    {% else %}
+                                        <span class="empty">★</span>
+                                    {% endif %}
+                                {% endfor %}
+                                <span style="margin-left: 5px; font-size: 0.9rem; color: var(--text-dark); font-weight: 600;">
+                                    {{ user.avg_rating|floatformat:1 }}/5.0
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="rating-badge">{{ user.review_count }} review{{ user.review_count|pluralize }}</span>
+                            <div style="font-size: 0.7rem; color: var(--text-light); margin-top: 2px;">
+                                {{ user.worker_reviews }} as worker • {{ user.owner_reviews }} as owner
+                            </div>
+                        </td>
+                        <td>
+                            <span class="role-badge">{{ user.completed_tasks }} task{{ user.completed_tasks|pluralize }}</span>
+                        </td>
+                        <td>
+                            <div class="user-rating-distribution">
+                                <div class="user-rating-bar rating-5" style="width: {{ user.five_star_percent }}%;" title="{{ user.five_star }} five star reviews"></div>
+                                <div class="user-rating-bar rating-4" style="width: {{ user.four_star_percent }}%;" title="{{ user.four_star }} four star reviews"></div>
+                                <div class="user-rating-bar rating-3" style="width: {{ user.three_star_percent }}%;" title="{{ user.three_star }} three star reviews"></div>
+                                <div class="user-rating-bar rating-2" style="width: {{ user.two_star_percent }}%;" title="{{ user.two_star }} two star reviews"></div>
+                                <div class="user-rating-bar rating-1" style="width: {{ user.one_star_percent }}%;" title="{{ user.one_star }} one star reviews"></div>
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--text-light); margin-top: 4px;">
+                                {{ user.five_star }}•{{ user.four_star }}•{{ user.three_star }}•{{ user.two_star }}•{{ user.one_star }}
+                            </div>
+                        </td>
+                        <td>
+                            <div class="reliability-score">
+                                <div class="reliability-value" style="color: 
+                                    {% if user.reliability_score >= 4.5 %}#10B981
+                                    {% elif user.reliability_score >= 4.0 %}#F59E0B
+                                    {% elif user.reliability_score >= 3.0 %}#FFA500
+                                    {% else %}#EF4444{% endif %};">
+                                    {{ user.reliability_score|floatformat:1 }}
+                                </div>
+                                <div style="font-size: 0.7rem; color: var(--text-light);">
+                                    score
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if user.last_review_date %}
+                                <small>{{ user.last_review_date|date:"M j, Y" }}</small>
+                            {% else %}
+                                <small style="color: var(--text-light);">Never</small>
+                            {% endif %}
+                        </td>
+                        <td class="action-buttons">
+                            <a href="{% url 'admin_review_list' %}?user_id={{ user.id }}" class="action-btn btn-review">
+                                <i class="fas fa-star"></i>
+                                Reviews
+                            </a>
+                            <a href="{% url 'user_detail' user.id %}" class="action-btn btn-profile">
+                                <i class="fas fa-user"></i>
+                                Profile
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <i class="fas fa-trophy"></i>
+                            <p>No users found matching your criteria</p>
+                            {% if current_filters.min_rating or current_filters.min_reviews %}
+                                <p style="margin-top: 10px;">
+                                    <a href="{% url 'user_ratings_report' %}" class="btn btn-primary">
+                                        Clear filters to see all users
+                                    </a>
+                                </p>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Add interactive effects for better user experience
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add hover effects to table rows
+            const tableRows = document.querySelectorAll('tbody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.05)';
+                });
+                
+                row.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = 'none';
+                });
+            });
+            
+            // Add click effects to stat cards
+            const statCards = document.querySelectorAll('.stat-card');
+            statCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    window.location.href = this.getAttribute('onclick').match(/'([^']+)'/)[1];
+                });
+            });
+        });
+    </script>
+</body>
+</html>

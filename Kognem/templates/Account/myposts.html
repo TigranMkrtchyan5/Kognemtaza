@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Kognem — Իմ հրապարակումները{% endblock %}
+{% block title %}Kognem — Իմ Հայտարարությունները{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -22,39 +22,43 @@
         --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
         --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
         --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
-        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        
+        /* Status Colors */
+        --status-active: #10B981;
+        --status-pending: #8B5CF6;
+        --status-rejected: #EF4444;
+        --status-in-progress: #F59E0B;
+        --status-completed: #3B82F6;
+        --status-cancelled: #EF4444;
+        --status-incomplete: #DC2626;
+        --status-waiting: #7C3AED;
+        --status-disputed: #D97706;
+        --status-worker: #059669;
+        --status-owner: #7C3AED;
+        --status-under-review: #D97706;
     }
 
     .page-main {
         min-height: 80vh;
         padding: 40px 20px;
         background: var(--light-bg);
-        position: relative;
-        overflow: hidden;
     }
 
     .profile-container {
         max-width: 1200px;
         margin: 0 auto;
-        position: relative;
-        z-index: 1;
     }
 
     .profile-header {
         text-align: center;
         margin-bottom: 50px;
-        transform: translateY(30px);
-        opacity: 0;
-        animation: fadeInUp 1s forwards 0.2s;
     }
 
     .profile-title {
         font-size: 2.5rem;
         font-weight: 800;
         margin-bottom: 15px;
-        background: var(--gradient-primary);
-        
-        -webkit-text-fill-color: transparent;
+        color: var(--primary);
         line-height: 1.2;
     }
 
@@ -65,14 +69,46 @@
         line-height: 1.6;
     }
 
-    .posts-stats {
+    /* View Type Tabs */
+    .view-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .view-tab {
+        padding: 12px 24px;
+        border: 2px solid var(--light-border);
+        border-radius: 12px;
+        background: white;
+        color: var(--text-medium);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .view-tab:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .view-tab.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    /* Combined Statistics */
+    .combined-stats {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: 20px;
-        margin-bottom: 40px;
-        transform: translateY(30px);
-        opacity: 0;
-        animation: fadeInUp 1s forwards 0.4s;
+        margin-bottom: 30px;
     }
 
     .stat-card {
@@ -94,7 +130,15 @@
         left: 0;
         width: 100%;
         height: 4px;
-        background: var(--gradient-primary);
+        background: var(--primary);
+    }
+
+    .stat-card.worker::before {
+        background: var(--secondary);
+    }
+
+    .stat-card.combined::before {
+        background: linear-gradient(90deg, var(--primary) 50%, var(--secondary) 50%);
     }
 
     .stat-card:hover {
@@ -106,9 +150,16 @@
         font-size: 2.2rem;
         font-weight: 800;
         margin-bottom: 8px;
-        background: var(--gradient-primary);
-        -webkit-text-fill-color: transparent;
         line-height: 1;
+        color: var(--primary);
+    }
+
+    .stat-card.worker .stat-number {
+        color: var(--secondary);
+    }
+
+    .stat-card.combined .stat-number {
+        color: var(--text-dark);
     }
 
     .stat-label {
@@ -119,21 +170,58 @@
         letter-spacing: 0.5px;
     }
 
+    .stat-subtitle {
+        font-size: 0.8rem;
+        color: var(--text-light);
+        margin-top: 5px;
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .filter-tab {
+        padding: 12px 24px;
+        border: 2px solid var(--light-border);
+        border-radius: 12px;
+        background: white;
+        color: var(--text-medium);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filter-tab:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .filter-tab.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
     /* Posts Grid */
     .posts-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-        gap: 30px;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 25px;
         margin-bottom: 40px;
-        transform: translateY(30px);
-        opacity: 0;
-        animation: fadeInUp 1s forwards 0.6s;
     }
 
     .post-card {
         background: white;
         border: 1px solid var(--light-border);
-        border-radius: 20px;
+        border-radius: 16px;
         overflow: hidden;
         box-shadow: var(--shadow-light);
         transition: all 0.3s ease;
@@ -141,14 +229,14 @@
     }
 
     .post-card:hover {
-        transform: translateY(-8px);
-        box-shadow: var(--shadow-large);
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
         border-color: var(--primary-light);
     }
 
     .post-image-container {
         position: relative;
-        height: 200px;
+        height: 220px;
         overflow: hidden;
         background: var(--light-secondary);
     }
@@ -164,35 +252,58 @@
         transform: scale(1.05);
     }
 
-    .post-status {
+    /* Role and Status Badges */
+    .post-badges {
         position: absolute;
         top: 15px;
+        left: 15px;
         right: 15px;
-        padding: 6px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        z-index: 2;
+    }
+
+    .role-badge {
+        padding: 8px 16px;
         border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
+        font-size: 0.75rem;
+        font-weight: 700;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(8px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
     }
 
-    .status-approved {
-        background: rgba(16, 185, 129, 0.1);
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.2);
+    .role-badge.owner { background: var(--status-owner); }
+    .role-badge.worker { background: var(--status-worker); }
+
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(8px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
     }
 
-    .status-pending {
-        background: rgba(245, 158, 11, 0.1);
-        color: #f59e0b;
-        border: 1px solid rgba(245, 158, 11, 0.2);
-    }
-
-    .status-rejected {
-        background: rgba(239, 68, 68, 0.1);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.2);
-    }
+    .status-pending { background: var(--status-pending); }
+    .status-approved { background: var(--status-active); }
+    .status-rejected { background: var(--status-rejected); }
+    .status-open { background: var(--status-active); }
+    .status-in_progress { background: var(--status-in-progress); }
+    .status-completed { background: var(--status-completed); }
+    .status-cancelled { background: var(--status-cancelled); }
+    .status-incomplete { background: var(--status-incomplete); }
+    .status-waiting_approval { background: var(--status-waiting); }
+    .status-disputed { background: var(--status-disputed); }
+    .status-under_review { background: var(--status-under-review); }
 
     .post-content {
         padding: 25px;
@@ -202,25 +313,210 @@
         font-size: 1.3rem;
         font-weight: 700;
         color: var(--text-dark);
-        margin-bottom: 12px;
+        margin-bottom: 15px;
         line-height: 1.4;
-        display: -webkit-box;
-       
-        -webkit-box-orient: vertical;
-        overflow: hidden;
     }
 
     .post-description {
-        color: var(--text-medium);
+        color: var(--text-dark);
         font-size: 0.95rem;
-        line-height: 1.5;
+        line-height: 1.6;
         margin-bottom: 20px;
-        display: -webkit-box;
-        
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+        background: var(--light-secondary);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid var(--primary);
     }
 
+    /* Info Cards */
+    .info-card {
+        background: var(--light-secondary);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        border-left: 4px solid var(--primary);
+        font-size: 0.9rem;
+        color: var(--text-dark);
+    }
+
+    .info-card.worker {
+        border-left-color: var(--secondary);
+    }
+
+    .info-card.warning {
+        border-left-color: var(--status-incomplete);
+        background: rgba(220, 38, 38, 0.05);
+    }
+
+    .info-card.success {
+        border-left-color: var(--status-active);
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .info-card.info {
+        border-left-color: var(--status-waiting);
+        background: rgba(124, 58, 237, 0.05);
+    }
+
+    .info-card.dispute {
+        border-left-color: var(--status-disputed);
+        background: rgba(217, 119, 6, 0.05);
+    }
+
+    .info-card.pending {
+        border-left-color: var(--status-pending);
+        background: rgba(139, 92, 246, 0.05);
+    }
+
+    .info-card.review {
+        border-left-color: var(--status-under-review);
+        background: rgba(217, 119, 6, 0.05);
+    }
+
+    /* View Count Styles */
+    .view-count {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: var(--text-medium);
+        font-weight: 600;
+        background: rgba(108, 99, 255, 0.1);
+        padding: 6px 12px;
+        border-radius: 12px;
+    }
+
+    .view-count-high {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--status-active);
+    }
+
+    .view-count-high i {
+        color: var(--status-active);
+    }
+
+    .post-views-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid var(--light-border);
+    }
+
+    .views-section {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .view-stat {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.8rem;
+        color: var(--text-light);
+    }
+
+    .view-stat i {
+        color: var(--primary);
+    }
+
+    .view-stat .count {
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    /* Button System */
+    .button-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .btn {
+        padding: 10px 16px;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-align: center;
+        justify-content: center;
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .btn-primary { 
+        background: var(--primary); 
+        color: white; 
+        border-color: var(--primary);
+    }
+    
+    .btn-secondary { 
+        background: white; 
+        color: var(--text-dark); 
+        border-color: var(--light-border);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--light-secondary);
+        border-color: var(--primary);
+    }
+    
+    .btn-success { 
+        background: var(--status-active); 
+        color: white; 
+        border-color: var(--status-active);
+    }
+    
+    .btn-warning { 
+        background: var(--status-in-progress); 
+        color: white; 
+        border-color: var(--status-in-progress);
+    }
+    
+    .btn-danger { 
+        background: var(--status-rejected); 
+        color: white; 
+        border-color: var(--status-rejected);
+    }
+    
+    .btn-info { 
+        background: var(--status-waiting); 
+        color: white; 
+        border-color: var(--status-waiting);
+    }
+    
+    .btn-dispute { 
+        background: var(--status-disputed); 
+        color: white; 
+        border-color: var(--status-disputed);
+    }
+    
+    .btn-gray { 
+        background: var(--status-cancelled); 
+        color: white; 
+        border-color: var(--status-cancelled);
+    }
+
+    .btn-full {
+        flex: 1;
+        min-width: 100%;
+    }
+
+    /* Post Meta */
     .post-meta {
         display: flex;
         justify-content: space-between;
@@ -242,49 +538,15 @@
         font-weight: 500;
     }
 
-    .post-actions {
-        display: flex;
-        gap: 10px;
-    }
-
-    .action-btn {
-        flex: 1;
-        padding: 10px 16px;
-        border: none;
-        border-radius: 10px;
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        text-decoration: none;
-        text-align: center;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-    }
-
-    .view-btn {
-        background: var(--gradient-primary);
-        color: white;
-        box-shadow: var(--shadow-light);
-    }
-
-    .view-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-medium);
-    }
-
-    .edit-btn {
-        background: var(--light-secondary);
-        color: var(--text-medium);
-        border: 1px solid var(--light-border);
-    }
-
-    .edit-btn:hover {
+    /* Applications Count */
+    .applications-count {
         background: var(--primary-light);
         color: white;
-        border-color: var(--primary);
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 8px;
     }
 
     /* Empty State */
@@ -295,9 +557,6 @@
         border: 1px solid var(--light-border);
         border-radius: 20px;
         box-shadow: var(--shadow-light);
-        transform: translateY(30px);
-        opacity: 0;
-        animation: fadeInUp 1s forwards 0.8s;
     }
 
     .empty-icon {
@@ -323,29 +582,330 @@
         margin-right: auto;
     }
 
-    .create-post-btn {
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .action-btn-large {
         display: inline-flex;
         align-items: center;
         gap: 10px;
         padding: 14px 28px;
-        background: var(--gradient-primary);
+        background: var(--primary);
         color: white;
         text-decoration: none;
         border-radius: 12px;
         font-weight: 600;
         transition: all 0.3s ease;
         box-shadow: var(--shadow-light);
+        border: 2px solid var(--primary);
     }
 
-    .create-post-btn:hover {
+    .action-btn-large:hover {
         transform: translateY(-2px);
         box-shadow: var(--shadow-large);
     }
 
-    /* Animations */
-    @keyframes fadeInUp {
-        0% { opacity: 0; transform: translateY(30px); }
-        100% { opacity: 1; transform: translateY(0); }
+    .action-btn-large.secondary {
+        background: var(--secondary);
+        border-color: var(--secondary);
+    }
+
+    /* Review Popup Styles */
+    .review-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .review-popup-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .review-popup {
+        background: white;
+        border-radius: 20px;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: var(--shadow-large);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+        overflow: hidden;
+    }
+
+    .review-popup-overlay.active .review-popup {
+        transform: translateY(0);
+    }
+
+    .review-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        padding: 30px;
+        text-align: center;
+        color: white;
+    }
+
+    .review-header i {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+        display: block;
+    }
+
+    .review-header h3 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 0 0 10px;
+    }
+
+    .review-header p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .review-content {
+        padding: 30px;
+    }
+
+    .review-task-info {
+        text-align: center;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--light-border);
+    }
+
+    .review-task-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+    }
+
+    .review-task-user {
+        color: var(--text-medium);
+        font-size: 1rem;
+    }
+
+    .star-rating-review {
+        text-align: center;
+        margin: 30px 0;
+    }
+
+    .star-rating-review .star {
+        font-size: 2.8rem;
+        color: #E0E0E0;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin: 0 8px;
+    }
+
+    .star-rating-review .star:hover {
+        transform: scale(1.2);
+    }
+
+    .star-rating-review .star.active {
+        color: #FFD700;
+    }
+
+    .rating-text {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 1.1rem;
+        color: var(--text-medium);
+        font-weight: 600;
+        min-height: 30px;
+    }
+
+    .review-comment {
+        margin-top: 25px;
+    }
+
+    .review-comment label {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--text-dark);
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .review-comment textarea {
+        width: 100%;
+        padding: 16px;
+        border: 2px solid var(--light-border);
+        border-radius: 12px;
+        resize: vertical;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--light-secondary);
+        min-height: 100px;
+        font-family: inherit;
+    }
+
+    .review-comment textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+    }
+
+    .quick-comments {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .quick-comment-btn {
+        padding: 10px 15px;
+        border: 1px solid var(--light-border);
+        border-radius: 8px;
+        background: white;
+        color: var(--text-medium);
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .quick-comment-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(108, 99, 255, 0.05);
+    }
+
+    .review-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+
+    .review-actions .btn {
+        flex: 1;
+        padding: 14px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .review-success {
+        text-align: center;
+        padding: 40px 30px;
+    }
+
+    .review-success i {
+        font-size: 4rem;
+        color: var(--status-active);
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    .review-success h4 {
+        color: var(--text-dark);
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .review-success p {
+        color: var(--text-medium);
+        line-height: 1.6;
+        margin-bottom: 25px;
+    }
+
+    /* Modal Styles */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+    
+    .modal-content {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+    
+    .close {
+        float: right;
+        font-size: 28px;
+        cursor: pointer;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+    
+    .form-group textarea,
+    .form-group input[type="file"] {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+    
+    /* Dispute Message Styles */
+    .dispute-message {
+        margin-bottom: 15px;
+        padding: 10px;
+        border-radius: 8px;
+    }
+    
+    .own-message {
+        background: #e3f2fd;
+        margin-left: 20%;
+    }
+    
+    .other-message {
+        background: #f5f5f5;
+        margin-right: 20%;
+    }
+    
+    .message-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+    
+    .message-content {
+        word-wrap: break-word;
+    }
+    
+    .message-image img {
+        max-width: 200px;
+        max-height: 200px;
+        cursor: pointer;
+        border-radius: 5px;
+        margin-top: 10px;
     }
 
     /* Responsive Design */
@@ -359,22 +919,93 @@
             font-size: 2rem;
         }
 
-        .posts-stats {
+        .combined-stats {
             grid-template-columns: repeat(2, 1fr);
             gap: 15px;
         }
 
-        .post-actions {
+        .view-tabs, .filter-tabs {
             flex-direction: column;
+        }
+
+        .button-group {
+            flex-direction: column;
+        }
+
+        .btn {
+            min-width: 100%;
         }
 
         .post-content {
             padding: 20px;
         }
+
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .action-btn-large {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .post-badges {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .status-badge {
+            align-self: flex-end;
+        }
+
+        .post-views-stats {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .views-section {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .review-popup {
+            margin: 20px;
+        }
+
+        .review-header {
+            padding: 25px 20px;
+        }
+
+        .review-content {
+            padding: 25px 20px;
+        }
+
+        .star-rating-review .star {
+            font-size: 2.2rem;
+            margin: 0 5px;
+        }
+
+        .review-actions {
+            flex-direction: column;
+        }
+
+        .modal-content {
+            padding: 20px;
+            margin: 20px;
+        }
+
+        .own-message,
+        .other-message {
+            margin-left: 10%;
+            margin-right: 10%;
+        }
     }
 
     @media (max-width: 480px) {
-        .posts-stats {
+        .combined-stats {
             grid-template-columns: 1fr;
         }
 
@@ -395,6 +1026,34 @@
             gap: 10px;
             align-items: flex-start;
         }
+
+        .views-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .quick-comments {
+            grid-template-columns: 1fr;
+        }
+
+        .review-header {
+            padding: 20px 15px;
+        }
+
+        .review-content {
+            padding: 20px 15px;
+        }
+
+        .star-rating-review .star {
+            font-size: 1.8rem;
+            margin: 0 3px;
+        }
+
+        .modal-content {
+            padding: 15px;
+            margin: 10px;
+        }
     }
 </style>
 {% endblock %}
@@ -405,27 +1064,71 @@
         <!-- Header -->
         <div class="profile-header">
             <h1 class="profile-title">Իմ Հայտարարությունները</h1>
-            <p class="profile-subtitle">Կառավարեք և հետևեք Ձեր բոլոր հայտարարություններին</p>
+            <p class="profile-subtitle">Կառավարեք և հետևեք Ձեր բոլոր հայտարարություններին և առաջադրանքներին</p>
         </div>
 
-        <!-- Statistics -->
-        <div class="posts-stats">
-            <div class="stat-card">
-                <div class="stat-number">{{ posts.count }}</div>
-                <div class="stat-label">Ընդհանուր Հայտարարություններ</div>
+        <!-- View Type Tabs -->
+        <div class="view-tabs">
+            <a href="?view=all&filter={{ current_filter }}" class="view-tab {% if view_type == 'all' %}active{% endif %}">
+                <i class="fas fa-layer-group"></i> Բոլորը
+            </a>
+            <a href="?view=owner&filter={{ current_filter }}" class="view-tab {% if view_type == 'owner' %}active{% endif %}">
+                <i class="fas fa-user-tie"></i> Իմ Հայտարարությունները
+            </a>
+            <a href="?view=worker&filter={{ current_filter }}" class="view-tab {% if view_type == 'worker' %}active{% endif %}">
+                <i class="fas fa-tasks"></i> Իմ Առաջադրանքները
+            </a>
+        </div>
+
+        <!-- Combined Statistics -->
+        <div class="combined-stats">
+            <div class="stat-card combined">
+                <div class="stat-number">{{ total_combined }}</div>
+                <div class="stat-label">Ընդհանուր</div>
+                <div class="stat-subtitle">Բոլոր հայտարարություններ և առաջադրանքներ</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">{{ posts|length }}</div>
-                <div class="stat-label">Ակտիվ Հայտարարություններ</div>
+                <div class="stat-number">{{ total_posts }}</div>
+                <div class="stat-label">Իմ Հայտարարությունները</div>
+                <div class="stat-subtitle">Ակտիվ: {{ active_posts }} | Ընթացիկ: {{ in_progress_tasks }}</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number">{{ posts|length }}</div>
-                <div class="stat-label">Ավարտված Առաջադրանքներ</div>
+            <div class="stat-card worker">
+                <div class="stat-number">{{ total_worker }}</div>
+                <div class="stat-label">Իմ Առաջադրանքները</div>
+                <div class="stat-subtitle">Ընթացիկ: {{ in_progress_worker }} | Սպասում: {{ waiting_approval_worker }}</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number">94%</div>
-                <div class="stat-label">Հաճախորդների Գնահատական</div>
-            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <a href="?view={{ view_type }}&filter=all" class="filter-tab {% if current_filter == 'all' %}active{% endif %}">
+                <i class="fas fa-layer-group"></i> Բոլորը
+            </a>
+            <a href="?view={{ view_type }}&filter=active" class="filter-tab {% if current_filter == 'active' %}active{% endif %}">
+                <i class="fas fa-play-circle"></i> Ակտիվ
+            </a>
+            <a href="?view={{ view_type }}&filter=in_progress" class="filter-tab {% if current_filter == 'in_progress' %}active{% endif %}">
+                <i class="fas fa-tasks"></i> Ընթացիկ
+            </a>
+            <a href="?view={{ view_type }}&filter=waiting_approval" class="filter-tab {% if current_filter == 'waiting_approval' %}active{% endif %}">
+                <i class="fas fa-clock"></i> Սպասում
+            </a>
+            <a href="?view={{ view_type }}&filter=completed" class="filter-tab {% if current_filter == 'completed' %}active{% endif %}">
+                <i class="fas fa-check-circle"></i> Ավարտված
+            </a>
+            <a href="?view={{ view_type }}&filter=incomplete" class="filter-tab {% if current_filter == 'incomplete' %}active{% endif %}">
+                <i class="fas fa-times-circle"></i> Անավարտ
+            </a>
+            <a href="?view={{ view_type }}&filter=cancelled" class="filter-tab {% if current_filter == 'cancelled' %}active{% endif %}">
+                <i class="fas fa-ban"></i> Չեղարկված
+            </a>
+            <a href="?view={{ view_type }}&filter=rejected" class="filter-tab {% if current_filter == 'rejected' %}active{% endif %}">
+                <i class="fas fa-times"></i> Մերժված
+            </a>
+            <!-- Add Under Review Filter -->
+            <a href="?view={{ view_type }}&filter=under_review" class="filter-tab {% if current_filter == 'under_review' %}active{% endif %}">
+                <i class="fas fa-gavel"></i> Վերանայման տակ
+            </a>
         </div>
 
         {% if posts %}
@@ -438,14 +1141,60 @@
                         {% if post.image %}
                             <img src="{{ post.image.url }}" alt="{{ post.title }}" class="post-image">
                         {% else %}
-                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: var(--gradient-primary); color: white; font-size: 3rem;">
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: var(--primary); color: white; font-size: 3rem;">
                                 <i class="fas fa-tasks"></i>
                             </div>
                         {% endif %}
                         
-                        <!-- Status Badge -->
-                        <div class="post-status status-{{ post.status }}">
-                            {{ post.get_status_display }}
+                        <!-- Role and Status Badges -->
+                        <div class="post-badges">
+                            <!-- Left: Role Badge -->
+                            {% if post.user == request.user %}
+                                <div class="role-badge owner">
+                                    <i class="fas fa-user-tie"></i> Սեփականատեր
+                                </div>
+                            {% elif post.assigned_to == request.user %}
+                                <div class="role-badge worker">
+                                    <i class="fas fa-tasks"></i> Աշխատող
+                                </div>
+                            {% else %}
+                                <div class="role-badge" style="background: transparent; box-shadow: none; border: none;"></div>
+                            {% endif %}
+                            
+                            <!-- Right: Status Badge -->
+                            <div class="status-badge 
+                                {% if post.task_status == 'under_review' or post.is_under_review %}status-under_review
+                                {% elif post.disputed_by_worker or post.disputed_by_owner %}status-disputed
+                                {% elif post.status == 'rejected' %}status-rejected
+                                {% elif post.status == 'pending' %}status-pending
+                                {% elif post.task_status == 'waiting_approval' %}status-waiting_approval
+                                {% elif post.task_status != 'open' %}status-{{ post.task_status }}
+                                {% else %}status-{{ post.status }}{% endif %}">
+                                
+                                {% if post.task_status == 'under_review' or post.is_under_review %}
+                                    Վերանայման տակ
+                                {% elif post.disputed_by_worker or post.disputed_by_owner %}
+                                    Վիճահարույց
+                                {% elif post.status == 'rejected' %}
+                                    Մերժված
+                                {% elif post.status == 'pending' %}
+                                    Սպասում
+                                {% elif post.task_status == 'in_progress' %}
+                                    Ընթացիկ
+                                {% elif post.task_status == 'completed' %}
+                                    Ավարտված
+                                {% elif post.task_status == 'incomplete' %}
+                                    Անավարտ
+                                {% elif post.task_status == 'cancelled' %}
+                                    Չեղարկված
+                                {% elif post.task_status == 'waiting_approval' %}
+                                    Սպասում
+                                {% elif post.status == 'approved' %}
+                                    Ակտիվ
+                                {% else %}
+                                    {{ post.get_status_display }}
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
 
@@ -453,15 +1202,110 @@
                     <div class="post-content">
                         <h3 class="post-title">{{ post.title }}</h3>
                         
-                        <p class="post-description">
-                            {{ post.description|default:"Նկարագրություն չկա"|truncatewords:20 }}
-                        </p>
+                        <!-- Description - Now clearly visible -->
+                        <div class="post-description">
+                            {{ post.description|default:"Նկարագրություն չկա"|truncatewords:30 }}
+                        </div>
+
+                        <!-- Under Review Notice -->
+                        {% if post.task_status == 'under_review' or post.is_under_review %}
+                        <div class="info-card review">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i class="fas fa-gavel" style="color: var(--status-under-review); font-size: 1.2rem;"></i>
+                                <strong style="color: var(--status-under-review); font-size: 1rem;">Վերանայման Տակ</strong>
+                            </div>
+                            <p style="margin: 0; color: var(--text-dark); line-height: 1.5;">
+                                Այս առաջադրանքը ներկայումս վերանայվում է ադմինիստրացիայի կողմից: 
+                                Դուք չեք կարող խմբագրել, ջնջել կամ փոփոխել առաջադրանքը մինչև վերանայումն ավարտվի:
+                                {% if post.disputes.exists %}
+                                <br>Դիսպուտի ID: #{{ post.disputes.first.id }}
+                                <button onclick="openDisputeChat({{ post.disputes.first.id }})" class="btn btn-info" style="margin-top: 8px; padding: 5px 10px;">
+                                    <i class="fas fa-comments"></i> Դիտել Դիսպուտը
+                                </button>
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Role Information -->
+                        {% if post.user == request.user %}
+                            <div class="info-card">
+                                <i class="fas fa-user-tie"></i>
+                                <strong>Դուք եք հայտարարության սեփականատերը</strong>
+                                {% if post.assigned_to %}
+                                <br>Աշխատող: {{ post.assigned_to.username }}
+                                {% endif %}
+                            </div>
+                        {% elif post.assigned_to == request.user %}
+                            <div class="info-card worker">
+                                <i class="fas fa-tasks"></i>
+                                <strong>Դուք եք այս առաջադրանքի աշխատողը</strong>
+                                <br>Հայտարարության սեփականատեր: {{ post.user.username }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Pending Moderation Notice -->
+                        {% if post.status == 'pending' and post.user == request.user %}
+                        <div class="info-card pending">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i class="fas fa-shield-alt" style="color: var(--status-pending); font-size: 1.2rem;"></i>
+                                <strong style="color: var(--status-pending); font-size: 1rem;">Ադմինիստրացիայի Ստուգում</strong>
+                            </div>
+                            <p style="margin: 0; color: var(--text-dark); line-height: 1.5;">
+                                Ձեր հայտարարությունը ներկայումս ստուգվում է ադմինիստրացիայի կողմից: 
+                                Ստուգումը սովորաբար տևում է մինչև 24 ժամ: Ստուգումից հետո հայտարարությունը կհրապարակվի:
+                            </p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Dispute Notice -->
+                        {% if post.disputed_by_worker or post.disputed_by_owner %}
+                        <div class="info-card dispute">
+                            <strong>⚠️ Վիճահարույց առաջադրանք</strong>
+                            <br>Այս առաջադրանքը ուղարկվել է աջակցության թիմին վերանայման համար:
+                            {% if post.dispute_reason %}
+                            <br><em>Պատճառ: {{ post.dispute_reason }}</em>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Rejection Reason -->
+                        {% if post.status == 'rejected' and post.rejection_reason %}
+                        <div class="info-card warning">
+                            <strong>Մերժման պատճառ:</strong>
+                            {{ post.rejection_reason }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Incomplete Notice -->
+                        {% if post.task_status == 'incomplete' and not post.disputed_by_worker %}
+                        <div class="info-card warning">
+                            <strong>Առաջադրանքը նշված է որպես անավարտ</strong>
+                            {% if post.user == request.user %}
+                                Դուք կարող եք վերահաստատել այս առաջադրանքը նորից հրապարակելու համար:
+                            {% elif post.assigned_to == request.user %}
+                                Դուք կարող եք վիճարկել այս որոշումը, եթե համարում եք, որ առաջադրանքը ավարտված է:
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Waiting Approval Notice -->
+                        {% if post.task_status == 'waiting_approval' %}
+                        <div class="info-card info">
+                            <strong>⏳ Սպասում է հաստատման</strong>
+                            {% if post.assigned_to == request.user %}
+                                <br>Դուք նշել եք այս առաջադրանքը որպես ավարտված։ Սպասեք սեփականատիրոջ հաստատմանը։
+                            {% elif post.user == request.user %}
+                                <br>Աշխատողը նշել է այս առաջադրանքը որպես ավարտված։ Խնդրում ենք ստուգել և հաստատել։
+                            {% endif %}
+                        </div>
+                        {% endif %}
 
                         <!-- Meta Information -->
                         <div class="post-meta">
                             <div class="post-price">
                                 {% if post.price %}
-                                    ${{ post.price }}
+                                    {{ post.price }} դրամ
                                 {% else %}
                                     Գին չկա
                                 {% endif %}
@@ -471,17 +1315,140 @@
                             </div>
                         </div>
 
-                        <!-- Actions -->
-                        <div class="post-actions">
-                            <a href="{% url 'view_post' post.id %}" class="action-btn view-btn">
+                        <!-- View Count and Applications Stats -->
+                        <div class="post-views-stats">
+                            <div class="views-section">
+                                <div class="view-stat">
+                                    <i class="fas fa-eye"></i>
+                                    <span class="count">{{ post.views_count|default:"0" }}</span> դիտում
+                                </div>
+                                {% if post.user == request.user and post.task_status == 'open' and post.status == 'approved' %}
+                                <div class="view-stat">
+                                    <i class="fas fa-users"></i>
+                                    <span class="count">{{ post.applications.count }}</span> դիմում
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- View Count Badge -->
+                            <div class="view-count {% if post.views_count > 10 %}view-count-high{% endif %}">
                                 <i class="fas fa-eye"></i>
-                                Դիտել
-                            </a>
-                            <a href="#" class="action-btn edit-btn">
-                                <i class="fas fa-edit"></i>
-                                Խմբագրել
-                            </a>
+                                {{ post.views_count|default:"0" }} դիտում
+                            </div>
                         </div>
+
+                        <!-- Action Buttons - Hide when under review -->
+                        {% if not post.is_under_review and post.task_status != 'under_review' %}
+                        <div class="button-group">
+                            <!-- View Button -->
+                            <a href="{% url 'view_post' post.id %}" class="btn btn-primary">
+                                <i class="fas fa-eye"></i> Դիտել
+                            </a>
+
+                            <!-- Message Button - White but visible -->
+                            {% if post.user == request.user and post.assigned_to and post.status == 'approved' %}
+                                <a href="{% url 'create_room' post.assigned_to.username %}" class="btn btn-secondary">
+                                    <i class="fas fa-comment"></i> Նամակ
+                                </a>
+                            {% elif post.assigned_to == request.user and post.status == 'approved' %}
+                                <a href="{% url 'create_room' post.user.username %}" class="btn btn-secondary">
+                                    <i class="fas fa-comment"></i> Նամակ
+                                </a>
+                            {% endif %}
+
+                            <!-- Applications Button for Open Tasks -->
+                            {% if post.task_status == 'open' and post.status == 'approved' and post.user == request.user %}
+                                <a href="{% url 'task_applications' post.id %}" class="btn btn-info">
+                                    <i class="fas fa-users"></i> Դիմումներ 
+                                    <span class="applications-count">{{ post.applications.count }}</span>
+                                </a>
+                            {% endif %}
+
+                            <!-- Edit Button for Owner -->
+                            {% if post.user == request.user %}
+                                <a href="{% url 'edit_post' post.id %}" class="btn btn-secondary">
+                                    <i class="fas fa-edit"></i> Խմբագրել
+                                </a>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="button-group">
+                            <button class="btn btn-secondary" disabled>
+                                <i class="fas fa-edit"></i> Խմբագրել (Անհասանելի)
+                            </button>
+                            <button class="btn btn-secondary" disabled>
+                                <i class="fas fa-trash"></i> Ջնջել (Անհասանելի)
+                            </button>
+                            {% if post.disputes.exists %}
+                            <button onclick="openDisputeChat({{ post.disputes.first.id }})" class="btn btn-info">
+                                <i class="fas fa-comments"></i> Դիտել Դիսպուտը
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Վիճարկել Button (always visible for involved parties) - RENAMED FROM CONTACT ADMIN -->
+                        {% if post.user == request.user or post.assigned_to == request.user %}
+                        <div class="button-group">
+                            <button onclick="openContactAdminModal({{ post.id }})" class="btn btn-warning">
+                                <i class="fas fa-gavel"></i> Վիճարկել
+                            </button>
+                        </div>
+                        {% endif %}
+
+                        <!-- Task Management Buttons - ТОЛЬКО ДЛЯ APPROVED ПОСТОВ -->
+                        {% if post.status == 'approved' and not post.is_under_review and post.task_status != 'under_review' %}
+                            <!-- Task Management Buttons -->
+                            {% if post.task_status == 'incomplete' and post.user == request.user and not post.disputed_by_worker %}
+                            <div class="button-group">
+                                <button onclick="resubmitTask({{ post.id }})" class="btn btn-success btn-full">
+                                    <i class="fas fa-redo"></i> Վերահաստատել Առաջադրանքը
+                                </button>
+                            </div>
+                            {% endif %}
+
+                            <!-- Approval Actions for Owner -->
+                            {% if post.task_status == 'waiting_approval' and post.user == request.user and not post.disputed_by_owner %}
+                            <div class="button-group">
+                                <button onclick="approveCompletion({{ post.id }})" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Հաստատել
+                                </button>
+                                <button onclick="rejectCompletion({{ post.id }})" class="btn btn-danger">
+                                    <i class="fas fa-times"></i> Մերժել
+                                </button>
+                            </div>
+                            {% endif %}
+
+                            <!-- Task Management for Owner - Cancel is Red -->
+                            {% if post.task_status == 'in_progress' and post.user == request.user %}
+                            <div class="button-group">
+                                <button onclick="completeTask({{ post.id }})" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Ավարտել
+                                </button>
+                                <button onclick="markIncomplete({{ post.id }})" class="btn btn-warning">
+                                    <i class="fas fa-times"></i> Անավարտ
+                                </button>
+                                <button onclick="cancelTask({{ post.id }})" class="btn btn-danger">
+                                    <i class="fas fa-ban"></i> Չեղարկել
+                                </button>
+                            </div>
+                            {% endif %}
+
+                            <!-- Worker Actions - Cancel is Red -->
+                            {% if post.task_status == 'in_progress' and post.assigned_to == request.user %}
+                            <div class="button-group">
+                                <button onclick="workerCompleteTask({{ post.id }})" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Ավարտել
+                                </button>
+                                <button onclick="workerMarkIncomplete({{ post.id }})" class="btn btn-warning">
+                                    <i class="fas fa-times"></i> Անավարտ
+                                </button>
+                                <button onclick="workerCancelTask({{ post.id }})" class="btn btn-danger">
+                                    <i class="fas fa-ban"></i> Չեղարկել
+                                </button>
+                            </div>
+                            {% endif %}
+                        {% endif %}
                     </div>
                 </div>
                 {% endfor %}
@@ -492,20 +1459,706 @@
                 <div class="empty-icon">
                     <i class="fas fa-tasks"></i>
                 </div>
-                <h3 class="empty-title">Դեռևս Հայտարարություններ Չկան</h3>
+                <h3 class="empty-title">
+                    {% if view_type == 'owner' and current_filter == 'all' %}Դեռևս Հայտարարություններ Չկան
+                    {% elif view_type == 'worker' and current_filter == 'all' %}Վերագրված Առաջադրանքներ Չկան
+                    {% elif view_type == 'all' and current_filter == 'all' %}Հայտարարություններ և Առաջադրանքներ Չկան
+                    {% elif current_filter == 'active' %}Ակտիվ Հայտարարություններ Չկան
+                    {% elif current_filter == 'in_progress' %}Ընթացիկ Առաջադրանքներ Չկան
+                    {% elif current_filter == 'waiting_approval' %}Հաստատման Սպասող Առաջադրանքներ Չկան
+                    {% elif current_filter == 'completed' %}Ավարտված Առաջադրանքներ Չկան
+                    {% elif current_filter == 'incomplete' %}Անավարտ Առաջադրանքներ Չկան
+                    {% elif current_filter == 'cancelled' %}Չեղարկված Առաջադրանքներ Չկան
+                    {% elif current_filter == 'rejected' %}Մերժված Հայտարարություններ Չկան
+                    {% elif current_filter == 'under_review' %}Վերանայման Տակ Գտնվող Առաջադրանքներ Չկան
+                    {% else %}Հայտարարություններ Չկան{% endif %}
+                </h3>
                 <p class="empty-description">
-                    Դուք դեռ չունեք ակտիվ հայտարարություններ։ Ստեղծեք Ձեր առաջին հայտարարությունը հենց հիմա և սկսեք ստանալ առաջարկներ։
+                    {% if view_type == 'owner' and current_filter == 'all' %}
+                    Դուք դեռ չունեք հայտարարություններ։ Ստեղծեք Ձեր առաջին հայտարարությունը հենց հիմա։
+                    {% elif view_type == 'worker' and current_filter == 'all' %}
+                    Դուք դեռ չունեք վերագրված առաջադրանքներ։ Դիմեք առաջադրանքների և սպասեք, որ Ձեզ վերագրեն։
+                    {% elif view_type == 'all' and current_filter == 'all' %}
+                    Դուք դեռ չունեք ոչ հայտարարություններ, ոչ վերագրված առաջադրանքներ։
+                    {% else %}
+                    Այս կատեգորիայում հայտարարություններ չկան։
+                    {% endif %}
                 </p>
-                <a href="{% url 'create_post' %}" class="create-post-btn">
-                    <i class="fas fa-plus-circle"></i>
-                    Ստեղծել Նոր Հայտարարություն
-                </a>
+                <div class="action-buttons">
+                    {% if view_type != 'worker' %}
+                    <a href="{% url 'create_post' %}" class="action-btn-large">
+                        <i class="fas fa-plus-circle"></i>
+                        Ստեղծել Նոր Հայտարարություն
+                    </a>
+                    {% endif %}
+                    {% if view_type != 'owner' %}
+                    <a href="{% url 'ashxatanq' %}" class="action-btn-large secondary">
+                        <i class="fas fa-search"></i>
+                        Փնտրել Առաջադրանքներ
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         {% endif %}
     </section>
 </main>
 
+<!-- Review Popup -->
+<div class="review-popup-overlay" id="reviewPopup">
+    <div class="review-popup">
+        <div class="review-header">
+            <i class="fas fa-star"></i>
+            <h3>Գնահատեք աշխատանքը</h3>
+            <p>Կիսվեք ձեր տպավորություններով</p>
+        </div>
+        
+        <div class="review-content">
+            <div id="reviewPopupContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Admin Modal (Now renamed to Վիճարկել) -->
+<div id="contactAdminModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h3>Վիճարկել Առաջադրանքը</h3>
+        <p>Ուղարկեք հաղորդագրություն ադմինիստրատորներին ապացույցներով: Առաջադրանքը կդրվի վերանայման տակ:</p>
+        
+        <div class="form-group">
+            <label>Ձեր հաղորդագրությունը:</label>
+            <textarea id="adminMessage" rows="4" placeholder="Բացատրեք իրավիճակը և տրամադրեք համապատասխան տեղեկատվություն..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label>Վերբեռնել Ապացույցներ (Ընտրովի):</label>
+            <input type="file" id="adminImage" accept="image/*" style="width: 100%; padding: 10px;">
+            <small>Կարող եք վերբեռնել էկրանի կադրեր կամ լուսանկարներ որպես ապացույց</small>
+        </div>
+        
+        <div style="margin-top: 20px; display: flex; gap: 10px;">
+            <button onclick="closeContactAdminModal()" class="btn btn-secondary">Չեղարկել</button>
+            <button onclick="submitAdminContact()" class="btn btn-primary">Ուղարկել Ադմինիստրատորներին</button>
+        </div>
+    </div>
+</div>
+
+<!-- Dispute Chat Modal -->
+<div id="disputeChatModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 600px;">
+        <h3>Դիսպուտի Հաղորդակցություն</h3>
+        <p>Հաղորդակցվեք ադմինիստրատորների հետ այս դիսպուտի վերաբերյալ:</p>
+        
+        <div id="disputeMessages" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 15px; background: #f9f9f9;">
+            <!-- Messages will be loaded here -->
+        </div>
+        
+        <div class="form-group">
+            <textarea id="disputeMessage" rows="3" placeholder="Մուտքագրեք ձեր հաղորդագրությունը..." style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <input type="file" id="disputeImage" accept="image/*" style="width: 100%; padding: 10px;">
+            <small>Անհրաժեշտության դեպքում վերբեռնեք նկար ապացույցների համար</small>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button onclick="closeDisputeChat()" class="btn btn-secondary">Փակել</button>
+            <button onclick="sendDisputeMessage()" class="btn btn-primary">Ուղարկել Հաղորդագրություն</button>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 90%; max-height: 90%; text-align: center;">
+        <span class="close" onclick="closeImageModal()" style="float: right; font-size: 28px; cursor: pointer;">&times;</span>
+        <img id="imageModalImage" src="" alt="Ապացույց" style="max-width: 100%; max-height: 80vh;">
+    </div>
+</div>
+
 <script>
+    // Global variables
+    let currentContactPostId = null;
+    let currentDisputeId = null;
+    let currentDisputePostId = null;
+    let currentOwnerDisputePostId = null;
+    let currentReviewData = null;
+    let selectedRating = 0;
+
+    // Contact Admin Modal Functions (Now renamed to Վիճարկել)
+    function openContactAdminModal(postId) {
+        currentContactPostId = postId;
+        document.getElementById('contactAdminModal').style.display = 'block';
+    }
+
+    function closeContactAdminModal() {
+        document.getElementById('contactAdminModal').style.display = 'none';
+        document.getElementById('adminMessage').value = '';
+        document.getElementById('adminImage').value = '';
+        currentContactPostId = null;
+    }
+
+    function submitAdminContact() {
+        const message = document.getElementById('adminMessage').value.trim();
+        const image = document.getElementById('adminImage').files[0];
+        
+        if (!message) {
+            alert('Խնդրում ենք մուտքագրել հաղորդագրություն');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('message', message);
+        if (image) {
+            formData.append('image', image);
+        }
+        
+        fetch(`/task/${currentContactPostId}/contact-admin/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                closeContactAdminModal();
+                location.reload();
+            } else {
+                alert('Սխալ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Ցանցի սխալ: ' + error);
+        });
+    }
+
+    // Dispute Chat Modal Functions
+    function openDisputeChat(disputeId) {
+        currentDisputeId = disputeId;
+        document.getElementById('disputeChatModal').style.display = 'block';
+        loadDisputeMessages(disputeId);
+    }
+
+    function closeDisputeChat() {
+        document.getElementById('disputeChatModal').style.display = 'none';
+        document.getElementById('disputeMessage').value = '';
+        document.getElementById('disputeImage').value = '';
+        currentDisputeId = null;
+    }
+
+    function loadDisputeMessages(disputeId) {
+        fetch(`/dispute/${disputeId}/get-messages/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayDisputeMessages(data.messages);
+            } else {
+                alert('Հաղորդագրությունները բեռնելու սխալ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Ցանցի սխալ: ' + error);
+        });
+    }
+
+    function displayDisputeMessages(messages) {
+        const container = document.getElementById('disputeMessages');
+        container.innerHTML = '';
+        
+        messages.forEach(msg => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `dispute-message ${msg.is_own_message ? 'own-message' : 'other-message'}`;
+            
+            let messageHTML = `
+                <div class="message-header">
+                    <strong>${msg.sender}</strong>
+                    <small>${msg.created_at}</small>
+                </div>
+                <div class="message-content">${msg.message}</div>
+            `;
+            
+            if (msg.image) {
+                messageHTML += `
+                    <div class="message-image">
+                        <img src="${msg.image}" alt="Ապացույց" onclick="openImageModal('${msg.image}')">
+                    </div>
+                `;
+            }
+            
+            messageDiv.innerHTML = messageHTML;
+            container.appendChild(messageDiv);
+        });
+        
+        container.scrollTop = container.scrollHeight;
+    }
+
+    function sendDisputeMessage() {
+        const message = document.getElementById('disputeMessage').value.trim();
+        const image = document.getElementById('disputeImage').files[0];
+        
+        if (!message) {
+            alert('Խնդրում ենք մուտքագրել հաղորդագրություն');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('message', message);
+        if (image) {
+            formData.append('image', image);
+        }
+        
+        fetch(`/dispute/${currentDisputeId}/send-message/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('disputeMessage').value = '';
+                document.getElementById('disputeImage').value = '';
+                loadDisputeMessages(currentDisputeId);
+            } else {
+                alert('Սխալ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Ցանցի սխալ: ' + error);
+        });
+    }
+
+    function openImageModal(imageUrl) {
+        document.getElementById('imageModalImage').src = imageUrl;
+        document.getElementById('imageModal').style.display = 'block';
+    }
+
+    function closeImageModal() {
+        document.getElementById('imageModal').style.display = 'none';
+    }
+
+    // Task Management Functions
+    function completeTask(postId) {
+        if (confirm('Հաստատեք, որ առաջադրանքը ավարտված է?')) {
+            fetch(`/task/${postId}/complete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show review popup for owner to rate worker
+                    showReviewPopup({
+                        postId: postId,
+                        reviewedUserId: data.assigned_to_id,
+                        reviewType: 'owner_to_worker',
+                        taskTitle: data.task_title,
+                        userName: data.worker_username
+                    });
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function markIncomplete(postId) {
+        if (confirm('Հաստատեք, որ առաջադրանքը անավարտ է?')) {
+            fetch(`/task/${postId}/incomplete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function cancelTask(postId) {
+        if (confirm('Հաստատեք առաջադրանքի չեղարկումը?')) {
+            fetch(`/task/${postId}/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function resubmitTask(postId) {
+        if (confirm('Հաստատեք առաջադրանքի վերահաստատումը? Այն կրկին հասանելի կլինի այլ օգտատերերի համար:')) {
+            fetch(`/task/${postId}/resubmit/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function approveCompletion(postId) {
+        if (confirm('Հաստատեք առաջադրանքի ավարտը?')) {
+            fetch(`/task/${postId}/approve-completion/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show review popup for owner to rate worker after approval
+                    showReviewPopup({
+                        postId: postId,
+                        reviewedUserId: data.worker_id,
+                        reviewType: 'owner_to_worker',
+                        taskTitle: data.task_title,
+                        userName: data.worker_username
+                    });
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function rejectCompletion(postId) {
+        if (confirm('Մերժե՞լ ավարտը և նշել որպես անավարտ:')) {
+            fetch(`/task/${postId}/reject-completion/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    // Worker Task Management Functions
+    function workerCompleteTask(taskId) {
+        if (confirm('Հաստատեք, որ առաջադրանքը ավարտված է? Այն կուղարկվի սեփականատիրոջը հաստատման:')) {
+            fetch(`/task/${taskId}/worker/complete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show review popup for worker to rate owner
+                    showReviewPopup({
+                        postId: taskId,
+                        reviewedUserId: data.owner_id,
+                        reviewType: 'worker_to_owner',
+                        taskTitle: data.task_title,
+                        userName: data.owner_username
+                    });
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function workerMarkIncomplete(taskId) {
+        if (confirm('Հաստատեք, որ առաջադրանքը անավարտ է?')) {
+            fetch(`/task/${taskId}/worker/incomplete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function workerCancelTask(taskId) {
+        if (confirm('Հաստատեք առաջադրանքի չեղարկումը?')) {
+            fetch(`/task/${taskId}/worker/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    // Review Popup Functions
+    function showReviewPopup(reviewData) {
+        currentReviewData = reviewData;
+        selectedRating = 0;
+        
+        const popupContent = document.getElementById('reviewPopupContent');
+        const ratingDescriptions = {
+            1: "Շատ վատ - Շատ անբավարար աշխատանք",
+            2: "Վատ - Կան բազմաթիվ թերություններ",
+            3: "Միջին - Բավարար աշխատանք",
+            4: "Լավ - Բարձրորակ աշխատանք",
+            5: "Գերազանց - Հիանալի աշխատանք"
+        };
+        
+        popupContent.innerHTML = `
+            <div class="review-task-info">
+                <div class="review-task-title">${reviewData.taskTitle}</div>
+                <div class="review-task-user">
+                    ${reviewData.reviewType === 'owner_to_worker' ? 'Աշխատող' : 'Հայտարարության սեփականատեր'}: ${reviewData.userName}
+                </div>
+            </div>
+            
+            <div class="star-rating-review">
+                <span class="star" data-rating="1">★</span>
+                <span class="star" data-rating="2">★</span>
+                <span class="star" data-rating="3">★</span>
+                <span class="star" data-rating="4">★</span>
+                <span class="star" data-rating="5">★</span>
+                <div class="rating-text" id="ratingText">Ընտրեք գնահատականը</div>
+            </div>
+            
+            <div class="review-comment">
+                <label for="reviewComment">Մեկնաբանություն (ըստ ցանկության)</label>
+                <textarea id="reviewComment" placeholder="Կիսվեք ձեր տպավորություններով..."></textarea>
+                
+                <div class="quick-comments">
+                    <div class="quick-comment-btn" onclick="setQuickComment('Աշխատանքը կատարվել է ժամանակին')">Աշխատանքը կատարվել է ժամանակին</div>
+                    <div class="quick-comment-btn" onclick="setQuickComment('Բարձր որակի աշխատանք')">Բարձր որակի աշխատանք</div>
+                    <div class="quick-comment-btn" onclick="setQuickComment('Լավ հաղորդակցություն')">Լավ հաղորդակցություն</div>
+                    <div class="quick-comment-btn" onclick="setQuickComment('Խորհուրդ կտայի ուրիշներին')">Խորհուրդ կտայի ուրիշներին</div>
+                </div>
+            </div>
+            
+            <div class="review-actions">
+                <button onclick="closeReviewPopup()" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Փակել
+                </button>
+                <button onclick="submitReview()" class="btn btn-primary" id="submitReviewBtn" disabled>
+                    <i class="fas fa-paper-plane"></i> Ուղարկել գնահատականը
+                </button>
+            </div>
+        `;
+        
+        // Add event listeners to stars
+        const stars = popupContent.querySelectorAll('.star');
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                selectedRating = parseInt(star.getAttribute('data-rating'));
+                updateStars();
+                document.getElementById('ratingText').textContent = ratingDescriptions[selectedRating];
+                document.getElementById('submitReviewBtn').disabled = false;
+            });
+            
+            star.addEventListener('mouseover', () => {
+                const hoverRating = parseInt(star.getAttribute('data-rating'));
+                highlightStars(hoverRating);
+            });
+        });
+        
+        // Reset stars when mouse leaves the container
+        const starContainer = popupContent.querySelector('.star-rating-review');
+        starContainer.addEventListener('mouseleave', updateStars);
+        
+        // Show popup
+        document.getElementById('reviewPopup').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function setQuickComment(comment) {
+        document.getElementById('reviewComment').value = comment;
+    }
+
+    function highlightStars(rating) {
+        const stars = document.querySelectorAll('.star-rating-review .star');
+        stars.forEach(star => {
+            const starRating = parseInt(star.getAttribute('data-rating'));
+            if (starRating <= rating) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+    }
+
+    function updateStars() {
+        const stars = document.querySelectorAll('.star-rating-review .star');
+        stars.forEach(star => {
+            const starRating = parseInt(star.getAttribute('data-rating'));
+            if (starRating <= selectedRating) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+    }
+
+    function closeReviewPopup() {
+        document.getElementById('reviewPopup').classList.remove('active');
+        document.body.style.overflow = 'auto';
+        currentReviewData = null;
+        selectedRating = 0;
+    }
+
+    function submitReview() {
+        if (selectedRating === 0) {
+            alert('Խնդրում ենք ընտրել գնահատական');
+            return;
+        }
+
+        const comment = document.getElementById('reviewComment').value;
+        
+        fetch('/submit-review/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                post_id: currentReviewData.postId,
+                reviewed_user_id: currentReviewData.reviewedUserId,
+                review_type: currentReviewData.reviewType,
+                rating: selectedRating,
+                comment: comment
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success state
+                const popupContent = document.getElementById('reviewPopupContent');
+                popupContent.innerHTML = `
+                    <div class="review-success">
+                        <i class="fas fa-check-circle"></i>
+                        <h4>Շնորհակալություն գնահատականի համար</h4>
+                        <p>Ձեր գնահատականը հաջողությամբ ուղարկվել է։ Այն կօգնի այլ օգտատերերին ընտրել հուսալի գործընկերներ։</p>
+                        <button onclick="closeReviewPopup()" class="btn btn-primary" style="min-width: 200px;">
+                            <i class="fas fa-check"></i> Հասկանալի է
+                        </button>
+                    </div>
+                `;
+                
+                // Auto close after 3 seconds
+                setTimeout(() => {
+                    closeReviewPopup();
+                    location.reload();
+                }, 3000);
+            } else {
+                alert('Սխալ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Ցանցի սխալ: ' + error);
+        });
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        const reviewPopup = document.getElementById('reviewPopup');
+        const contactAdminModal = document.getElementById('contactAdminModal');
+        const disputeChatModal = document.getElementById('disputeChatModal');
+        const imageModal = document.getElementById('imageModal');
+        
+        if (event.target === reviewPopup) {
+            closeReviewPopup();
+        }
+        if (event.target === contactAdminModal) {
+            closeContactAdminModal();
+        }
+        if (event.target === disputeChatModal) {
+            closeDisputeChat();
+        }
+        if (event.target === imageModal) {
+            closeImageModal();
+        }
+    }
+
     // Add scroll animations
     document.addEventListener('DOMContentLoaded', () => {
         const observerOptions = {
@@ -522,7 +2175,7 @@
         }, observerOptions);
 
         // Observe all animated elements
-        document.querySelectorAll('.posts-stats, .posts-grid, .empty-state').forEach(element => {
+        document.querySelectorAll('.view-tabs, .combined-stats, .filter-tabs, .posts-grid, .empty-state').forEach(element => {
             element.style.animationPlayState = 'paused';
             observer.observe(element);
         });

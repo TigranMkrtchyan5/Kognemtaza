@@ -270,5 +270,23 @@
     "phone": "032323223",
     "verification_id": "ALO12131212144",
     "date_joined": "2025-10-31 17:08"
+  },
+  {
+    "username": "pilot",
+    "first_name": "Barev",
+    "last_name": "Dzez",
+    "email": "tigran.mkrtchyan.73@mail.ru",
+    "phone": "022222222",
+    "verification_id": "ALO1213127",
+    "date_joined": "2025-11-03 19:53"
+  },
+  {
+    "username": "sad",
+    "first_name": "Kakskkdksad",
+    "last_name": "dsd",
+    "email": "123@mail.rus",
+    "phone": "055663329",
+    "verification_id": "AO7854544",
+    "date_joined": "2025-11-05 19:30"
   }
 ]

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispute #{{ dispute.id }} - Admin Resolution</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3498db;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+        }
+        
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .dispute-header {
+            background: linear-gradient(135deg, var(--dark) 0%, #34495e 100%);
+            color: white;
+            padding: 1.5rem 0;
+            border-bottom: 4px solid var(--warning);
+        }
+        
+        .status-badge {
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+        }
+        
+        .user-card {
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .user-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+        }
+        
+        .user-card.worker {
+            border-top: 4px solid var(--success);
+        }
+        
+        .user-card.owner {
+            border-top: 4px solid var(--primary);
+        }
+        
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: var(--dark);
+            margin: 0 auto;
+        }
+        
+        .evidence-item {
+            border-radius: 8px;
+            overflow: hidden;
+            height: 150px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        
+        .evidence-item:hover {
+            transform: scale(1.05);
+        }
+        
+        .evidence-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .decision-option {
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .decision-option:hover {
+            border-color: var(--primary);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .decision-option.selected {
+            border-color: var(--primary);
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+        
+        .btn-decision {
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: 8px;
+        }
+        
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 7px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--light);
+        }
+        
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+        
+        .resolution-card {
+            border-left: 4px solid var(--success);
+        }
+        
+        .chat-bubble {
+            max-width: 80%;
+            padding: 1rem;
+            border-radius: 15px;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        
+        .chat-bubble.owner {
+            background: var(--primary);
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .chat-bubble.worker {
+            background: var(--light);
+            border-bottom-left-radius: 5px;
+        }
+        
+        .status-under_review { background-color: var(--warning); color: #000; }
+        .status-completed { background-color: var(--success); color: white; }
+        .status-cancelled { background-color: var(--danger); color: white; }
+        .status-refunded { background-color: #9b59b6; color: white; }
+        .status-reopened { background-color: #e67e22; color: white; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dispute-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="#" class="text-white-50">Admin</a></li>
+                            <li class="breadcrumb-item"><a href="#" class="text-white-50">Disputes</a></li>
+                            <li class="breadcrumb-item active text-white" aria-current="page">Dispute #{{ dispute.id }}</li>
+                        </ol>
+                    </nav>
+                    <h1 class="h3 mb-1">{{ dispute.post.title }}</h1>
+                    <p class="mb-0 text-white-50">Dispute between {{ dispute.post.user.username }} and {{ dispute.worker.username }}</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <span class="status-badge status-{{ dispute.status }}">
+                        <i class="fas fa-{% if dispute.status == 'under_review' %}clock{% elif dispute.status == 'completed' %}check-circle{% elif dispute.status == 'cancelled' %}times-circle{% elif dispute.status == 'refunded' %}money-bill-wave{% else %}redo{% endif %} me-1"></i>
+                        {{ dispute.get_status_display }}
+                    </span>
+                    <div class="mt-2">
+                        <small class="text-white-50">Created: {{ dispute.created_at|date:"M j, Y" }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <!-- Messages -->
+        {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="row">
+            <!-- Left Column - Parties & Details -->
+            <div class="col-lg-4 mb-4">
+                <!-- Parties Involved -->
+                <div class="row">
+                    <div class="col-md-6 col-lg-12 mb-3">
+                        <div class="card user-card owner h-100">
+                            <div class="card-body text-center">
+                                <div class="user-avatar mb-3">
+                                    {{ dispute.post.user.username|slice:":1"|upper }}
+                                </div>
+                                <h5 class="card-title">{{ dispute.post.user.username }}</h5>
+                                <p class="card-text text-muted">
+                                    <i class="fas fa-user-tie me-1"></i>Task Owner
+                                </p>
+                                <div class="d-grid">
+                                    <a href="{% url 'user_detail' dispute.post.user.id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-user me-1"></i>View Profile
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 col-lg-12 mb-3">
+                        <div class="card user-card worker h-100">
+                            <div class="card-body text-center">
+                                <div class="user-avatar mb-3">
+                                    {{ dispute.worker.username|slice:":1"|upper }}
+                                </div>
+                                <h5 class="card-title">{{ dispute.worker.username }}</h5>
+                                <p class="card-text text-muted">
+                                    <i class="fas fa-hard-hat me-1"></i>Worker
+                                </p>
+                                <div class="d-grid">
+                                    <a href="{% url 'user_detail' dispute.worker.id %}" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-user me-1"></i>View Profile
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Task Details -->
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-tasks me-2"></i>Task Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td><strong>Title:</strong></td>
+                                <td>{{ dispute.post.title }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Price:</strong></td>
+                                <td>${{ dispute.post.price|floatformat:2 }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    <span class="badge bg-{% if dispute.post.status == 'completed' %}success{% elif dispute.post.status == 'cancelled' %}danger{% elif dispute.post.status == 'disputed' %}warning{% else %}primary{% endif %}">
+                                        {{ dispute.post.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Created:</strong></td>
+                                <td>{{ dispute.post.created_at|date:"M j, Y" }}</td>
+                            </tr>
+                            {% if dispute.post.completed_at %}
+                            <tr>
+                                <td><strong>Completed:</strong></td>
+                                <td>{{ dispute.post.completed_at|date:"M j, Y" }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Timeline -->
+                <div class="card">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-history me-2"></i>Timeline
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <h6 class="mb-1">Task Created</h6>
+                                <p class="text-muted small mb-0">{{ dispute.post.created_at|date:"M j, Y g:i A" }}</p>
+                            </div>
+                            {% if dispute.post.assigned_worker %}
+                            <div class="timeline-item">
+                                <h6 class="mb-1">Worker Assigned</h6>
+                                <p class="text-muted small mb-0">{{ dispute.post.assigned_worker.username }}</p>
+                            </div>
+                            {% endif %}
+                            <div class="timeline-item">
+                                <h6 class="mb-1">Dispute Filed</h6>
+                                <p class="text-muted small mb-0">{{ dispute.created_at|date:"M j, Y g:i A" }}</p>
+                                <p class="small mb-0">By: {{ dispute.created_by.username }}</p>
+                            </div>
+                            {% if dispute.resolved_at %}
+                            <div class="timeline-item">
+                                <h6 class="mb-1">Dispute Resolved</h6>
+                                <p class="text-muted small mb-0">{{ dispute.resolved_at|date:"M j, Y g:i A" }}</p>
+                                <p class="small mb-0">By: {{ dispute.resolved_by.username }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Dispute Content & Resolution -->
+            <div class="col-lg-8">
+                <!-- Dispute Reason -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-circle me-2"></i>Dispute Reason
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="lead">{{ dispute.reason }}</p>
+                        <div class="d-flex align-items-center text-muted">
+                            <i class="fas fa-user me-1"></i>
+                            <span>Filed by: {{ dispute.created_by.username }}</span>
+                            <span class="mx-2">•</span>
+                            <i class="fas fa-calendar me-1"></i>
+                            <span>{{ dispute.created_at|date:"F j, Y g:i A" }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Evidence -->
+                <div class="card mb-4">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-paperclip me-2"></i>Evidence
+                            <span class="badge bg-light text-dark ms-2">{{ evidence|length }} files</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        {% if evidence %}
+                        <div class="row g-3">
+                            {% for item in evidence %}
+                            <div class="col-sm-6 col-md-4">
+                                <div class="evidence-item">
+                                    {% if item.file.url|lower|slice:'-4:' == '.jpg' or item.file.url|lower|slice:'-5:' == '.jpeg' or item.file.url|lower|slice:'-4:' == '.png' or item.file.url|lower|slice:'-4:' == '.gif' %}
+                                    <img src="{{ item.file.url }}" alt="Evidence {{ forloop.counter }}" data-bs-toggle="modal" data-bs-target="#evidenceModal" data-src="{{ item.file.url }}">
+                                    {% else %}
+                                    <div class="text-center">
+                                        <i class="fas fa-file fa-3x text-muted mb-2"></i>
+                                        <p class="small mb-0">{{ item.filename }}</p>
+                                        <a href="{{ item.file.url }}" class="btn btn-sm btn-outline-primary mt-2" download>Download</a>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% if item.description %}
+                                <p class="small text-muted mt-1 mb-0">{{ item.description }}</p>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No evidence submitted for this dispute.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Admin Resolution -->
+                {% if dispute.status == 'under_review' or dispute.status == 'reopened' %}
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-gavel me-2"></i>Admin Resolution
+                            {% if dispute.status == 'reopened' %}
+                            <span class="badge bg-warning text-dark ms-2">Reopened</span>
+                            {% endif %}
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{% url 'resolve_dispute' dispute.id %}">
+                            {% csrf_token %}
+                            
+                            <div class="mb-4">
+                                <h6 class="mb-3">Select Decision:</h6>
+                                
+                                <div class="row g-3">
+                                    <!-- Approve Completion -->
+                                    <div class="col-md-6">
+                                        <div class="decision-option" data-decision="completed">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="decision" id="decision-completed" value="completed" required>
+                                                <label class="form-check-label fw-bold text-success" for="decision-completed">
+                                                    <i class="fas fa-check-circle me-2"></i>Approve Completion
+                                                </label>
+                                            </div>
+                                            <p class="small text-muted mt-2 mb-0">
+                                                Mark work as completed and release payment to the worker. Use this if the worker has fulfilled the task requirements.
+                                            </p>
+                                            <div class="mt-2">
+                                                <small class="text-success">
+                                                    <i class="fas fa-money-bill-wave me-1"></i>
+                                                    Payment will be released to: <strong>{{ dispute.worker.username }}</strong>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Cancel Task -->
+                                    <div class="col-md-6">
+                                        <div class="decision-option" data-decision="cancelled">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="decision" id="decision-cancelled" value="cancelled">
+                                                <label class="form-check-label fw-bold text-danger" for="decision-cancelled">
+                                                    <i class="fas fa-times-circle me-2"></i>Cancel Task
+                                                </label>
+                                            </div>
+                                            <p class="small text-muted mt-2 mb-0">
+                                                Cancel the task and refund the post owner. Use this if the work is incomplete or doesn't meet requirements.
+                                            </p>
+                                            <div class="mt-2">
+                                                <small class="text-danger">
+                                                    <i class="fas fa-undo me-1"></i>
+                                                    Full refund to: <strong>{{ dispute.post.user.username }}</strong>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Partial Refund -->
+                                    <div class="col-md-6">
+                                        <div class="decision-option" data-decision="refunded">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="decision" id="decision-refunded" value="refunded">
+                                                <label class="form-check-label fw-bold text-info" for="decision-refunded">
+                                                    <i class="fas fa-money-bill-wave me-2"></i>Issue Refund
+                                                </label>
+                                            </div>
+                                            <p class="small text-muted mt-2 mb-0">
+                                                Issue a full refund to the post owner. Use this if the work cannot be completed or has major issues.
+                                            </p>
+                                            <div class="mt-2">
+                                                <small class="text-info">
+                                                    <i class="fas fa-exchange-alt me-1"></i>
+                                                    Refund to: <strong>{{ dispute.post.user.username }}</strong>
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Admin Notes -->
+                            <div class="mb-4">
+                                <label for="admin_notes" class="form-label fw-bold">Admin Notes:</label>
+                                <textarea class="form-control" id="admin_notes" name="admin_notes" rows="4" placeholder="Explain your decision and provide any additional notes...">{{ dispute.admin_notes|default:'' }}</textarea>
+                                <div class="form-text">
+                                    These notes will be visible to both parties and will be recorded in the dispute history.
+                                </div>
+                            </div>
+                            
+                            <!-- Submit Button -->
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-paper-plane me-2"></i>Submit Decision
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                {% else %}
+                <!-- Resolution Details -->
+                <div class="card resolution-card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-clipboard-check me-2"></i>Resolution Details
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <p><strong>Final Decision:</strong> 
+                                    <span class="badge status-{{ dispute.status }}">
+                                        {{ dispute.get_status_display }}
+                                    </span>
+                                </p>
+                                <p><strong>Resolved By:</strong> {{ dispute.resolved_by.get_full_name|default:dispute.resolved_by.username }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Resolved At:</strong> {{ dispute.resolved_at|date:"F j, Y g:i A" }}</p>
+                                <p><strong>Task Status:</strong> 
+                                    <span class="badge bg-{% if dispute.post.status == 'completed' %}success{% elif dispute.post.status == 'cancelled' %}danger{% else %}info{% endif %}">
+                                        {{ dispute.post.get_status_display }}
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                        
+                        {% if dispute.admin_notes %}
+                        <div class="alert alert-light">
+                            <h6 class="alert-heading">Admin Notes:</h6>
+                            <hr>
+                            <p class="mb-0">{{ dispute.admin_notes|linebreaks }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'reopen_dispute' dispute.id %}" class="btn btn-outline-warning" onclick="return confirm('Are you sure you want to reopen this dispute?')">
+                                <i class="fas fa-undo me-1"></i>Reopen Dispute
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Evidence Modal -->
+    <div class="modal fade" id="evidenceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Evidence</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <img id="evidenceImage" src="" alt="Evidence" class="img-fluid">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <a id="downloadEvidence" href="#" class="btn btn-primary" download>
+                        <i class="fas fa-download me-1"></i>Download
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Decision option selection
+        document.querySelectorAll('.decision-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const radio = this.querySelector('input[type="radio"]');
+                radio.checked = true;
+                
+                // Remove selected class from all options
+                document.querySelectorAll('.decision-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                // Add selected class to clicked option
+                this.classList.add('selected');
+            });
+        });
+        
+        // Evidence modal
+        const evidenceModal = document.getElementById('evidenceModal');
+        if (evidenceModal) {
+            evidenceModal.addEventListener('show.bs.modal', function(event) {
+                const button = event.relatedTarget;
+                const evidenceSrc = button.getAttribute('data-src');
+                const modalImage = document.getElementById('evidenceImage');
+                const downloadLink = document.getElementById('downloadEvidence');
+                
+                modalImage.src = evidenceSrc;
+                downloadLink.href = evidenceSrc;
+            });
+        }
+        
+        // Auto-select decision option when clicking on the card
+        document.querySelectorAll('.decision-option input[type="radio"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.querySelectorAll('.decision-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                
+                if (this.checked) {
+                    this.closest('.decision-option').classList.add('selected');
+                }
+            });
+        });
+
+        // Auto-focus on first radio button if none selected
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstRadio = document.querySelector('input[type="radio"]');
+            if (firstRadio && !document.querySelector('input[type="radio"]:checked')) {
+                firstRadio.checked = true;
+                firstRadio.closest('.decision-option').classList.add('selected');
+            }
+        });
+    </script>
+</body>
+</html>
