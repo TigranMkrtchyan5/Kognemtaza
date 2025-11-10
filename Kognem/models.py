@@ -27,7 +27,6 @@ class UserActivity(models.Model):
         return f"{self.user.username} - {self.action[:30]}"
 
 # ---------------- Ban Log ----------------
-
 class BanLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="bans")
     admin = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="issued_bans")
@@ -45,10 +44,11 @@ class BanLog(models.Model):
 
     @property
     def is_active(self):
-        """Check if ban is currently active (not expired)"""
+        """Check if this specific ban is currently active (not expired)"""
         now = timezone.now()
-        is_active = self.active and now < self.end_date
-        return is_active
+        return self.active and now < self.end_date
+
+
 
     @property
     def time_remaining(self):
@@ -96,6 +96,8 @@ class Profile(models.Model):
     @property
     def is_banned(self):
         return self.user.bans.filter(end_date__gt=timezone.now()).exists()
+
+
 
 # ---------------- Post Model ----------------
 class Category(models.Model):
@@ -223,7 +225,15 @@ class Post(models.Model):
     def is_under_review(self):
         return self.task_status == 'under_review' or self.disputes.filter(status__in=['pending', 'under_review']).exists()
 
-
+    @property
+    def has_resolved_dispute(self):
+        """Check if this post has a resolved dispute"""
+        return self.disputes.filter(dispute_resolved=True).exists()
+    
+    @property
+    def has_active_dispute(self):
+        """Check if this post has an active (non-resolved) dispute"""
+        return self.disputes.filter(dispute_resolved=False).exists()
 
 
 
@@ -684,9 +694,19 @@ class TaskDispute(models.Model):
         ('dismissed', 'Dismissed'),
     ]
     
-    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='disputes')
+    DECISION_CHOICES = [
+        ('completed', 'Mark as Completed'),
+        ('cancelled', 'Cancel Task'),
+        ('refunded', 'Full Refund'),
+        ('split', 'Split Payment'),
+    ]
+    
+    post = models.ForeignKey('Post', on_delete=models.CASCADE, related_name='disputes')
     dispute_type = models.CharField(max_length=50, choices=DISPUTE_TYPES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    
+    # NEW FIELD: Dispute resolved flag
+    dispute_resolved = models.BooleanField(default=False, help_text="Whether the dispute has been resolved by admin")
     
     # Who initiated the dispute
     initiated_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='initiated_disputes')
@@ -703,6 +723,11 @@ class TaskDispute(models.Model):
     admin_notes = models.TextField(blank=True, null=True)
     resolved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='resolved_disputes')
     resolution = models.TextField(blank=True, null=True)
+    admin_decision = models.CharField(max_length=20, choices=DECISION_CHOICES, blank=True, null=True)
+    
+    # Split payment details (if decision is 'split')
+    worker_percentage = models.IntegerField(default=50, help_text="Percentage for worker (0-100)")
+    owner_percentage = models.IntegerField(default=50, help_text="Percentage for owner (0-100)")
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -717,87 +742,230 @@ class TaskDispute(models.Model):
     def __str__(self):
         return f"Dispute #{self.id} - {self.post.title} - {self.get_dispute_type_display()}"
     
+    def save(self, *args, **kwargs):
+        # Ensure percentages sum to 100 for split decisions
+        if self.admin_decision == 'split':
+            if self.worker_percentage + self.owner_percentage != 100:
+                self.owner_percentage = 100 - self.worker_percentage
+        
+        # Automatically set dispute_resolved when status is resolved or dismissed
+        if self.status in ['resolved', 'dismissed']:
+            self.dispute_resolved = True
+        else:
+            self.dispute_resolved = False
+            
+        super().save(*args, **kwargs)
+    
     @property
     def is_active(self):
         return self.status in ['pending', 'under_review']
     
+    @property
+    def is_resolved(self):
+        return self.status in ['resolved', 'dismissed']
+    
+    # Add this new property for dispute resolution status
+    @property
+    def can_be_disputed_again(self):
+        """Check if this dispute can be disputed again"""
+        return not self.dispute_resolved
+    
     def mark_under_review(self):
+        """Mark dispute as under review"""
         self.status = 'under_review'
+        self.dispute_resolved = False
         self.save()
     
     def resolve_dispute(self, admin_user, resolution, admin_notes=''):
+        """Legacy method for backward compatibility"""
         self.status = 'resolved'
+        self.dispute_resolved = True
         self.resolved_by = admin_user
         self.resolution = resolution
         self.admin_notes = admin_notes
         self.resolved_at = timezone.now()
         self.save()
         
-        # Update the post status based on resolution
+        # Update the post status based on resolution text
         if 'complete' in resolution.lower() or 'approve' in resolution.lower():
             self.post.task_status = 'completed'
             self.post.completed_at = timezone.now()
         elif 'incomplete' in resolution.lower() or 'reject' in resolution.lower():
             self.post.task_status = 'incomplete'
         self.post.save()
-
-    @property
-    def worker(self):
-        """Get the worker involved in the dispute"""
-        if self.post.assigned_to:
-            return self.post.assigned_to
-        return self.other_party if self.other_party != self.post.user else None
+        return True
     
-    @property
-    def owner(self):
-        """Get the task owner"""
-        return self.post.user
-    
-    @property
-    def is_resolved(self):
-        """Check if dispute has been resolved"""
-        return self.status in ['resolved', 'dismissed']
-    
-    def resolve_dispute(self, decision, admin_user, notes=""):
-        """Method to resolve the dispute with proper status mapping"""
-        # Map the decision to your status choices
-        status_map = {
-            'completed': 'resolved',
-            'cancelled': 'resolved', 
-            'refunded': 'resolved'
-        }
+    def resolve_with_decision(self, decision, admin_user, resolution='', admin_notes='', worker_percentage=50):
+        """Resolve dispute with specific decision"""
+        self.status = 'resolved'
+        self.dispute_resolved = True
+        self.resolved_by = admin_user
+        self.admin_decision = decision
+        self.resolution = resolution
+        self.admin_notes = admin_notes
+        self.resolved_at = timezone.now()
         
-        if decision in status_map:
-            self.status = status_map[decision]
-            self.admin_decision = decision
-            self.admin_notes = notes
-            self.resolved_at = timezone.now()
-            self.resolved_by = admin_user
+        if decision == 'split':
+            self.worker_percentage = worker_percentage
+            self.owner_percentage = 100 - worker_percentage
+        
+        self.save()
+        
+        # Update post status based on decision
+        if decision == 'completed':
+            self.post.task_status = 'completed'
+            self.post.completed_at = timezone.now()
+        elif decision in ['cancelled', 'refunded']:
+            self.post.task_status = 'cancelled'
+        elif decision == 'split':
+            self.post.task_status = 'completed'
+        
+        self.post.save()
+        return True
+    
+    def reopen_dispute(self):
+        """Reopen a resolved dispute"""
+        if self.status in ['resolved', 'dismissed']:
+            self.status = 'under_review'
+            self.dispute_resolved = False
+            self.resolved_by = None
+            self.resolution = ''
+            self.admin_notes = ''
+            self.resolved_at = None
+            self.admin_decision = None
             self.save()
             
-            # Update the related post status based on decision
-            if decision == 'completed':
-                self.post.task_status = 'completed'
-                self.post.completed_at = timezone.now()
-            elif decision == 'cancelled':
-                self.post.task_status = 'cancelled'
-            elif decision == 'refunded':
-                self.post.task_status = 'cancelled'  # or whatever status you want for refunds
-            
+            # Reset post status to under review
+            self.post.task_status = 'under_review'
             self.post.save()
             return True
         return False
+    
+    def get_absolute_url(self):
+        from django.urls import reverse
+        return reverse('dispute_detail', kwargs={'dispute_id': self.id})
 
 
 class DisputeMessage(models.Model):
     dispute = models.ForeignKey(TaskDispute, on_delete=models.CASCADE, related_name='messages')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField()
-    image = models.ImageField(upload_to='dispute_evidence/', null=True, blank=True)
+    image = models.ImageField(upload_to='dispute_messages/%Y/%m/%d/', null=True, blank=True, max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         ordering = ['created_at']
+        verbose_name = 'Dispute Message'
+        verbose_name_plural = 'Dispute Messages'
     
     def __str__(self):
         return f"Message from {self.sender.username} in Dispute #{self.dispute.id}"
+    
+    @property
+    def has_image(self):
+        return bool(self.image)
+    
+    def get_image_url(self):
+        if self.image:
+            return self.image.url
+        return None
+    
+    def to_dict(self):
+        """Convert message to dictionary for JSON serialization"""
+        return {
+            'id': self.id,
+            'sender': {
+                'id': self.sender.id,
+                'username': self.sender.username,
+                'is_staff': self.sender.is_staff,
+            },
+            'message': self.message,
+            'image_url': self.get_image_url(),
+            'created_at': self.created_at.isoformat(),
+            'formatted_time': self.created_at.strftime('%b %d, %Y %H:%M'),
+            'has_image': self.has_image,
+        }
+
+
+class DisputeEvidence(models.Model):
+    EVIDENCE_TYPES = [
+        ('image', 'Image'),
+        ('document', 'Document'),
+        ('other', 'Other'),
+    ]
+    
+    dispute = models.ForeignKey(TaskDispute, on_delete=models.CASCADE, related_name='evidence_files')
+    submitted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_evidence')
+    file = models.FileField(upload_to='dispute_evidence/%Y/%m/%d/', max_length=500)
+    file_type = models.CharField(max_length=20, choices=EVIDENCE_TYPES, default='image')
+    description = models.TextField(blank=True, null=True)
+    is_initial = models.BooleanField(default=False, help_text="Whether this is initial evidence submitted with dispute")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Dispute Evidence'
+        verbose_name_plural = 'Dispute Evidence'
+    
+    def __str__(self):
+        return f"Evidence #{self.id} for Dispute #{self.dispute.id}"
+    
+    def save(self, *args, **kwargs):
+        # Automatically determine file type based on extension
+        if self.file:
+            extension = self.file.name.split('.')[-1].lower()
+            if extension in ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']:
+                self.file_type = 'image'
+            elif extension in ['pdf', 'doc', 'docx', 'txt', 'rtf']:
+                self.file_type = 'document'
+            else:
+                self.file_type = 'other'
+        super().save(*args, **kwargs)
+    
+    @property
+    def filename(self):
+        if self.file:
+            return self.file.name.split('/')[-1]
+        return "No file"
+    
+    @property
+    def is_image(self):
+        return self.file_type == 'image'
+    
+    @property
+    def is_document(self):
+        return self.file_type == 'document'
+    
+    def get_file_url(self):
+        if self.file:
+            return self.file.url
+        return None
+    
+    def get_file_icon(self):
+        if self.is_image:
+            return 'fa-image'
+        elif self.is_document:
+            return 'fa-file-alt'
+        else:
+            return 'fa-file'
+    
+    def to_dict(self):
+        """Convert evidence to dictionary for JSON serialization"""
+        return {
+            'id': self.id,
+            'submitted_by': {
+                'id': self.submitted_by.id,
+                'username': self.submitted_by.username,
+            },
+            'file_url': self.get_file_url(),
+            'file_type': self.file_type,
+            'filename': self.filename,
+            'description': self.description,
+            'is_initial': self.is_initial,
+            'created_at': self.created_at.isoformat(),
+            'formatted_time': self.created_at.strftime('%b %d, %Y %H:%M'),
+            'is_image': self.is_image,
+            'icon_class': self.get_file_icon(),
+        }

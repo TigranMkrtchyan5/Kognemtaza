@@ -1,87 +1,217 @@
+
+
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hy">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dispute #{{ dispute.id }} - Admin Resolution</title>
+    <title>Դիսպուտ #{{ dispute.id }} - Վարչական Լուծում | Kognem</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary: #3498db;
-            --success: #2ecc71;
-            --warning: #f39c12;
-            --danger: #e74c3c;
-            --dark: #2c3e50;
-            --light: #ecf0f1;
+            --primary: #3B82F6;
+            --primary-dark: #2563EB;
+            --primary-light: #60A5FA;
+            --primary-bg: #EFF6FF;
+            --secondary: #8B5CF6;
+            --secondary-dark: #7C3AED;
+            --accent: #06B6D4;
+            --success: #10B981;
+            --success-light: #D1FAE5;
+            --warning: #F59E0B;
+            --warning-light: #FEF3C7;
+            --danger: #EF4444;
+            --danger-light: #FEE2E2;
+            --dark: #1F2937;
+            --dark-light: #374151;
+            --light: #F9FAFB;
+            --light-border: #E5E7EB;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            --card-shadow-hover: 0 10px 15px rgba(0, 0, 0, 0.1);
+            --sidebar-width: 280px;
+            
+            /* Chat Colors */
+            --owner-message-bg: #3B82F6;
+            --owner-message-text: white;
+            --worker-message-bg: #10B981;
+            --worker-message-text: white;
+            --admin-message-bg: #F59E0B;
+            --admin-message-text: black;
+            --user-message-bg: #E5E7EB;
+            --user-message-text: #374151;
+        }
+        
+        * {
+            font-family: 'Inter', sans-serif;
         }
         
         body {
-            background-color: #f8f9fa;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #F9FAFB;
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1.5rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 2rem;
+            background-color: var(--light);
+        }
+        
+        .logo-container {
+            padding: 0 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            margin-bottom: 1.5rem;
+        }
+        
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        
+        .logo i {
+            margin-right: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+        
+        .nav-link i {
+            margin-right: 0.75rem;
+            width: 20px;
+            text-align: center;
         }
         
         .dispute-header {
-            background: linear-gradient(135deg, var(--dark) 0%, #34495e 100%);
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
             color: white;
-            padding: 1.5rem 0;
-            border-bottom: 4px solid var(--warning);
+            padding: 2rem 0;
+            margin: -2rem -2rem 2rem;
+            padding-left: 2rem;
+            padding-right: 2rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dispute-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 100%);
         }
         
         .status-badge {
             font-size: 0.9rem;
             padding: 0.5rem 1rem;
             border-radius: 50px;
+            font-weight: 600;
         }
         
         .user-card {
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid var(--light-border);
+            box-shadow: var(--card-shadow);
+            border-top: 4px solid transparent;
+            margin-bottom: 1.5rem;
+            background-color: white;
         }
         
         .user-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            box-shadow: var(--card-shadow-hover);
         }
         
         .user-card.worker {
-            border-top: 4px solid var(--success);
+            border-top-color: var(--success);
         }
         
         .user-card.owner {
-            border-top: 4px solid var(--primary);
+            border-top-color: var(--primary);
         }
         
         .user-avatar {
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: var(--light);
+            background: var(--primary-bg);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 2rem;
-            color: var(--dark);
+            color: var(--primary);
             margin: 0 auto;
+            border: 3px solid white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
         }
         
         .evidence-item {
-            border-radius: 8px;
+            border-radius: 10px;
             overflow: hidden;
             height: 150px;
-            background: #f8f9fa;
+            background: white;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: transform 0.3s ease;
+            border: 2px solid var(--light-border);
         }
         
         .evidence-item:hover {
             transform: scale(1.05);
+            border-color: var(--primary);
         }
         
         .evidence-item img {
@@ -91,22 +221,23 @@
         }
         
         .decision-option {
-            border: 2px solid #dee2e6;
-            border-radius: 10px;
+            border: 2px solid var(--light-border);
+            border-radius: 12px;
             padding: 1.5rem;
             margin-bottom: 1rem;
             cursor: pointer;
             transition: all 0.3s ease;
+            background-color: white;
         }
         
         .decision-option:hover {
             border-color: var(--primary);
-            background-color: rgba(52, 152, 219, 0.05);
+            background-color: var(--primary-bg);
         }
         
         .decision-option.selected {
             border-color: var(--primary);
-            background-color: rgba(52, 152, 219, 0.1);
+            background-color: var(--primary-bg);
         }
         
         .btn-decision {
@@ -127,7 +258,7 @@
             top: 0;
             bottom: 0;
             width: 2px;
-            background: var(--light);
+            background: var(--light-border);
         }
         
         .timeline-item {
@@ -150,401 +281,1395 @@
             border-left: 4px solid var(--success);
         }
         
-        .chat-bubble {
-            max-width: 80%;
-            padding: 1rem;
-            border-radius: 15px;
-            margin-bottom: 1rem;
-            position: relative;
+        /* Enhanced Chat Styles */
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            border: 1px solid var(--light-border);
+            border-radius: 12px;
+            background-color: white;
+            display: flex;
+            flex-direction: column;
         }
         
-        .chat-bubble.owner {
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .message {
+            padding: 1rem;
+            border-radius: 18px;
+            max-width: 70%;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            animation: fadeIn 0.3s ease;
+            word-wrap: break-word;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message-owner {
+            background-color: var(--owner-message-bg);
+            color: var(--owner-message-text);
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .message-worker {
+            background-color: var(--worker-message-bg);
+            color: var(--worker-message-text);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message-admin {
+            background-color: var(--admin-message-bg);
+            color: var(--admin-message-text);
+            margin: 0.5rem auto;
+            border: 1px dashed var(--light-border);
+            max-width: 80%;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .message-user {
+            background-color: var(--user-message-bg);
+            color: var(--user-message-text);
+            margin-right: auto;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+        
+        .message-sender {
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .message-time {
+            font-size: 0.7rem;
+        }
+        
+        .message-content {
+            line-height: 1.4;
+            margin-bottom: 0.5rem;
+        }
+        
+        .message-images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .message-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .message-image:hover {
+            transform: scale(1.05);
+            border-color: rgba(255,255,255,0.6);
+        }
+        
+        .message-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .chat-input-area {
+            border-top: 1px solid var(--light-border);
+            padding: 1.5rem;
+            background: white;
+            border-radius: 0 0 12px 12px;
+        }
+        
+        .status-pending { background-color: var(--warning); color: #000; }
+        .status-under_review { background-color: var(--warning); color: #000; }
+        .status-resolved { background-color: var(--success); color: white; }
+        .status-dismissed { background-color: var(--danger); color: white; }
+        
+        .tab-content {
+            border: 1px solid var(--light-border);
+            border-top: none;
+            border-radius: 0 0 12px 12px;
+            background: white;
+        }
+        
+        .nav-tabs {
+            border-bottom: 1px solid var(--light-border);
+        }
+        
+        .nav-tabs .nav-link {
+            border: none;
+            padding: 12px 20px;
+            color: #6B7280;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: transparent;
+        }
+        
+        .nav-tabs .nav-link:hover {
+            color: var(--primary);
+            background: var(--primary-bg);
+        }
+        
+        .nav-tabs .nav-link.active {
+            border-bottom: 3px solid var(--primary);
+            font-weight: bold;
+            color: var(--primary);
+            background: transparent;
+        }
+        
+        .evidence-section {
+            margin-bottom: 2rem;
+        }
+        
+        .evidence-section-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--light-border);
+        }
+        
+        .initial-evidence {
+            background: var(--primary-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .evidence-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #6B7280;
+        }
+        
+        .evidence-description {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border-left: 3px solid var(--primary);
+        }
+
+        /* File Preview Styles */
+        .file-preview-container {
+            margin-top: 15px;
+        }
+        
+        .file-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .file-preview {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            height: 100px;
+            background: var(--light);
+            border: 2px solid var(--light-border);
+        }
+        
+        .file-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .file-preview .file-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            flex-direction: column;
+            color: var(--dark);
+        }
+        
+        .file-preview .remove-file {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+        
+        .file-preview .remove-file:hover {
+            background: rgba(239, 68, 68, 1);
+            transform: scale(1.1);
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        /* Enhanced Form Styles */
+        .form-control, .form-select {
+            background-color: white;
+            border: 1px solid var(--light-border);
+            color: var(--dark);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+            color: var(--dark);
+        }
+        
+        .form-control::placeholder {
+            color: #9CA3AF;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            border-color: var(--success);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning);
+            border-color: var(--warning);
+            color: white;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            border-color: var(--danger);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+        
+        /* Card enhancements */
+        .card {
+            border: 1px solid var(--light-border);
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+        
+        .card:hover {
+            box-shadow: var(--card-shadow-hover);
+        }
+        
+        .card-header {
+            border-radius: 12px 12px 0 0 !important;
+            font-weight: 600;
+            background-color: var(--light);
+            border-bottom: 1px solid var(--light-border);
+            color: var(--dark);
+        }
+
+        /* Breadcrumb */
+        .breadcrumb {
+            background-color: transparent;
+            padding: 0;
+        }
+        
+        .breadcrumb-item a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+        }
+        
+        .breadcrumb-item.active {
+            color: white;
+        }
+        
+        .breadcrumb-item + .breadcrumb-item::before {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Alert styles */
+        .alert {
+            border: none;
+            border-radius: 8px;
+        }
+        
+        .alert-success {
+            background-color: var(--success-light);
+            color: #065F46;
+            border-left: 4px solid var(--success);
+        }
+        
+        .alert-danger {
+            background-color: var(--danger-light);
+            color: #991B1B;
+            border-left: 4px solid var(--danger);
+        }
+        
+        .alert-warning {
+            background-color: var(--warning-light);
+            color: #92400E;
+            border-left: 4px solid var(--warning);
+        }
+        
+        .alert-info {
+            background-color: #E0F2FE;
+            color: #0C4A6E;
+            border-left: 4px solid var(--accent);
+        }
+
+        /* Badge styles */
+        .badge {
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+        }
+
+        /* Stats cards */
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid var(--light-border);
+            transition: all 0.3s ease;
+            box-shadow: var(--card-shadow);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--card-shadow-hover);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #6B7280;
+            font-size: 0.9rem;
+        }
+        
+        /* Menu toggle for mobile */
+        .menu-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1100;
             background: var(--primary);
             color: white;
-            margin-left: auto;
-            border-bottom-right-radius: 5px;
+            border: none;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
         
-        .chat-bubble.worker {
-            background: var(--light);
-            border-bottom-left-radius: 5px;
+        /* Action buttons */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
         }
         
-        .status-under_review { background-color: var(--warning); color: #000; }
-        .status-completed { background-color: var(--success); color: white; }
-        .status-cancelled { background-color: var(--danger); color: white; }
-        .status-refunded { background-color: #9b59b6; color: white; }
-        .status-reopened { background-color: #e67e22; color: white; }
+        .action-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn-primary {
+            background: var(--primary);
+            color: white;
+            border: 1px solid var(--primary);
+        }
+        
+        .action-btn-primary:hover {
+            background: var(--primary-dark);
+            color: white;
+            transform: translateY(-2px);
+        }
+        
+        .action-btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .action-btn-secondary:hover {
+            background: var(--primary-bg);
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 992px) {
+            .menu-toggle {
+                display: flex;
+            }
+            
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .message {
+                max-width: 85%;
+            }
+            
+            .message-image {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .user-avatar {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .evidence-item {
+                height: 120px;
+            }
+            
+            .chat-container {
+                height: 400px;
+            }
+            
+            .chat-messages {
+                padding: 1rem;
+            }
+            
+            .chat-input-area {
+                padding: 1rem;
+            }
+            
+            .main-content {
+                padding: 1rem;
+            }
+            
+            .dispute-header {
+                margin: -1rem -1rem 1rem;
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+        
+        /* Custom scrollbar */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--primary-light);
+            border-radius: 10px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+        
+        /* Animation for new messages */
+        @keyframes highlight {
+            0% { background-color: rgba(59, 130, 246, 0.2); }
+            100% { background-color: transparent; }
+        }
+        
+        .message.new {
+            animation: highlight 2s ease;
+        }
+        
+        /* Overlay for mobile menu */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        
+        .sidebar-overlay.open {
+            display: block;
+        }
+        
+        /* Kognem brand styling */
+        .kognem-primary {
+            color: var(--primary);
+        }
+        
+        .kognem-bg-primary {
+            background-color: var(--primary);
+        }
+        
+        .kognem-gradient {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        }
+        
+        /* Enhanced header actions */
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        /* Improved user role indicators */
+        .role-badge {
+            font-size: 0.7rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+            margin-left: 5px;
+        }
+        
+        .role-owner {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .role-worker {
+            background: var(--success);
+            color: white;
+        }
+        
+        .role-admin {
+            background: var(--warning);
+            color: black;
+        }
     </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="dispute-header">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="#" class="text-white-50">Admin</a></li>
-                            <li class="breadcrumb-item"><a href="#" class="text-white-50">Disputes</a></li>
-                            <li class="breadcrumb-item active text-white" aria-current="page">Dispute #{{ dispute.id }}</li>
-                        </ol>
-                    </nav>
-                    <h1 class="h3 mb-1">{{ dispute.post.title }}</h1>
-                    <p class="mb-0 text-white-50">Dispute between {{ dispute.post.user.username }} and {{ dispute.worker.username }}</p>
+    <!-- Mobile Menu Toggle -->
+    <button class="menu-toggle" id="menuToggle">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo-container">
+                <div class="logo">
+                    <i class="fas fa-gem"></i>
+                    Kognem
                 </div>
-                <div class="col-md-4 text-md-end">
-                    <span class="status-badge status-{{ dispute.status }}">
-                        <i class="fas fa-{% if dispute.status == 'under_review' %}clock{% elif dispute.status == 'completed' %}check-circle{% elif dispute.status == 'cancelled' %}times-circle{% elif dispute.status == 'refunded' %}money-bill-wave{% else %}redo{% endif %} me-1"></i>
-                        {{ dispute.get_status_display }}
-                    </span>
-                    <div class="mt-2">
-                        <small class="text-white-50">Created: {{ dispute.created_at|date:"M j, Y" }}</small>
+            </div>
+            
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'admin_dashboard' %}">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Դաշտ
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{% url 'admin_disputes' %}">
+                        <i class="fas fa-balance-scale"></i>
+                        Դիսպուտներ
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'all_users' %}">
+                        <i class="fas fa-users"></i>
+                        Օգտատերեր
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'post_management' %}">
+                        <i class="fas fa-tasks"></i>
+                        Առաջադրանքներ
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'user_ratings_report' %}">
+                        <i class="fas fa-chart-bar"></i>
+                        Վիճակագրություն
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <div class="dispute-header">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <nav aria-label="breadcrumb">
+                            <ol class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="{% url 'admin_dashboard' %}">Վարչություն</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'admin_disputes' %}">Դիսպուտներ</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Դիսպուտ #{{ dispute.id }}</li>
+                            </ol>
+                        </nav>
+                        <h1 class="h3 mb-1">{{ dispute.post.title|default:"Անանուն Հայտարարություն" }}</h1>
+                        <p class="mb-0 text-light">
+                            Դիսպուտ 
+                            <strong>{{ dispute.post.user.username|default:"Անհայտ Օգտատեր" }}</strong> 
+                            և 
+                            <strong>{{ dispute.worker.username|default:"Անհայտ Աշխատող" }}</strong>
+                            միջև
+                        </p>
+                        
+                        <!-- Action Buttons -->
+                        <div class="header-actions">
+                            <a href="{% url 'admin_dashboard' %}" class="action-btn action-btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Վերադառնալ Դաշտ
+                            </a>
+                            <a href="{% url 'admin_disputes' %}" class="action-btn action-btn-primary">
+                                <i class="fas fa-list"></i>
+                                Բոլոր Դիսպուտները
+                            </a>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <span class="status-badge status-{{ dispute.status }}">
+                            <i class="fas fa-{% if dispute.status == 'under_review' %}clock{% elif dispute.status == 'resolved' %}check-circle{% elif dispute.status == 'dismissed' %}times-circle{% else %}redo{% endif %} me-1"></i>
+                            {{ dispute.get_status_display }}
+                        </span>
+                        <div class="mt-2">
+                            <small class="text-light">Ստեղծված: {{ dispute.created_at|date:"M j, Y" }}</small>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <div class="container py-4">
-        <!-- Messages -->
-        {% if messages %}
-        <div class="mb-4">
-            {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            <!-- Messages -->
+            {% if messages %}
+            <div class="mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-triangle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
             </div>
-            {% endfor %}
-        </div>
-        {% endif %}
+            {% endif %}
 
-        <div class="row">
-            <!-- Left Column - Parties & Details -->
-            <div class="col-lg-4 mb-4">
-                <!-- Parties Involved -->
-                <div class="row">
-                    <div class="col-md-6 col-lg-12 mb-3">
-                        <div class="card user-card owner h-100">
-                            <div class="card-body text-center">
-                                <div class="user-avatar mb-3">
-                                    {{ dispute.post.user.username|slice:":1"|upper }}
-                                </div>
-                                <h5 class="card-title">{{ dispute.post.user.username }}</h5>
-                                <p class="card-text text-muted">
-                                    <i class="fas fa-user-tie me-1"></i>Task Owner
-                                </p>
-                                <div class="d-grid">
-                                    <a href="{% url 'user_detail' dispute.post.user.id %}" class="btn btn-outline-primary btn-sm">
-                                        <i class="fas fa-user me-1"></i>View Profile
-                                    </a>
-                                </div>
+            <div class="row">
+                <!-- Left Column - Parties & Details -->
+                <div class="col-lg-4 mb-4">
+                    <!-- Quick Stats -->
+                    <div class="row mb-4">
+                        <div class="col-6">
+                            <div class="stat-card text-center">
+                                <div class="stat-value kognem-primary">{{ dispute_messages.count }}</div>
+                                <div class="stat-label">Հաղորդագրություններ</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="stat-card text-center">
+                                <div class="stat-value text-info">{{ evidence_files.count }}</div>
+                                <div class="stat-label">Ապացույցներ</div>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="col-md-6 col-lg-12 mb-3">
-                        <div class="card user-card worker h-100">
-                            <div class="card-body text-center">
-                                <div class="user-avatar mb-3">
-                                    {{ dispute.worker.username|slice:":1"|upper }}
+                    <!-- Parties Involved -->
+                    <div class="row">
+                        <div class="col-md-6 col-lg-12 mb-3">
+                            <div class="card user-card owner h-100">
+                                <div class="card-body text-center">
+                                    <div class="user-avatar mb-3">
+                                        {{ dispute.post.user.username|slice:":1"|upper|default:"U" }}
+                                    </div>
+                                    <h5 class="card-title">{{ dispute.post.user.username|default:"Անհայտ Օգտատեր" }}</h5>
+                                    <p class="card-text text-muted">
+                                        <i class="fas fa-user-tie me-1"></i>Հայտարարության Սեփականատեր
+                                    </p>
+                                    <div class="d-grid">
+                                        {% if dispute.post.user.id %}
+                                        <a href="{% url 'user_detail' dispute.post.user.id %}" class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-user me-1"></i>Դիտել Պրոֆիլը
+                                        </a>
+                                        {% else %}
+                                        <button class="btn btn-outline-secondary btn-sm" disabled>
+                                            <i class="fas fa-user me-1"></i>Պրոֆիլը Հասանելի Չէ
+                                        </button>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                <h5 class="card-title">{{ dispute.worker.username }}</h5>
-                                <p class="card-text text-muted">
-                                    <i class="fas fa-hard-hat me-1"></i>Worker
-                                </p>
-                                <div class="d-grid">
-                                    <a href="{% url 'user_detail' dispute.worker.id %}" class="btn btn-outline-success btn-sm">
-                                        <i class="fas fa-user me-1"></i>View Profile
-                                    </a>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 col-lg-12 mb-3">
+                            <div class="card user-card worker h-100">
+                                <div class="card-body text-center">
+                                    <div class="user-avatar mb-3">
+                                        {{ dispute.worker.username|slice:":1"|upper|default:"W" }}
+                                    </div>
+                                    <h5 class="card-title">{{ dispute.worker.username|default:"Անհայտ Աշխատող" }}</h5>
+                                    <p class="card-text text-muted">
+                                        <i class="fas fa-hard-hat me-1"></i>Աշխատող
+                                    </p>
+                                    <div class="d-grid">
+                                        {% if dispute.worker.id %}
+                                        <a href="{% url 'user_detail' dispute.worker.id %}" class="btn btn-outline-success btn-sm">
+                                            <i class="fas fa-user me-1"></i>Դիտել Պրոֆիլը
+                                        </a>
+                                        {% else %}
+                                        <button class="btn btn-outline-secondary btn-sm" disabled>
+                                            <i class="fas fa-user me-1"></i>Պրոֆիլը Հասանելի Չէ
+                                        </button>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Task Details -->
-                <div class="card mb-4">
-                    <div class="card-header bg-dark text-white">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-tasks me-2"></i>Task Details
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <table class="table table-borderless table-sm">
-                            <tr>
-                                <td><strong>Title:</strong></td>
-                                <td>{{ dispute.post.title }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Price:</strong></td>
-                                <td>${{ dispute.post.price|floatformat:2 }}</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Status:</strong></td>
-                                <td>
-                                    <span class="badge bg-{% if dispute.post.status == 'completed' %}success{% elif dispute.post.status == 'cancelled' %}danger{% elif dispute.post.status == 'disputed' %}warning{% else %}primary{% endif %}">
-                                        {{ dispute.post.get_status_display }}
-                                    </span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><strong>Created:</strong></td>
-                                <td>{{ dispute.post.created_at|date:"M j, Y" }}</td>
-                            </tr>
-                            {% if dispute.post.completed_at %}
-                            <tr>
-                                <td><strong>Completed:</strong></td>
-                                <td>{{ dispute.post.completed_at|date:"M j, Y" }}</td>
-                            </tr>
-                            {% endif %}
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Timeline -->
-                <div class="card">
-                    <div class="card-header bg-dark text-white">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-history me-2"></i>Timeline
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="timeline">
-                            <div class="timeline-item">
-                                <h6 class="mb-1">Task Created</h6>
-                                <p class="text-muted small mb-0">{{ dispute.post.created_at|date:"M j, Y g:i A" }}</p>
-                            </div>
-                            {% if dispute.post.assigned_worker %}
-                            <div class="timeline-item">
-                                <h6 class="mb-1">Worker Assigned</h6>
-                                <p class="text-muted small mb-0">{{ dispute.post.assigned_worker.username }}</p>
+                    <!-- Post Creation Details -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-file-alt me-2"></i>Հայտարարության Մանրամասներ
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            {% if dispute.post.image %}
+                            <div class="mb-3 text-center">
+                                <img src="{{ dispute.post.image.url }}" alt="{{ dispute.post.title }}" class="img-fluid rounded" style="max-height: 200px; object-fit: cover;">
                             </div>
                             {% endif %}
-                            <div class="timeline-item">
-                                <h6 class="mb-1">Dispute Filed</h6>
-                                <p class="text-muted small mb-0">{{ dispute.created_at|date:"M j, Y g:i A" }}</p>
-                                <p class="small mb-0">By: {{ dispute.created_by.username }}</p>
-                            </div>
-                            {% if dispute.resolved_at %}
-                            <div class="timeline-item">
-                                <h6 class="mb-1">Dispute Resolved</h6>
-                                <p class="text-muted small mb-0">{{ dispute.resolved_at|date:"M j, Y g:i A" }}</p>
-                                <p class="small mb-0">By: {{ dispute.resolved_by.username }}</p>
+                            
+                            <h6 class="mb-2">{{ dispute.post.title|default:"Վերնագիր չկա" }}</h6>
+                            
+                            {% if dispute.post.description %}
+                            <div class="description-box mb-3">
+                                <strong>Նկարագրություն:</strong>
+                                <p class="mb-0 mt-2">{{ dispute.post.description|linebreaksbr }}</p>
                             </div>
                             {% endif %}
+                            
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <small class="text-muted">Գին</small>
+                                    <div class="fw-bold kognem-primary">{{ dispute.post.price|default:"0" }} դրամ</div>
+                                </div>
+                                <div class="col-6">
+                                    <small class="text-muted">Կարգավիճակ</small>
+                                    <div>
+                                        <span class="badge bg-{% if dispute.post.status == 'completed' %}success{% elif dispute.post.status == 'cancelled' %}danger{% elif dispute.post.status == 'disputed' %}warning{% else %}primary{% endif %}">
+                                            {{ dispute.post.get_status_display|default:"Անհայտ" }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <div class="small text-muted">
+                                <div><i class="fas fa-calendar me-1"></i> Ստեղծված: {{ dispute.post.created_at|date:"M j, Y H:i"|default:"Անհայտ" }}</div>
+                                {% if dispute.post.updated_at %}
+                                <div><i class="fas fa-edit me-1"></i> Թարմացված: {{ dispute.post.updated_at|date:"M j, Y H:i" }}</div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
-            <!-- Right Column - Dispute Content & Resolution -->
-            <div class="col-lg-8">
-                <!-- Dispute Reason -->
-                <div class="card mb-4">
-                    <div class="card-header bg-warning text-dark">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-exclamation-circle me-2"></i>Dispute Reason
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <p class="lead">{{ dispute.reason }}</p>
-                        <div class="d-flex align-items-center text-muted">
-                            <i class="fas fa-user me-1"></i>
-                            <span>Filed by: {{ dispute.created_by.username }}</span>
-                            <span class="mx-2">•</span>
-                            <i class="fas fa-calendar me-1"></i>
-                            <span>{{ dispute.created_at|date:"F j, Y g:i A" }}</span>
+                    <!-- Timeline -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-history me-2"></i>Ժամանակագրություն
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="timeline">
+                                <div class="timeline-item">
+                                    <h6 class="mb-1">Առաջադրանքը Ստեղծված է</h6>
+                                    <p class="text-muted small mb-0">{{ dispute.post.created_at|date:"M j, Y g:i A"|default:"Տվյալներ չկան" }}</p>
+                                </div>
+                                {% if dispute.post.assigned_to %}
+                                <div class="timeline-item">
+                                    <h6 class="mb-1">Աշխատող Նշանակված է</h6>
+                                    <p class="text-muted small mb-0">{{ dispute.post.assigned_to.username|default:"Անհայտ Աշխատող" }}</p>
+                                    <p class="text-muted small mb-0">{{ dispute.post.assigned_at|date:"M j, Y g:i A"|default:"" }}</p>
+                                </div>
+                                {% endif %}
+                                <div class="timeline-item">
+                                    <h6 class="mb-1">Դիսպուտ Ներկայացված է</h6>
+                                    <p class="text-muted small mb-0">{{ dispute.created_at|date:"M j, Y g:i A" }}</p>
+                                    <p class="small mb-0">Ներկայացրել է: {{ dispute.created_by.username|default:"Անհայտ Օգտատեր" }}</p>
+                                </div>
+                                {% if dispute.resolved_at %}
+                                <div class="timeline-item">
+                                    <h6 class="mb-1">Դիսպուտը Լուծված է</h6>
+                                    <p class="text-muted small mb-0">{{ dispute.resolved_at|date:"M j, Y g:i A" }}</p>
+                                    <p class="small mb-0">Լուծել է: {% if dispute.resolved_by %}{{ dispute.resolved_by.get_full_name|default:dispute.resolved_by.username }}{% else %}Համակարգ{% endif %}</p>
+                                </div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Evidence -->
-                <div class="card mb-4">
-                    <div class="card-header bg-dark text-white">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-paperclip me-2"></i>Evidence
-                            <span class="badge bg-light text-dark ms-2">{{ evidence|length }} files</span>
-                        </h5>
+                <!-- Right Column - Dispute Content & Resolution -->
+                <div class="col-lg-8">
+                    <!-- Dispute Reason -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-exclamation-circle me-2"></i>Դիսպուտի Պատճառ
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="lead">{{ dispute.reason|default:"Պատճառ նշված չէ" }}</p>
+                            <div class="d-flex align-items-center text-muted">
+                                <i class="fas fa-user me-1"></i>
+                                <span>Ներկայացրել է: {{ dispute.created_by.username|default:"Անհայտ Օգտատեր" }}</span>
+                                <span class="mx-2">•</span>
+                                <i class="fas fa-calendar me-1"></i>
+                                <span>{{ dispute.created_at|date:"F j, Y g:i A" }}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        {% if evidence %}
-                        <div class="row g-3">
-                            {% for item in evidence %}
-                            <div class="col-sm-6 col-md-4">
-                                <div class="evidence-item">
-                                    {% if item.file.url|lower|slice:'-4:' == '.jpg' or item.file.url|lower|slice:'-5:' == '.jpeg' or item.file.url|lower|slice:'-4:' == '.png' or item.file.url|lower|slice:'-4:' == '.gif' %}
-                                    <img src="{{ item.file.url }}" alt="Evidence {{ forloop.counter }}" data-bs-toggle="modal" data-bs-target="#evidenceModal" data-src="{{ item.file.url }}">
+
+                    <!-- Tabs for Evidence and Messages -->
+                    <ul class="nav nav-tabs" id="disputeTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="evidence-tab" data-bs-toggle="tab" data-bs-target="#evidence" type="button" role="tab">
+                                <i class="fas fa-paperclip me-1"></i>Ապացույցներ
+                                <span class="badge bg-secondary ms-1" id="evidence-count">{{ evidence_files.count }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="messages-tab" data-bs-toggle="tab" data-bs-target="#messages" type="button" role="tab">
+                                <i class="fas fa-comments me-1"></i>Հաղորդագրություններ
+                                <span class="badge bg-secondary ms-1" id="messages-count">{{ dispute_messages.count }}</span>
+                            </button>
+                        </li>
+                        {% if dispute.status == 'under_review' or dispute.status == 'pending' %}
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="resolution-tab" data-bs-toggle="tab" data-bs-target="#resolution" type="button" role="tab">
+                                <i class="fas fa-gavel me-1"></i>Լուծում
+                            </button>
+                        </li>
+                        {% endif %}
+                    </ul>
+
+                    <div class="tab-content" id="disputeTabContent">
+                        <!-- Evidence Tab -->
+                        <div class="tab-pane fade show active" id="evidence" role="tabpanel">
+                            <!-- Initial Dispute Evidence -->
+                            <div class="evidence-section" id="initialEvidenceSection">
+                                <h6 class="evidence-section-title">Սկզբնական Դիսպուտի Ապացույցներ</h6>
+                                
+                                <div class="initial-evidence">
+                                    <div class="evidence-description">
+                                        <strong>Սկզբնական հաղորդագրություն:</strong>
+                                        <p class="mb-3">{{ dispute.reason|default:"Հաղորդագրություն նշված չէ" }}</p>
+                                    </div>
+                                    
+                                    <div id="initialEvidenceContainer">
+                                        {% if initial_evidence %}
+                                        <div class="row g-3">
+                                            {% for item in initial_evidence %}
+                                            <div class="col-sm-6 col-md-4">
+                                                <div class="evidence-item">
+                                                    {% if item.file and item.file.url %}
+                                                        {% if item.is_image %}
+                                                        <img src="{{ item.file.url }}" alt="Ապացույց {{ forloop.counter }}" data-bs-toggle="modal" data-bs-target="#evidenceModal" data-src="{{ item.file.url }}">
+                                                        {% else %}
+                                                        <div class="text-center">
+                                                            <i class="fas {{ item.get_file_icon }} fa-3x text-muted mb-2"></i>
+                                                            <p class="small mb-0">{{ item.filename|default:"Անհայտ ֆայլ" }}</p>
+                                                            <a href="{{ item.file.url }}" class="btn btn-sm btn-outline-primary mt-2" download>Ներբեռնել</a>
+                                                        </div>
+                                                        {% endif %}
+                                                    {% else %}
+                                                        <div class="text-center">
+                                                            <i class="fas fa-file fa-3x text-muted mb-2"></i>
+                                                            <p class="small mb-0">Ֆայլը հասանելի չէ</p>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                                {% if item.description %}
+                                                <p class="small text-muted mt-1 mb-0">{{ item.description }}</p>
+                                                {% endif %}
+                                                <div class="evidence-meta">
+                                                    <small class="text-muted">Ուղարկել է: {{ item.submitted_by.username|default:"Անհայտ" }}</small>
+                                                    <small class="text-muted">{{ item.submitted_at|date:"M j, Y"|default:"Անհայտ ամսաթիվ" }}</small>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% else %}
+                                        <div class="text-center py-3">
+                                            <i class="fas fa-inbox fa-2x text-muted mb-2"></i>
+                                            <p class="text-muted">Սկզբնական դիսպուտի համար ապացույցներ ներկայացված չեն:</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Evidence -->
+                            <div class="evidence-section" id="additionalEvidenceSection">
+                                <h6 class="evidence-section-title">Լրացուցիչ Ապացույցներ</h6>
+                                
+                                <div id="additionalEvidenceContainer">
+                                    {% if additional_evidence %}
+                                    <div class="row g-3">
+                                        {% for item in additional_evidence %}
+                                        <div class="col-sm-6 col-md-4">
+                                            <div class="evidence-item">
+                                                {% if item.file and item.file.url %}
+                                                    {% if item.is_image %}
+                                                    <img src="{{ item.file.url }}" alt="Ապացույց {{ forloop.counter }}" data-bs-toggle="modal" data-bs-target="#evidenceModal" data-src="{{ item.file.url }}">
+                                                    {% else %}
+                                                    <div class="text-center">
+                                                        <i class="fas {{ item.get_file_icon }} fa-3x text-muted mb-2"></i>
+                                                        <p class="small mb-0">{{ item.filename|default:"Անհայտ ֆայլ" }}</p>
+                                                        <a href="{{ item.file.url }}" class="btn btn-sm btn-outline-primary mt-2" download>Ներբեռնել</a>
+                                                    </div>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <div class="text-center">
+                                                        <i class="fas fa-file fa-3x text-muted mb-2"></i>
+                                                        <p class="small mb-0">Ֆայլը հասանելի չէ</p>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            {% if item.description %}
+                                            <p class="small text-muted mt-1 mb-0">{{ item.description }}</p>
+                                            {% endif %}
+                                            <div class="evidence-meta">
+                                                <small class="text-muted">Ուղարկել է: {{ item.submitted_by.username|default:"Անհայտ" }}</small>
+                                                <small class="text-muted">{{ item.submitted_at|date:"M j, Y"|default:"Անհայտ ամսաթիվ" }}</small>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
                                     {% else %}
-                                    <div class="text-center">
-                                        <i class="fas fa-file fa-3x text-muted mb-2"></i>
-                                        <p class="small mb-0">{{ item.filename }}</p>
-                                        <a href="{{ item.file.url }}" class="btn btn-sm btn-outline-primary mt-2" download>Download</a>
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">Լրացուցիչ ապացույցներ ներկայացված չեն այս դիսպուտի համար:</p>
                                     </div>
                                     {% endif %}
                                 </div>
-                                {% if item.description %}
-                                <p class="small text-muted mt-1 mb-0">{{ item.description }}</p>
-                                {% endif %}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No evidence submitted for this dispute.</p>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <!-- Admin Resolution -->
-                {% if dispute.status == 'under_review' or dispute.status == 'reopened' %}
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-gavel me-2"></i>Admin Resolution
-                            {% if dispute.status == 'reopened' %}
-                            <span class="badge bg-warning text-dark ms-2">Reopened</span>
-                            {% endif %}
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <form method="POST" action="{% url 'resolve_dispute' dispute.id %}">
-                            {% csrf_token %}
-                            
-                            <div class="mb-4">
-                                <h6 class="mb-3">Select Decision:</h6>
-                                
-                                <div class="row g-3">
-                                    <!-- Approve Completion -->
-                                    <div class="col-md-6">
-                                        <div class="decision-option" data-decision="completed">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="decision" id="decision-completed" value="completed" required>
-                                                <label class="form-check-label fw-bold text-success" for="decision-completed">
-                                                    <i class="fas fa-check-circle me-2"></i>Approve Completion
-                                                </label>
-                                            </div>
-                                            <p class="small text-muted mt-2 mb-0">
-                                                Mark work as completed and release payment to the worker. Use this if the worker has fulfilled the task requirements.
-                                            </p>
-                                            <div class="mt-2">
-                                                <small class="text-success">
-                                                    <i class="fas fa-money-bill-wave me-1"></i>
-                                                    Payment will be released to: <strong>{{ dispute.worker.username }}</strong>
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Cancel Task -->
-                                    <div class="col-md-6">
-                                        <div class="decision-option" data-decision="cancelled">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="decision" id="decision-cancelled" value="cancelled">
-                                                <label class="form-check-label fw-bold text-danger" for="decision-cancelled">
-                                                    <i class="fas fa-times-circle me-2"></i>Cancel Task
-                                                </label>
-                                            </div>
-                                            <p class="small text-muted mt-2 mb-0">
-                                                Cancel the task and refund the post owner. Use this if the work is incomplete or doesn't meet requirements.
-                                            </p>
-                                            <div class="mt-2">
-                                                <small class="text-danger">
-                                                    <i class="fas fa-undo me-1"></i>
-                                                    Full refund to: <strong>{{ dispute.post.user.username }}</strong>
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Partial Refund -->
-                                    <div class="col-md-6">
-                                        <div class="decision-option" data-decision="refunded">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="radio" name="decision" id="decision-refunded" value="refunded">
-                                                <label class="form-check-label fw-bold text-info" for="decision-refunded">
-                                                    <i class="fas fa-money-bill-wave me-2"></i>Issue Refund
-                                                </label>
-                                            </div>
-                                            <p class="small text-muted mt-2 mb-0">
-                                                Issue a full refund to the post owner. Use this if the work cannot be completed or has major issues.
-                                            </p>
-                                            <div class="mt-2">
-                                                <small class="text-info">
-                                                    <i class="fas fa-exchange-alt me-1"></i>
-                                                    Refund to: <strong>{{ dispute.post.user.username }}</strong>
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
                             
-                            <!-- Admin Notes -->
-                            <div class="mb-4">
-                                <label for="admin_notes" class="form-label fw-bold">Admin Notes:</label>
-                                <textarea class="form-control" id="admin_notes" name="admin_notes" rows="4" placeholder="Explain your decision and provide any additional notes...">{{ dispute.admin_notes|default:'' }}</textarea>
-                                <div class="form-text">
-                                    These notes will be visible to both parties and will be recorded in the dispute history.
-                                </div>
-                            </div>
-                            
-                            <!-- Submit Button -->
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-paper-plane me-2"></i>Submit Decision
+                            <!-- Add Evidence Button (for admins) -->
+                            <div class="mt-4">
+                                <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addEvidenceModal">
+                                    <i class="fas fa-plus me-1"></i>Ավելացնել Ապացույց
                                 </button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-                {% else %}
-                <!-- Resolution Details -->
-                <div class="card resolution-card">
-                    <div class="card-header bg-success text-white">
-                        <h5 class="card-title mb-0">
-                            <i class="fas fa-clipboard-check me-2"></i>Resolution Details
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <p><strong>Final Decision:</strong> 
-                                    <span class="badge status-{{ dispute.status }}">
-                                        {{ dispute.get_status_display }}
-                                    </span>
-                                </p>
-                                <p><strong>Resolved By:</strong> {{ dispute.resolved_by.get_full_name|default:dispute.resolved_by.username }}</p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><strong>Resolved At:</strong> {{ dispute.resolved_at|date:"F j, Y g:i A" }}</p>
-                                <p><strong>Task Status:</strong> 
-                                    <span class="badge bg-{% if dispute.post.status == 'completed' %}success{% elif dispute.post.status == 'cancelled' %}danger{% else %}info{% endif %}">
-                                        {{ dispute.post.get_status_display }}
-                                    </span>
-                                </p>
+                        </div>
+
+                        <!-- Messages Tab -->
+                        <div class="tab-pane fade" id="messages" role="tabpanel">
+                            <div class="chat-container">
+                                <div class="chat-messages" id="messageContainer">
+                                    {% if dispute_messages %}
+                                        {% for message in dispute_messages %}
+                                            {% if message.sender.profile.role in 'admin superadmin' or message.sender.is_staff %}
+                                            <div class="message message-admin">
+                                                <div class="message-header">
+                                                    <span class="message-sender">
+                                                        <i class="fas fa-shield-alt me-1"></i>
+                                                        {{ message.sender.username|default:"Վարչություն" }}
+                                                        <span class="role-badge role-admin">Վարչություն</span>
+                                                    </span>
+                                                    <span class="message-time">{{ message.created_at|date:"M j, Y g:i A"|default:"Անհայտ ժամ" }}</span>
+                                                </div>
+                                                <div class="message-content">{{ message.message|default:"Բովանդակություն չկա" }}</div>
+                                                {% if message.image %}
+                                                <div class="message-images">
+                                                    <div class="message-image">
+                                                        <img src="{{ message.image.url }}" alt="Հաղորդագրության նկար" data-bs-toggle="modal" data-bs-target="#evidenceModal" data-src="{{ message.image.url }}">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% elif message.sender.id == dispute.post.user.id %}
+                                            <div class="message message-owner">
+                                                <div class="message-header">
+                                                    <span class="message-sender">
+                                                        <i class="fas fa-user-tie me-1"></i>
+                                                        {{ message.sender.username|default:"Սեփականատեր" }}
+                                                        <span class="role-badge role-owner">Սեփականատեր</span>
+                                                    </span>
+                                                    <span class="message-time">{{ message.created_at|date:"M j, Y g:i A"|default:"Անհայտ ժամ" }}</span>
+                                                </div>
+                                                <div class="message-content">{{ message.message|default:"Բովանդակություն չկա" }}</div>
+                                                {% if message.image %}
+                                                <div class="message-images">
+                                                    <div class="message-image">
+                                                        <img src="{{ message.image.url }}" alt="Հաղորդագրության նկար" data-bs-toggle="modal" data-bs-target="#evidenceModal" data-src="{{ message.image.url }}">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% elif message.sender.id == dispute.worker.id %}
+                                            <div class="message message-worker">
+                                                <div class="message-header">
+                                                    <span class="message-sender">
+                                                        <i class="fas fa-hard-hat me-1"></i>
+                                                        {{ message.sender.username|default:"Աշխատող" }}
+                                                        <span class="role-badge role-worker">Աշխատող</span>
+                                                    </span>
+                                                    <span class="message-time">{{ message.created_at|date:"M j, Y g:i A"|default:"Անհայտ ժամ" }}</span>
+                                                </div>
+                                                <div class="message-content">{{ message.message|default:"Բովանդակություն չկա" }}</div>
+                                                {% if message.image %}
+                                                <div class="message-images">
+                                                    <div class="message-image">
+                                                        <img src="{{ message.image.url }}" alt="Հաղորդագրության նկար" data-bs-toggle="modal" data-bs-target="#evidenceModal" data-src="{{ message.image.url }}">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% else %}
+                                            <div class="message message-user">
+                                                <div class="message-header">
+                                                    <span class="message-sender">
+                                                        <i class="fas fa-user me-1"></i>
+                                                        {{ message.sender.username|default:"Օգտատեր" }}
+                                                    </span>
+                                                    <span class="message-time">{{ message.created_at|date:"M j, Y g:i A"|default:"Անհայտ ժամ" }}</span>
+                                                </div>
+                                                <div class="message-content">{{ message.message|default:"Բովանդակություն չկա" }}</div>
+                                                {% if message.image %}
+                                                <div class="message-images">
+                                                    <div class="message-image">
+                                                        <img src="{{ message.image.url }}" alt="Հաղորդագրության նկար" data-bs-toggle="modal" data-bs-target="#evidenceModal" data-src="{{ message.image.url }}">
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="text-center py-4">
+                                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                            <p class="text-muted">Դեռևս հաղորդագրություններ չկան: Սկսեք խոսակցությունը:</p>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- New Message Form -->
+                                <div class="chat-input-area">
+                                    <form method="POST" id="messageForm" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="action" value="send_message">
+                                        <div class="mb-3">
+                                            <textarea name="message" class="form-control" placeholder="Մուտքագրեք ձեր հաղորդագրությունը..." rows="3" required id="messageText"></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="image" class="form-label">Կցել Նկար (ընտրովի)</label>
+                                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                            <div class="form-text">Դուք կարող եք ընտրել մեկ նկար (առավելագույնը 5MB)</div>
+                                            
+                                            <!-- Image preview container -->
+                                            <div class="file-preview-container mt-2" id="messageImagePreview" style="display: none;">
+                                                <div class="file-preview-grid" id="messageImageGrid"></div>
+                                            </div>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-primary" id="sendMessageBtn">
+                                                <i class="fas fa-paper-plane me-2"></i>Ուղարկել Հաղորդագրություն
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
                             </div>
                         </div>
-                        
-                        {% if dispute.admin_notes %}
-                        <div class="alert alert-light">
-                            <h6 class="alert-heading">Admin Notes:</h6>
-                            <hr>
-                            <p class="mb-0">{{ dispute.admin_notes|linebreaks }}</p>
+
+                        <!-- Resolution Tab -->
+                        {% if dispute.status == 'under_review' or dispute.status == 'pending' %}
+                        <div class="tab-pane fade" id="resolution" role="tabpanel">
+                            <form method="POST" id="resolutionForm">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="resolve_dispute">
+                                
+                                <div class="mb-4">
+                                    <h6 class="mb-3">Ընտրեք Որոշում:</h6>
+                                    
+                                    <div class="row g-3">
+                                        <!-- Approve Completion -->
+                                        <div class="col-md-6">
+                                            <div class="decision-option" data-decision="completed">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="decision" id="decision-completed" value="completed" required>
+                                                    <label class="form-check-label fw-bold text-success" for="decision-completed">
+                                                        <i class="fas fa-check-circle me-2"></i>Հաստատել Ավարտը
+                                                    </label>
+                                                </div>
+                                                <p class="small text-muted mt-2 mb-0">
+                                                    Նշել աշխատանքը որպես ավարտված և վճարումը փոխանցել աշխատողին: Օգտագործեք, եթե աշխատողը կատարել է առաջադրանքի պահանջները:
+                                                </p>
+                                                <div class="mt-2">
+                                                    <small class="text-success">
+                                                        <i class="fas fa-money-bill-wave me-1"></i>
+                                                        Վճարումը կփոխանցվի: <strong>{{ dispute.worker.username|default:"Աշխատող" }}</strong>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Cancel Task -->
+                                        <div class="col-md-6">
+                                            <div class="decision-option" data-decision="cancelled">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="decision" id="decision-cancelled" value="cancelled">
+                                                    <label class="form-check-label fw-bold text-danger" for="decision-cancelled">
+                                                        <i class="fas fa-times-circle me-2"></i>Չեղարկել Առաջադրանքը
+                                                    </label>
+                                                </div>
+                                                <p class="small text-muted mt-2 mb-0">
+                                                    Չեղարկել առաջադրանքը և փոխհատուցել հայտարարության սեփականատիրոջը: Օգտագործեք, եթե աշխատանքը անավարտ է կամ չի համապատասխանում պահանջներին:
+                                                </p>
+                                                <div class="mt-2">
+                                                    <small class="text-danger">
+                                                        <i class="fas fa-undo me-1"></i>
+                                                        Ամբողջական փոխհատուցում: <strong>{{ dispute.post.user.username|default:"Սեփականատեր" }}</strong>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Partial Refund -->
+                                        <div class="col-md-6">
+                                            <div class="decision-option" data-decision="refunded">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="decision" id="decision-refunded" value="refunded">
+                                                    <label class="form-check-label fw-bold text-info" for="decision-refunded">
+                                                        <i class="fas fa-money-bill-wave me-2"></i>Փոխհատուցում
+                                                    </label>
+                                                </div>
+                                                <p class="small text-muted mt-2 mb-0">
+                                                    Փոխհատուցել հայտարարության սեփականատիրոջը: Օգտագործեք, եթե աշխատանքը հնարավոր չէ ավարտին հասցնել կամ ունի խոշոր խնդիրներ:
+                                                </p>
+                                                <div class="mt-2">
+                                                    <small class="text-info">
+                                                        <i class="fas fa-exchange-alt me-1"></i>
+                                                        Փոխհատուցում: <strong>{{ dispute.post.user.username|default:"Սեփականատեր" }}</strong>
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Split Payment -->
+                                        <div class="col-md-6">
+                                            <div class="decision-option" data-decision="split">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="decision" id="decision-split" value="split">
+                                                    <label class="form-check-label fw-bold text-warning" for="decision-split">
+                                                        <i class="fas fa-percentage me-2"></i>Բաժանել Վճարումը
+                                                    </label>
+                                                </div>
+                                                <p class="small text-muted mt-2 mb-0">
+                                                    Բաժանել վճարումը երկու կողմերի միջև: Օգտագործեք, եթե աշխատանքը մասամբ է կատարվել:
+                                                </p>
+                                                <div class="mt-2">
+                                                    <small class="text-warning">
+                                                        <i class="fas fa-balance-scale me-1"></i>
+                                                        Վճարումը կբաժանվի երկու կողմերի միջև
+                                                    </small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Split Payment Details (shown only when split is selected) -->
+                                <div class="mb-4" id="splitPaymentDetails" style="display: none;">
+                                    <div class="card border-warning">
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0">Բաժանման Մանրամասներ</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <label for="workerPercentage" class="form-label">Աշխատողի տոկոս (%)</label>
+                                                    <input type="number" class="form-control" id="workerPercentage" name="worker_percentage" min="0" max="100" value="50">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label for="ownerPercentage" class="form-label">Սեփականատիրոջ տոկոս (%)</label>
+                                                    <input type="number" class="form-control" id="ownerPercentage" name="owner_percentage" min="0" max="100" value="50" readonly>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <small class="text-muted">Ընդհանուր գումար: <strong>{{ dispute.post.price|default:"0" }} դրամ</strong></small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Resolution Notes -->
+                                <div class="mb-4">
+                                    <label for="resolution" class="form-label fw-bold">Պատճառաբանություն:</label>
+                                    <textarea class="form-control" id="resolution" name="resolution" rows="4" placeholder="Բացատրեք ձեր որոշումը և տրամադրեք լրացուցիչ նշումներ..." required></textarea>
+                                    <div class="form-text">
+                                        Այս տեքստը տեսանելի կլինի երկու կողմերին և կգրանցվի դիսպուտի պատմության մեջ:
+                                    </div>
+                                </div>
+
+                                <!-- Admin Notes -->
+                                <div class="mb-4">
+                                    <label for="admin_notes" class="form-label fw-bold">Վարչության Նշումներ:</label>
+                                    <textarea class="form-control" id="admin_notes" name="admin_notes" rows="3" placeholder="Ներքին նշումներ ադմինիստրացիայի համար...">{{ dispute.admin_notes|default:'' }}</textarea>
+                                    <div class="form-text">
+                                        Այս նշումները տեսանելի կլինեն միայն վարչությանը:
+                                    </div>
+                                </div>
+                                
+                                <!-- Submit Button -->
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary btn-lg" id="submitResolutionBtn">
+                                        <i class="fas fa-paper-plane me-2"></i>Ներկայացնել Որոշումը
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                         {% endif %}
-                        
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{% url 'reopen_dispute' dispute.id %}" class="btn btn-outline-warning" onclick="return confirm('Are you sure you want to reopen this dispute?')">
-                                <i class="fas fa-undo me-1"></i>Reopen Dispute
-                            </a>
+                    </div>
+
+                    <!-- Resolution Details (if resolved) -->
+                    {% if dispute.status == 'resolved' or dispute.status == 'dismissed' %}
+                    <div class="card resolution-card mt-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-clipboard-check me-2"></i>Լուծման Մանրամասներ
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <p><strong>Վերջնական Որոշում:</strong> 
+                                        <span class="badge status-{{ dispute.status }}">
+                                            {{ dispute.get_status_display }}
+                                        </span>
+                                    </p>
+                                    <p><strong>Լուծել է:</strong> {% if dispute.resolved_by %}{{ dispute.resolved_by.get_full_name|default:dispute.resolved_by.username }}{% else %}Համակարգ{% endif %}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>Լուծման Ամսաթիվ:</strong> {{ dispute.resolved_at|date:"F j, Y g:i A"|default:"Տվյալներ չկան" }}</p>
+                                    <p><strong>Առաջադրանքի Կարգավիճակ:</strong> 
+                                        <span class="badge bg-{% if dispute.post.status == 'completed' %}success{% elif dispute.post.status == 'cancelled' %}danger{% else %}info{% endif %}">
+                                            {{ dispute.post.get_status_display|default:"Անհայտ" }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            {% if dispute.resolution %}
+                            <div class="alert alert-light">
+                                <h6 class="alert-heading">Պատճառաբանություն:</h6>
+                                <hr>
+                                <p class="mb-0">{{ dispute.resolution|linebreaks }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            {% if dispute.admin_notes %}
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">Վարչության Նշումներ:</h6>
+                                <hr>
+                                <p class="mb-0">{{ dispute.admin_notes|linebreaks }}</p>
+                            </div>
+                            {% endif %}
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'reopen_dispute' dispute.id %}" class="btn btn-outline-warning" onclick="return confirm('Հաստատում եք այս դիսպուտը վերաբացելու որոշումը՞')">
+                                    <i class="fas fa-undo me-1"></i>Վերաբացել Դիսպուտը
+                                </a>
+                            </div>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
-                {% endif %}
             </div>
         </div>
     </div>
@@ -554,75 +1679,619 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Evidence</h5>
+                    <h5 class="modal-title">Ապացույց</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body text-center">
-                    <img id="evidenceImage" src="" alt="Evidence" class="img-fluid">
+                    <img id="evidenceImage" src="" alt="Ապացույց" class="img-fluid rounded">
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Փակել</button>
                     <a id="downloadEvidence" href="#" class="btn btn-primary" download>
-                        <i class="fas fa-download me-1"></i>Download
+                        <i class="fas fa-download me-1"></i>Ներբեռնել
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Add Evidence Modal -->
+    <div class="modal fade" id="addEvidenceModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Ավելացնել Ապացույց</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form method="POST" id="addEvidenceForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_evidence">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="evidenceFile" class="form-label">Ներբեռնել Ֆայլ</label>
+                            <input type="file" class="form-control" id="evidenceFile" name="evidence_file" required>
+                            <div class="form-text">Ընդունելի ֆորմատներ: JPG, PNG, PDF, DOC, TXT (Առավելագույնը 10MB)</div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="evidenceDescription" class="form-label">Նկարագրություն (Ընտրովի)</label>
+                            <textarea class="form-control" id="evidenceDescription" name="description" rows="3" placeholder="Նկարագրեք, թե ինչ է ցույց տալիս այս ապացույցը..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Չեղարկել</button>
+                        <button type="submit" class="btn btn-primary">Ավելացնել Ապացույց</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Decision option selection
-        document.querySelectorAll('.decision-option').forEach(option => {
-            option.addEventListener('click', function() {
-                const radio = this.querySelector('input[type="radio"]');
-                radio.checked = true;
-                
-                // Remove selected class from all options
-                document.querySelectorAll('.decision-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
-                
-                // Add selected class to clicked option
-                this.classList.add('selected');
-            });
-        });
+        // Mobile menu functionality
+        const menuToggle = document.getElementById('menuToggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
         
-        // Evidence modal
-        const evidenceModal = document.getElementById('evidenceModal');
-        if (evidenceModal) {
-            evidenceModal.addEventListener('show.bs.modal', function(event) {
-                const button = event.relatedTarget;
-                const evidenceSrc = button.getAttribute('data-src');
-                const modalImage = document.getElementById('evidenceImage');
-                const downloadLink = document.getElementById('downloadEvidence');
-                
-                modalImage.src = evidenceSrc;
-                downloadLink.href = evidenceSrc;
+        if (menuToggle && sidebar && sidebarOverlay) {
+            menuToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('open');
+                sidebarOverlay.classList.toggle('open');
+            });
+            
+            sidebarOverlay.addEventListener('click', function() {
+                sidebar.classList.remove('open');
+                sidebarOverlay.classList.remove('open');
             });
         }
         
-        // Auto-select decision option when clicking on the card
-        document.querySelectorAll('.decision-option input[type="radio"]').forEach(radio => {
-            radio.addEventListener('change', function() {
-                document.querySelectorAll('.decision-option').forEach(opt => {
-                    opt.classList.remove('selected');
-                });
-                
-                if (this.checked) {
-                    this.closest('.decision-option').classList.add('selected');
-                }
-            });
+        // Global variables
+        let currentDisputeId = {{ dispute.id }};
+        let autoRefreshInterval;
+        let currentTab = 'evidence';
+        let isSubmitting = false;
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing dispute detail page...');
+            initializeEventListeners();
+            initializeAutoRefresh();
+            scrollToBottom();
+            updateBadgeCounts();
         });
 
-        // Auto-focus on first radio button if none selected
-        document.addEventListener('DOMContentLoaded', function() {
-            const firstRadio = document.querySelector('input[type="radio"]');
-            if (firstRadio && !document.querySelector('input[type="radio"]:checked')) {
-                firstRadio.checked = true;
-                firstRadio.closest('.decision-option').classList.add('selected');
+        function initializeEventListeners() {
+            console.log('Setting up event listeners...');
+            
+            // Decision option selection
+            document.querySelectorAll('.decision-option').forEach(option => {
+                option.addEventListener('click', function(e) {
+                    if (!e.target.matches('input[type="radio"]')) {
+                        selectDecisionOption(this);
+                    }
+                });
+            });
+
+            // Radio button changes
+            document.querySelectorAll('input[name="decision"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    const option = this.closest('.decision-option');
+                    if (option) {
+                        selectDecisionOption(option);
+                    }
+                });
+            });
+
+            // Form submissions - AJAX handling
+            const messageForm = document.getElementById('messageForm');
+            if (messageForm) {
+                messageForm.addEventListener('submit', handleMessageSubmit);
+            }
+
+            const resolutionForm = document.getElementById('resolutionForm');
+            if (resolutionForm) {
+                resolutionForm.addEventListener('submit', handleResolutionSubmit);
+            }
+
+            const addEvidenceForm = document.getElementById('addEvidenceForm');
+            if (addEvidenceForm) {
+                addEvidenceForm.addEventListener('submit', handleEvidenceSubmit);
+            }
+
+            // Tab switching
+            const tabs = document.querySelectorAll('[data-bs-toggle="tab"]');
+            tabs.forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function(event) {
+                    currentTab = event.target.getAttribute('data-bs-target').replace('#', '');
+                    console.log('Switched to tab:', currentTab);
+                    
+                    if (currentTab === 'messages') {
+                        scrollToBottom();
+                    }
+                });
+            });
+
+            // Evidence modal
+            const evidenceModal = document.getElementById('evidenceModal');
+            if (evidenceModal) {
+                evidenceModal.addEventListener('show.bs.modal', handleEvidenceModalShow);
+            }
+
+            // File input changes
+            const messageImageInput = document.getElementById('image');
+            if (messageImageInput) {
+                messageImageInput.addEventListener('change', function() {
+                    previewMessageImage(this);
+                });
+            }
+
+            // Split percentage calculation
+            const workerPercentageInput = document.getElementById('workerPercentage');
+            if (workerPercentageInput) {
+                workerPercentageInput.addEventListener('input', updateSplitPercentages);
+            }
+        }
+
+        function selectDecisionOption(optionElement) {
+            console.log('Selecting decision option...');
+            
+            // Remove selected class from all options
+            document.querySelectorAll('.decision-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked option
+            optionElement.classList.add('selected');
+            
+            // Check the radio button
+            const radio = optionElement.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+                
+                // Show/hide split payment details
+                const splitDetails = document.getElementById('splitPaymentDetails');
+                if (splitDetails) {
+                    if (radio.value === 'split') {
+                        splitDetails.style.display = 'block';
+                    } else {
+                        splitDetails.style.display = 'none';
+                    }
+                }
+            }
+        }
+
+        function updateSplitPercentages() {
+            const workerInput = document.getElementById('workerPercentage');
+            const ownerInput = document.getElementById('ownerPercentage');
+            
+            if (workerInput && ownerInput) {
+                let workerValue = parseInt(workerInput.value) || 0;
+                
+                // Ensure value is between 0 and 100
+                if (workerValue < 0) workerValue = 0;
+                if (workerValue > 100) workerValue = 100;
+                
+                workerInput.value = workerValue;
+                ownerInput.value = 100 - workerValue;
+                
+                console.log('Updated split percentages:', workerValue, 100 - workerValue);
+            }
+        }
+
+        function handleEvidenceModalShow(event) {
+            const button = event.relatedTarget;
+            const evidenceSrc = button.getAttribute('data-src');
+            const modalImage = document.getElementById('evidenceImage');
+            const downloadLink = document.getElementById('downloadEvidence');
+            
+            if (modalImage && evidenceSrc) {
+                modalImage.src = evidenceSrc;
+            }
+            if (downloadLink && evidenceSrc) {
+                downloadLink.href = evidenceSrc;
+                downloadLink.setAttribute('download', evidenceSrc.split('/').pop());
+            }
+        }
+
+        async function handleMessageSubmit(event) {
+            event.preventDefault();
+            
+            if (isSubmitting) return;
+            isSubmitting = true;
+            
+            const form = event.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                // Validate form
+                const messageText = form.querySelector('textarea[name="message"]').value.trim();
+                if (!messageText) {
+                    showAlert('Խնդրում ենք մուտքագրել հաղորդագրություն', 'danger');
+                    isSubmitting = false;
+                    return;
+                }
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Ուղարկվում է...';
+                
+                // Create FormData for file upload
+                const formData = new FormData();
+                formData.append('csrfmiddlewaretoken', getCsrfToken());
+                formData.append('action', 'send_message');
+                formData.append('message', messageText);
+                
+                // Add image if exists
+                const imageInput = form.querySelector('input[name="image"]');
+                if (imageInput && imageInput.files.length > 0) {
+                    formData.append('image', imageInput.files[0]);
+                }
+                
+                console.log('Sending message with data:', {
+                    message: messageText,
+                    hasImage: !!(imageInput && imageInput.files.length > 0)
+                });
+                
+                // Use AJAX to submit the form without page reload
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                });
+                
+                console.log('Response status:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    showAlert('Հաղորդագրությունը հաջողությամբ ուղարկված է', 'success');
+                    form.reset();
+                    clearFilePreviews('messageImagePreview', 'messageImageGrid');
+                    
+                    // Refresh messages without page reload
+                    await refreshMessages();
+                } else {
+                    let errorMessage = 'Network response was not ok';
+                    try {
+                        const errorData = await response.text();
+                        console.error('Error response:', errorData);
+                        errorMessage = `${response.status} ${response.statusText}`;
+                    } catch (e) {
+                        console.error('Error parsing response:', e);
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showAlert('Սխալ հաղորդագրություն ուղարկելիս: ' + error.message, 'danger');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                isSubmitting = false;
+            }
+        }
+
+        async function handleResolutionSubmit(event) {
+            event.preventDefault();
+            
+            if (isSubmitting) return;
+            isSubmitting = true;
+            
+            const form = event.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                // Validate form
+                const decision = form.querySelector('input[name="decision"]:checked');
+                if (!decision) {
+                    showAlert('Խնդրում ենք ընտրել որոշում', 'danger');
+                    isSubmitting = false;
+                    return;
+                }
+                
+                const resolution = form.querySelector('textarea[name="resolution"]').value.trim();
+                if (!resolution) {
+                    showAlert('Խնդրում ենք մուտքագրել պատճառաբանություն', 'danger');
+                    isSubmitting = false;
+                    return;
+                }
+                
+                if (!confirm('Հաստատում եք ձեր որոշումը՞ Այս գործողությունը չի կարող հետ վերցվել:')) {
+                    isSubmitting = false;
+                    return;
+                }
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Ներկայացվում է...';
+                
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                });
+                
+                if (response.ok) {
+                    showAlert('Որոշումը հաջողությամբ ներկայացված է', 'success');
+                    // Reload page to show updated status
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    throw new Error('Network response was not ok');
+                }
+                
+            } catch (error) {
+                console.error('Error submitting resolution:', error);
+                showAlert('Սխալ որոշում ներկայացնելիս: ' + error.message, 'danger');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                isSubmitting = false;
+            }
+        }
+
+        async function handleEvidenceSubmit(event) {
+            event.preventDefault();
+            
+            if (isSubmitting) return;
+            isSubmitting = true;
+            
+            const form = event.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            try {
+                // Validate form
+                const evidenceFile = form.querySelector('input[name="evidence_file"]');
+                if (!evidenceFile.files.length) {
+                    showAlert('Խնդրում ենք ընտրել ֆայլ', 'danger');
+                    isSubmitting = false;
+                    return;
+                }
+                
+                // Disable submit button
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Ավելացվում է...';
+                
+                const response = await fetch(window.location.href, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        }
+                });
+                
+                if (response.ok) {
+                    showAlert('Ապացույցը հաջողությամբ ավելացված է', 'success');
+                    form.reset();
+                    
+                    // Close modal and refresh evidence
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addEvidenceModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                    
+                    // Refresh page to show new evidence
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    throw new Error('Network response was not ok');
+                }
+                
+            } catch (error) {
+                console.error('Error submitting evidence:', error);
+                showAlert('Սխալ ապացույց ավելացնելիս: ' + error.message, 'danger');
+            } finally {
+                // Re-enable submit button
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+                isSubmitting = false;
+            }
+        }
+
+        // File preview functionality
+        function previewMessageImage(input) {
+            const previewContainer = document.getElementById('messageImagePreview');
+            const previewGrid = document.getElementById('messageImageGrid');
+            
+            if (!previewContainer || !previewGrid) return;
+            
+            previewGrid.innerHTML = '';
+            
+            if (input.files && input.files.length > 0) {
+                previewContainer.style.display = 'block';
+                
+                const file = input.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const preview = document.createElement('div');
+                    preview.className = 'file-preview';
+                    
+                    if (file.type.startsWith('image/')) {
+                        preview.innerHTML = `
+                            <img src="${e.target.result}" alt="${file.name}">
+                            <button type="button" class="remove-file" onclick="removeFilePreview(this)">×</button>
+                        `;
+                    } else {
+                        preview.innerHTML = `
+                            <div class="file-icon">
+                                <i class="fas fa-file fa-2x mb-2"></i>
+                                <small>Ֆայլը նկար չէ</small>
+                            </div>
+                            <button type="button" class="remove-file" onclick="removeFilePreview(this)">×</button>
+                        `;
+                    }
+                    
+                    previewGrid.appendChild(preview);
+                };
+                
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.style.display = 'none';
+            }
+        }
+
+        function removeFilePreview(button) {
+            const preview = button.closest('.file-preview');
+            const input = preview.closest('form').querySelector('input[type="file"]');
+            
+            preview.remove();
+            
+            // Clear the file input
+            if (input) {
+                input.value = '';
+            }
+            
+            // Hide container if no files left
+            const grid = button.closest('.file-preview-grid');
+            if (grid && grid.children.length === 0) {
+                grid.parentElement.style.display = 'none';
+            }
+        }
+
+        function clearFilePreviews(containerId, gridId) {
+            const container = document.getElementById(containerId);
+            const grid = document.getElementById(gridId);
+            
+            if (container && grid) {
+                grid.innerHTML = '';
+                container.style.display = 'none';
+            }
+        }
+
+        // Auto-refresh functionality
+        function initializeAutoRefresh() {
+            if (currentDisputeId && {% if dispute.status != 'resolved' and dispute.status != 'dismissed' %}true{% else %}false{% endif %}) {
+                console.log('Starting auto-refresh for dispute messages...');
+                autoRefreshInterval = setInterval(refreshMessages, 10000); // Refresh every 10 seconds
+            }
+        }
+
+        async function refreshMessages() {
+            if (currentTab !== 'messages') return;
+            
+            try {
+                const response = await fetch(`/api/disputes/${currentDisputeId}/messages/`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateMessagesDisplay(data.messages);
+                }
+            } catch (error) {
+                console.error('Error refreshing messages:', error);
+            }
+        }
+
+        function updateMessagesDisplay(messages) {
+            const container = document.getElementById('messageContainer');
+            if (!container) return;
+            
+            const currentMessageCount = container.querySelectorAll('.message').length;
+            
+            if (messages.length > currentMessageCount) {
+                console.log('New messages detected, updating display...');
+                // For simplicity, reload the messages tab
+                if (currentTab === 'messages') {
+                    window.location.reload();
+                } else {
+                    // Update badge count
+                    updateBadgeCounts();
+                }
+            }
+        }
+
+        function updateBadgeCounts() {
+            // Update message count badge
+            const messagesBadge = document.querySelector('#messages-tab .badge');
+            const evidenceBadge = document.querySelector('#evidence-tab .badge');
+            
+            if (messagesBadge) {
+                // You can update this with actual counts from API
+                const currentCount = {{ dispute_messages.count }};
+                messagesBadge.textContent = currentCount;
+            }
+            
+            if (evidenceBadge) {
+                const evidenceCount = {{ evidence_files.count }};
+                evidenceBadge.textContent = evidenceCount;
+            }
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('messageContainer');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        // Utility functions
+        function getCsrfToken() {
+            const tokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+            return tokenInput ? tokenInput.value : '';
+        }
+
+        function showAlert(message, type) {
+            // Remove existing alerts
+            document.querySelectorAll('.alert-dismissible').forEach(alert => {
+                if (alert.parentElement) {
+                    alert.remove();
+                }
+            });
+            
+            // Create alert element
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check' : 'exclamation-triangle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Add to page
+            const container = document.querySelector('.main-content');
+            if (container) {
+                container.insertBefore(alertDiv, container.firstChild);
+            }
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (alertDiv.parentElement) {
+                    const bsAlert = new bootstrap.Alert(alertDiv);
+                    bsAlert.close();
+                }
+            }, 5000);
+        }
+
+        // Clean up on page unload
+        window.addEventListener('beforeunload', function() {
+            if (autoRefreshInterval) {
+                clearInterval(autoRefreshInterval);
             }
         });
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                if (autoRefreshInterval) {
+                    clearInterval(autoRefreshInterval);
+                }
+            } else {
+                initializeAutoRefresh();
+            }
+        });
+
+        console.log('Dispute detail page initialization complete');
+
     </script>
 </body>
 </html>

@@ -69,7 +69,7 @@
             font-size: 2rem;
             font-weight: 800;
             background: var(--gradient-primary);
-           
+            -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             display: flex;
             align-items: center;
@@ -151,9 +151,6 @@
             margin-left: 5px;
         }
 
-        /* Rest of your existing CSS remains the same */
-        /* ... (all your existing CSS for sections, tables, stats, etc.) ... */
-
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -209,7 +206,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Add dispute-specific styles */
         .dispute-count {
             color: var(--dispute-color);
             font-weight: 700;
@@ -272,7 +268,6 @@
             }
         }
 
-        /* The rest of your existing CSS continues below... */
         .section {
             background: white;
             border-radius: 20px;
@@ -377,6 +372,11 @@
             color: #e53e3e;
         }
 
+        .status-expired-ban {
+            background: rgba(255, 193, 7, 0.1);
+            color: #d97706;
+        }
+
         .role-badge {
             padding: 6px 12px;
             border-radius: 20px;
@@ -449,6 +449,11 @@
 
         .btn-unban {
             background: #1b5e20;
+            color: white;
+        }
+
+        .btn-manage {
+            background: var(--primary);
             color: white;
         }
 
@@ -632,6 +637,12 @@
             color: var(--secondary);
         }
 
+        .ban-time-remaining {
+            font-size: 0.7rem;
+            color: var(--text-light);
+            margin-top: 4px;
+        }
+
         @media (max-width: 768px) {
             main {
                 padding: 20px;
@@ -702,19 +713,16 @@
             Admin Dashboard
         </div>
         <div class="header-actions">
-            <!-- Posts Button -->
             <a href="{% url 'post_management' %}" class="header-btn posts">
                 <i class="fas fa-tasks"></i>
                 All Posts
             </a>
             
-            <!-- Reviews Button -->
             <a href="{% url 'admin_review_list' %}" class="header-btn reviews">
                 <i class="fas fa-star"></i>
                 Reviews
             </a>
 
-            <!-- Disputes Button -->
             <a href="{% url 'admin_disputes' %}" class="header-btn disputes">
                 <i class="fas fa-gavel"></i>
                 Disputes
@@ -757,7 +765,6 @@
             <div class="stat-number">{{ total_reviews_count }}</div>
             <div class="stat-label">Total Reviews</div>
         </div>
-        <!-- New Dispute Stat Card -->
         <div class="stat-card" onclick="window.location.href='{% url 'admin_disputes' %}'">
             <div class="stat-icon dispute">
                 <i class="fas fa-gavel"></i>
@@ -769,7 +776,7 @@
         </div>
     </div>
 
-    <!-- Dispute Alert (only show if there are pending disputes) -->
+    <!-- Dispute Alert -->
     {% if pending_disputes_count %}
     <div class="dispute-alert">
         <i class="fas fa-exclamation-triangle"></i>
@@ -785,7 +792,7 @@
 
     <!-- Users Section -->
     <section class="section">
-        <!-- Backend Filter Section -->
+        <!-- Filter Section -->
         <div class="filter-section">
             <div class="filter-header">
                 <i class="fas fa-filter"></i>
@@ -793,7 +800,6 @@
             </div>
             
             <form method="get" class="filter-form">
-                <!-- User Status Filter -->
                 <div class="filter-group">
                     <label class="filter-label">User Status</label>
                     <select name="user_filter" class="filter-select">
@@ -805,7 +811,6 @@
                     </select>
                 </div>
                 
-                <!-- Date Range Filter -->
                 <div class="filter-group">
                     <label class="filter-label">Date Joined</label>
                     <select name="date_range" class="filter-select">
@@ -817,7 +822,6 @@
                     </select>
                 </div>
                 
-                <!-- Sort By -->
                 <div class="filter-group">
                     <label class="filter-label">Sort By</label>
                     <select name="sort_by" class="filter-select">
@@ -829,14 +833,12 @@
                     </select>
                 </div>
                 
-                <!-- Search -->
                 <div class="filter-group">
                     <label class="filter-label">Search Users</label>
                     <input type="text" name="search" class="filter-input" 
                            placeholder="Username, email, name..." value="{{ current_search }}">
                 </div>
                 
-                <!-- Filter Actions -->
                 <div class="filter-actions">
                     <button type="submit" class="btn-primary">
                         <i class="fas fa-filter"></i>
@@ -964,34 +966,41 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if user.is_active %}
-                                <span class="status-badge status-active">Active</span>
-                            {% else %}
+                            {% if user.is_currently_banned %}
                                 <span class="status-badge status-banned">Banned</span>
+                            {% elif user.active_ban and not user.is_currently_banned %}
+                                <span class="status-badge status-expired-ban">Ban Expired</span>
+                            {% else %}
+                                <span class="status-badge status-active">Active</span>
                             {% endif %}
                         </td>
                         <td>
-                            {% if not user.is_active and user.active_ban %}
+                            {% if user.active_ban %}
                                 {{ user.active_ban.reason }}
                             {% else %}
                                 -
                             {% endif %}
                         </td>
                         <td>
-                            {% if not user.is_active and user.active_ban %}
+                            {% if user.is_currently_banned and user.active_ban %}
                                 {{ user.active_ban.end_date|date:"Y-m-d H:i" }}
+                                <div class="ban-time-remaining">
+                                    {{ user.active_ban.time_remaining }}
+                                </div>
+                            {% elif user.active_ban and not user.is_currently_banned %}
+                                <span style="color: var(--text-light); font-size: 0.8rem;">Expired</span>
                             {% else %}
                                 -
                             {% endif %}
                         </td>
                         <td class="action-buttons">
-                            {% if not user.is_active %}
+                            {% if user.is_currently_banned %}
                                 <button class="btn btn-unban" onclick="unbanUser('{{ user.id }}')">
                                     <i class="fas fa-check-circle"></i>
                                     Unban
                                 </button>
                             {% else %}
-                                <a href="{% url 'user_detail' user.id %}" class="btn" style="background: var(--primary); color: white;">
+                                <a href="{% url 'user_detail' user.id %}" class="btn btn-manage">
                                     <i class="fas fa-edit"></i>
                                     Manage
                                 </a>
@@ -1048,104 +1057,7 @@
         {% endif %}
     </section>
 
-    <!-- Recent Reviews Section -->
-    <section class="section">
-        <div class="section-header">
-            <div class="section-title reviews">
-                <i class="fas fa-star"></i>
-                <h2>Recent Reviews</h2>
-            </div>
-            <div class="user-count">
-                <a href="{% url 'admin_review_list' %}" class="header-btn reviews">
-                    <i class="fas fa-list"></i>
-                    View All Reviews
-                </a>
-                <!-- Add Disputes button here as well for easy access -->
-                <a href="{% url 'admin_disputes' %}" class="header-btn disputes" style="margin-left: 10px;">
-                    <i class="fas fa-gavel"></i>
-                    Manage Disputes
-                    {% if pending_disputes_count %}
-                    <span class="dispute-badge">{{ pending_disputes_count }}</span>
-                    {% endif %}
-                </a>
-            </div>
-        </div>
-        
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Task</th>
-                        <th>Reviewer</th>
-                        <th>Reviewed User</th>
-                        <th>Type</th>
-                        <th>Rating</th>
-                        <th>Comment</th>
-                        <th>Date</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for review in recent_reviews %}
-                    <tr>
-                        <td>
-                            <strong>{{ review.post.title|truncatewords:5 }}</strong>
-                        </td>
-                        <td>
-                            <a href="{% url 'user_detail' review.reviewer.id %}" class="user-link">
-                                {{ review.reviewer.username }}
-                            </a>
-                        </td>
-                        <td>
-                            <a href="{% url 'user_detail' review.reviewed_user.id %}" class="user-link">
-                                {{ review.reviewed_user.username }}
-                            </a>
-                        </td>
-                        <td>
-                            {% if review.review_type == 'worker_to_owner' %}
-                                <span class="review-type-badge review-type-worker">Worker → Owner</span>
-                            {% else %}
-                                <span class="review-type-badge review-type-owner">Owner → Worker</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="star-rating">
-                                {% for i in "12345" %}
-                                    {% if forloop.counter <= review.rating %}
-                                        ★
-                                    {% else %}
-                                        <span class="empty">★</span>
-                                    {% endif %}
-                                {% endfor %}
-                                <span style="margin-left: 5px; color: var(--text-medium);">
-                                    ({{ review.rating }}/5)
-                                </span>
-                            </div>
-                        </td>
-                        <td class="comment-preview">
-                            {{ review.comment|default:"No comment"|truncatewords:10 }}
-                        </td>
-                        <td>{{ review.created_at|date:"M j, Y" }}</td>
-                        <td class="action-buttons">
-                            <a href="{% url 'admin_review_list' %}?review_id={{ review.id }}" class="btn" style="background: var(--primary); color: white;">
-                                <i class="fas fa-eye"></i>
-                                View
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="8" class="empty-state">
-                            <i class="fas fa-star"></i>
-                            <p>No reviews yet</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </section>
-
+  
 </main>
 
 <script>
@@ -1164,7 +1076,8 @@ async function unbanUser(userId) {
         const res = await fetch(`/unban-user/${userId}/`, {
             method: 'POST',
             headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
             }
         });
         
@@ -1197,6 +1110,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Auto-refresh page every 5 minutes to update ban statuses
+setTimeout(() => {
+    location.reload();
+}, 300000); // 5 minutes
 </script>
 
 </body>

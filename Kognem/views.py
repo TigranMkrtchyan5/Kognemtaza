@@ -45,9 +45,17 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Avg, Count, Q
-from .models import Review, Post , DisputeMessage
+from .models import Review, Post , DisputeMessage , DisputeEvidence
 from django.core.paginator import Paginator
 from django.db import IntegrityError
+from django.views.decorators.http import require_http_methods
+from django.http import HttpResponseBadRequest
+from django.views.decorators.http import require_POST
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import os
+
+
 
 
 logger = logging.getLogger(__name__)
@@ -467,7 +475,7 @@ def user_ratings_report(request):
 @login_required
 def edit_post(request, post_id):
     """Редактирование поста с гарантированной отправкой на модерацию"""
-    post = get_object_or_404(Post, id=post_id)
+    post = get_object_or_404(Post, id=post_id,user=request.user)
     
     # Проверяем, что пользователь является владельцем поста
     if post.user != request.user:
@@ -603,11 +611,26 @@ def admin_dashboard(request):
     page_number = request.GET.get('page')
     users_page = paginator.get_page(page_number)
     
-    # Add active_ban property to each user for template access
+    # ADD BAN PROPERTIES TO EACH USER FOR TEMPLATE ACCESS
+    now = timezone.now()
     for user in users_page:
-        # Get the active ban (not expired and active=True)
-        active_ban = user.bans.filter(active=True, end_date__gt=timezone.now()).first()
-        user.active_ban = active_ban
+        # Add is_currently_banned property - checks for active, non-expired bans
+        user.is_currently_banned = user.bans.filter(
+            active=True, 
+            end_date__gt=now
+        ).exists()
+        
+        # Add active_ban property - gets the current active ban
+        user.active_ban = user.bans.filter(
+            active=True, 
+            end_date__gt=now
+        ).order_by('-end_date').first()
+        
+        # Add has_expired_ban property - for showing "Ban Expired" status
+        user.has_expired_ban = user.bans.filter(
+            active=True, 
+            end_date__lte=now
+        ).exists()
     
     # Existing user counts (unfiltered for stats)
     all_users_count = User.objects.count()
@@ -696,6 +719,7 @@ def admin_dashboard(request):
     
     return render(request, 'admin/dashboard.html', context)
 
+
 @admin_required
 def user_detail(request, user_id):
     try:
@@ -744,29 +768,28 @@ def all_users(request):
 
 @admin_required
 def active_users(request):
-    """View for active users only"""
-    now = timezone.now()
-    users = User.objects.filter(is_active=True).select_related("profile").prefetch_related('bans').all()
+    """View for active users only - based on CURRENT ban status"""
+    users = User.objects.select_related("profile").prefetch_related('bans').all()
     
+    # Filter users who are not currently banned
+    active_users_list = []
     for user in users:
-        try:
-            # Only get ACTIVE bans (not expired)
-            user.active_ban = user.bans.filter(active=True, end_date__gt=now).order_by('-end_date').first()
-        except AttributeError:
-            user.active_ban = None
+        if not user.is_currently_banned:
+            active_users_list.append(user)
     
     all_users_count = User.objects.count()
-    active_users_count = User.objects.filter(is_active=True).count()
-    banned_users_count = User.objects.filter(is_active=False).count()
+    active_users_count = len(active_users_list)
+    banned_users_count = all_users_count - active_users_count
     
     return render(request, "admin/dashboard.html", {
-        "users": users,
+        "users": active_users_list,
         "all_users_count": all_users_count,
         "active_users_count": active_users_count,
         "banned_users_count": banned_users_count,
         "current_filter": "active",
         "page_title": "Active Users"
     })
+
 
 @admin_required
 def banned_users(request):
@@ -1050,8 +1073,10 @@ def home(request):
     state_id = request.GET.get('state')
     province_id = request.GET.get('province')
 
-    approved_posts = Post.objects.filter(status='approved').order_by('-created_at')
-
+    approved_posts = Post.objects.filter(
+        status='approved', 
+        task_status='open'  # Показывать только работы со статусом "открыто для заявок"
+    ).order_by('-created_at')
     if category_id:
         approved_posts = approved_posts.filter(category_id=category_id)
     if state_id:
@@ -1868,82 +1893,105 @@ def contact_admin(request, post_id):
         'message': 'Your message has been sent to admins. The task is now under review.'
     })
 
-
-@login_required
+@csrf_exempt
+@require_POST
 def send_dispute_message(request, dispute_id):
-    """Send additional messages in an existing dispute"""
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Invalid method'})
-    
-    dispute = get_object_or_404(TaskDispute, id=dispute_id)
-    
-    # Check if user is involved in the dispute
-    if request.user not in [dispute.initiated_by, dispute.other_party]:
-        return JsonResponse({'success': False, 'error': 'Not authorized'})
-    
-    message = request.POST.get('message', '').strip()
-    if not message:
-        return JsonResponse({'success': False, 'error': 'Message is required'})
-    
-    # Handle image upload
-    image = None
-    if 'image' in request.FILES:
-        image = request.FILES['image']
-    
-    # Create message
-    dispute_message = DisputeMessage.objects.create(
-        dispute=dispute,
-        sender=request.user,
-        message=message,
-        image=image
-    )
-    
-    # Notify admins
-    admin_users = User.objects.filter(profile__role__in=['admin', 'superadmin'])
-    for admin_user in admin_users:
-        Notification.objects.create(
-            user=admin_user,
-            message=f"New message in dispute #{dispute.id} for task '{dispute.post.title}'",
-            post=dispute.post
+    try:
+        dispute = TaskDispute.objects.get(id=dispute_id)
+        
+        # Check if user is involved in the dispute or is admin
+        if (request.user != dispute.post.user and 
+            request.user != dispute.worker and 
+            not request.user.is_staff):
+            return JsonResponse({
+                'success': False,
+                'error': 'You are not authorized to send messages in this dispute'
+            }, status=403)
+        
+        message_text = request.POST.get('message', '').strip()
+        image = request.FILES.get('image')
+        
+        if not message_text and not image:
+            return JsonResponse({
+                'success': False,
+                'error': 'Message or image is required'
+            })
+        
+        # Create the message
+        message = DisputeMessage.objects.create(
+            dispute=dispute,
+            sender=request.user,
+            message=message_text
         )
-    
-    return JsonResponse({
-        'success': True,
-        'message': 'Message sent successfully',
-        'message_id': dispute_message.id
-    })
-
-
-@login_required
-def get_dispute_messages(request, dispute_id):
-    """Get all messages for a dispute"""
-    dispute = get_object_or_404(TaskDispute, id=dispute_id)
-    
-    # Check if user is involved in the dispute or is admin
-    if (request.user not in [dispute.initiated_by, dispute.other_party] and 
-        not (hasattr(request.user, 'profile') and 
-             request.user.profile.role in ['admin', 'superadmin'])):
-        return JsonResponse({'success': False, 'error': 'Not authorized'})
-    
-    messages = dispute.messages.all().order_by('created_at')
-    messages_data = []
-    
-    for msg in messages:
-        messages_data.append({
-            'id': msg.id,
-            'sender': msg.sender.username,
-            'sender_id': msg.sender.id,
-            'message': msg.message,
-            'image': msg.image.url if msg.image else None,
-            'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'is_own_message': msg.sender == request.user
+        
+        if image:
+            message.image = image
+            message.save()
+        
+        # Return success response with message data
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'sender': message.sender.username,
+                'sender_id': message.sender.id,
+                'message': message.message,
+                'image': message.image.url if message.image else None,
+                'created_at': message.created_at.strftime('%b %d, %Y %I:%M %p'),
+                'is_own_message': True,
+                'is_admin': request.user.is_staff
+            }
         })
-    
-    return JsonResponse({
-        'success': True,
-        'messages': messages_data,
-        'dispute_status': dispute.status
-    })
+        
+    except TaskDispute.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Dispute not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+def get_dispute_messages(request, dispute_id):
+    try:
+        dispute = TaskDispute.objects.get(id=dispute_id)
+        
+        # Check if user is involved in the dispute or is admin
+        if (request.user != dispute.post.user and 
+            request.user != dispute.worker and 
+            not request.user.is_staff):
+            return JsonResponse({
+                'success': False,
+                'error': 'You are not authorized to view these messages'
+            }, status=403)
+        
+        messages = dispute.messages.all().order_by('created_at')
+        
+        messages_data = []
+        for message in messages:
+            messages_data.append({
+                'id': message.id,
+                'sender': message.sender.username,
+                'sender_id': message.sender.id,
+                'message': message.message,
+                'image': message.image.url if message.image else None,
+                'created_at': message.created_at.strftime('%b %d, %Y %I:%M %p'),
+                'is_own_message': message.sender == request.user,
+                'is_admin': message.sender.is_staff
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'messages': messages_data
+        })
+        
+    except TaskDispute.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Dispute not found'
+        }, status=404)
 
 def admin_dispute_detail(request, dispute_id):
     """
@@ -1961,69 +2009,226 @@ def admin_dispute_detail(request, dispute_id):
     
     return render(request, 'admin/dispute_detail.html', context)
 
-@admin_required
-def resolve_dispute(request, dispute_id):
-    """
-    Handle admin decision on dispute
-    """
-    dispute = get_object_or_404(TaskDispute, id=dispute_id)
+# @admin_required
+# def resolve_dispute(request, dispute_id):
+#     """
+#     Handle admin decision on dispute
+#     """
+#     dispute = get_object_or_404(TaskDispute, id=dispute_id)
     
-    if request.method == 'POST':
-        decision = request.POST.get('decision')
-        admin_notes = request.POST.get('admin_notes', '')
+#     if request.method == 'POST':
+#         decision = request.POST.get('decision')
+#         admin_notes = request.POST.get('admin_notes', '')
         
-        if decision in ['completed', 'cancelled', 'refunded']:
-            # Use the model method to resolve the dispute
-            success = dispute.resolve_dispute(
-                decision=decision,
-                admin_user=request.user,
-                notes=admin_notes
-            )
+#         if decision in ['completed', 'cancelled', 'refunded']:
+#             # Use the model method to resolve the dispute
+#             success = dispute.resolve_dispute(
+#                 decision=decision,
+#                 admin_user=request.user,
+#                 notes=admin_notes
+#             )
             
-            if success:
-                # Success messages based on decision
-                if decision == 'completed':
-                    messages.success(
-                        request, 
-                        f'Dispute resolved: Work marked as completed. Payment released to {dispute.worker.username}.'
-                    )
-                elif decision == 'cancelled':
-                    messages.success(
-                        request,
-                        f'Dispute resolved: Task cancelled. Refund processed for {dispute.post.user.username}.'
-                    )
-                elif decision == 'refunded':
-                    messages.success(
-                        request,
-                        f'Dispute resolved: Full refund issued to {dispute.post.user.username}.'
-                    )
-            else:
-                messages.error(request, 'Failed to resolve dispute. Please try again.')
+#             if success:
+#                 # Success messages based on decision
+#                 if decision == 'completed':
+#                     messages.success(
+#                         request, 
+#                         f'Dispute resolved: Work marked as completed. Payment released to {dispute.worker.username}.'
+#                     )
+#                 elif decision == 'cancelled':
+#                     messages.success(
+#                         request,
+#                         f'Dispute resolved: Task cancelled. Refund processed for {dispute.post.user.username}.'
+#                     )
+#                 elif decision == 'refunded':
+#                     messages.success(
+#                         request,
+#                         f'Dispute resolved: Full refund issued to {dispute.post.user.username}.'
+#                     )
+#             else:
+#                 messages.error(request, 'Failed to resolve dispute. Please try again.')
             
-            return redirect('admin_dispute_detail', dispute_id=dispute.id)
-        else:
-            messages.error(request, 'Invalid decision selected.')
+#             return redirect('admin_dispute_detail', dispute_id=dispute.id)
+#         else:
+#             messages.error(request, 'Invalid decision selected.')
     
-    return redirect('admin_dispute_detail', dispute_id=dispute.id)
+#     return redirect('admin_dispute_detail', dispute_id=dispute.id)
+
+# @csrf_exempt
+# @admin_required
+# def resolve_dispute_api(request, dispute_id):
+#     """API endpoint for resolving disputes"""
+#     if request.method != 'POST':
+#         return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+    
+#     try:
+#         dispute = get_object_or_404(TaskDispute, id=dispute_id)
+        
+#         # Parse JSON data
+#         data = json.loads(request.body)
+#         decision = data.get('decision')
+#         resolution = data.get('resolution')
+#         admin_notes = data.get('admin_notes', '')
+        
+#         if not decision or not resolution:
+#             return JsonResponse({'success': False, 'error': 'Decision and resolution are required'}, status=400)
+        
+#         # Map decision to status and update dispute
+#         if decision == 'completed':
+#             dispute.status = 'resolved'
+#             dispute.resolution = resolution
+#             dispute.admin_notes = admin_notes
+#             dispute.resolved_by = request.user
+#             dispute.resolved_at = timezone.now()
+#             dispute.save()
+            
+#             # Update post status to completed
+#             dispute.post.task_status = 'completed'
+#             dispute.post.completed_at = timezone.now()
+#             dispute.post.save()
+            
+#             # Create notifications
+#             Notification.objects.create(
+#                 user=dispute.initiated_by,
+#                 message=f"Your dispute for task '{dispute.post.title}' has been resolved: {resolution}",
+#                 post=dispute.post
+#             )
+#             Notification.objects.create(
+#                 user=dispute.other_party,
+#                 message=f"The dispute for task '{dispute.post.title}' has been resolved: {resolution}",
+#                 post=dispute.post
+#             )
+            
+#         elif decision == 'cancelled':
+#             dispute.status = 'resolved'
+#             dispute.resolution = resolution
+#             dispute.admin_notes = admin_notes
+#             dispute.resolved_by = request.user
+#             dispute.resolved_at = timezone.now()
+#             dispute.save()
+            
+#             # Update post status to cancelled
+#             dispute.post.task_status = 'cancelled'
+#             dispute.post.save()
+            
+#             # Create notifications
+#             Notification.objects.create(
+#                 user=dispute.initiated_by,
+#                 message=f"Your dispute for task '{dispute.post.title}' has been resolved: {resolution}",
+#                 post=dispute.post
+#             )
+#             Notification.objects.create(
+#                 user=dispute.other_party,
+#                 message=f"The dispute for task '{dispute.post.title}' has been resolved: {resolution}",
+#                 post=dispute.post
+#             )
+            
+#         elif decision == 'refunded':
+#             dispute.status = 'resolved'
+#             dispute.resolution = resolution
+#             dispute.admin_notes = admin_notes
+#             dispute.resolved_by = request.user
+#             dispute.resolved_at = timezone.now()
+#             dispute.save()
+            
+#             # Update post status to cancelled (for refund scenario)
+#             dispute.post.task_status = 'cancelled'
+#             dispute.post.save()
+            
+#             # Create notifications
+#             Notification.objects.create(
+#                 user=dispute.initiated_by,
+#                 message=f"Your dispute for task '{dispute.post.title}' has been resolved with refund: {resolution}",
+#                 post=dispute.post
+#             )
+#             Notification.objects.create(
+#                 user=dispute.other_party,
+#                 message=f"The dispute for task '{dispute.post.title}' has been resolved with refund: {resolution}",
+#                 post=dispute.post
+#             )
+            
+#         elif decision == 'dismissed':
+#             dispute.status = 'dismissed'
+#             dispute.resolution = resolution
+#             dispute.admin_notes = admin_notes
+#             dispute.resolved_by = request.user
+#             dispute.resolved_at = timezone.now()
+#             dispute.save()
+            
+#             # Return post to previous status (in_progress or waiting_approval)
+#             if dispute.post.task_status == 'under_review':
+#                 dispute.post.task_status = 'in_progress'
+#                 dispute.post.save()
+            
+#             # Create notifications
+#             Notification.objects.create(
+#                 user=dispute.initiated_by,
+#                 message=f"Your dispute for task '{dispute.post.title}' has been dismissed: {resolution}",
+#                 post=dispute.post
+#             )
+#             Notification.objects.create(
+#                 user=dispute.other_party,
+#                 message=f"The dispute for task '{dispute.post.title}' has been dismissed: {resolution}",
+#                 post=dispute.post
+#             )
+        
+#         else:
+#             return JsonResponse({'success': False, 'error': 'Invalid decision'}, status=400)
+        
+#         return JsonResponse({
+#             'success': True, 
+#             'message': 'Dispute resolved successfully'
+#         })
+        
+#     except TaskDispute.DoesNotExist:
+#         return JsonResponse({'success': False, 'error': 'Dispute not found'}, status=404)
+#     except Exception as e:
+#         logger.error(f"Error resolving dispute: {e}")
+#         return JsonResponse({'success': False, 'error': f'Internal server error: {str(e)}'}, status=500)
+# @admin_required
+
 
 @admin_required
 def reopen_dispute(request, dispute_id):
-    """
-    Reopen a resolved dispute
-    """
-    dispute = get_object_or_404(TaskDispute, id=dispute_id)
+    """Reopen a resolved dispute"""
+    if request.method == 'POST':
+        try:
+            dispute = get_object_or_404(TaskDispute, id=dispute_id)
+            
+            if dispute.is_resolved:
+                dispute.status = 'pending'
+                dispute.resolved_by = None
+                dispute.resolution = ''
+                dispute.resolved_at = None
+                dispute.save()
+                
+                # Also update the post status if needed
+                if dispute.post.task_status == 'completed':
+                    dispute.post.task_status = 'under_review'
+                    dispute.post.save()
+                
+                # Create notification
+                Notification.objects.create(
+                    user=dispute.initiated_by,
+                    message=f"Dispute #{dispute.id} for task '{dispute.post.title}' has been reopened for review",
+                    post=dispute.post
+                )
+                
+                Notification.objects.create(
+                    user=dispute.other_party,
+                    message=f"Dispute #{dispute.id} for task '{dispute.post.title}' has been reopened for review",
+                    post=dispute.post
+                )
+                
+                return JsonResponse({'success': True, 'message': 'Dispute reopened successfully'})
+            else:
+                return JsonResponse({'success': False, 'error': 'Dispute is already active'})
+                
+        except Exception as e:
+            logger.error(f"Error reopening dispute: {e}")
+            return JsonResponse({'success': False, 'error': str(e)})
     
-    if dispute.is_resolved:
-        dispute.status = 'reopened'
-        dispute.post.status = 'disputed'
-        dispute.save()
-        dispute.post.save()
-        
-        messages.success(request, f'Dispute #{dispute.id} has been reopened for review.')
-    else:
-        messages.warning(request, 'This dispute is already active.')
-    
-    return redirect('admin_dispute_detail', dispute_id=dispute.id)
+    return JsonResponse({'success': False, 'error': 'Invalid method'})
 
 @admin_required
 def admin_user_detail(request, user_id):
@@ -2090,105 +2295,222 @@ def admin_disputes(request):
 
 @admin_required
 def dispute_detail(request, dispute_id):
-    """Admin view for dispute details"""
+    """Complete dispute detail view with all functionality"""
     dispute = get_object_or_404(TaskDispute, id=dispute_id)
     
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        resolution = request.POST.get('resolution', '')
-        admin_notes = request.POST.get('admin_notes', '')
-        
-        if action == 'start_review':
-            dispute.mark_under_review()
-            messages.success(request, 'Dispute marked as under review.')
-        
-        elif action == 'resolve':
-            if not resolution:
-                messages.error(request, 'Resolution text is required.')
-            else:
-                dispute.resolve_dispute(request.user, resolution, admin_notes)
-                
-                # Notify both parties
-                Notification.objects.create(
-                    user=dispute.initiated_by,
-                    message=f"Your dispute for task '{dispute.post.title}' has been resolved: {resolution}",
-                    post=dispute.post
-                )
-                Notification.objects.create(
-                    user=dispute.other_party,
-                    message=f"The dispute for task '{dispute.post.title}' has been resolved: {resolution}",
-                    post=dispute.post
-                )
-                
-                messages.success(request, 'Dispute resolved successfully.')
-        
-        elif action == 'dismiss':
-            dispute.status = 'dismissed'
-            dispute.resolved_by = request.user
-            dispute.resolution = 'Dispute dismissed by admin'
-            dispute.admin_notes = admin_notes
-            dispute.resolved_at = timezone.now()
-            dispute.save()
-            messages.info(request, 'Dispute dismissed.')
-        
-        return redirect('dispute_detail', dispute_id=dispute_id)
-    
-    # Get related information
+    # Get all related data
+    dispute_messages = DisputeMessage.objects.filter(dispute=dispute).select_related('sender').order_by('created_at')
+    evidence_files = DisputeEvidence.objects.filter(dispute=dispute).select_related('submitted_by').order_by('-created_at')
     task_applications = TaskApplication.objects.filter(post=dispute.post)
-    chat_messages = ChatMessage.objects.filter(
-        Q(sender=dispute.initiated_by, recipient=dispute.other_party) |
-        Q(sender=dispute.other_party, recipient=dispute.initiated_by)
-    ).order_by('created_at')
+    
+    # Separate evidence types
+    initial_evidence = evidence_files.filter(is_initial=True)
+    additional_evidence = evidence_files.filter(is_initial=False)
+    
+    # Handle POST requests
+    if request.method == 'POST':
+        return handle_dispute_post_requests(request, dispute)
     
     context = {
         'dispute': dispute,
+        'dispute_messages': dispute_messages,
+        'evidence_files': evidence_files,
+        'initial_evidence': initial_evidence,
+        'additional_evidence': additional_evidence,
         'task_applications': task_applications,
-        'chat_messages': chat_messages,
-        'page_title': f'Dispute #{dispute.id}'
+        'page_title': f'Դիսպուտ #{dispute.id}'
     }
     
     return render(request, 'admin/dispute_detail.html', context)
 
-@login_required
-def submit_dispute_evidence(request, dispute_id):
-    """Allow users to submit evidence for disputes"""
-    if request.method != 'POST':
-        return JsonResponse({'success': False, 'error': 'Invalid method'})
+def handle_dispute_post_requests(request, dispute):
+    """Handle all POST requests for dispute detail page"""
+    action = request.POST.get('action')
     
-    dispute = get_object_or_404(TaskDispute, id=dispute_id)
+    if action == 'resolve_dispute':
+        return resolve_dispute_action(request, dispute)
+    elif action == 'send_message':
+        return send_message_action(request, dispute)
+    elif action == 'add_evidence':
+        return add_evidence_action(request, dispute)
+    elif action == 'reopen_dispute':
+        return reopen_dispute_action(request, dispute)
+    else:
+        messages.error(request, 'Անհայտ գործողություն')
+        return redirect('dispute_detail', dispute_id=dispute.id)
+
+def resolve_dispute_action(request, dispute):
+    """Handle dispute resolution"""
+    try:
+        decision = request.POST.get('decision')
+        resolution = request.POST.get('resolution', '').strip()
+        admin_notes = request.POST.get('admin_notes', '').strip()
+        
+        if not decision:
+            messages.error(request, 'Խնդրում ենք ընտրել որոշում')
+            return redirect('dispute_detail', dispute_id=dispute.id)
+        
+        if not resolution:
+            messages.error(request, 'Խնդրում ենք մուտքագրել պատճառաբանություն')
+            return redirect('dispute_detail', dispute_id=dispute.id)
+        
+        # Update dispute
+        dispute.status = 'resolved'
+        dispute.resolved_by = request.user
+        dispute.resolved_at = timezone.now()
+        dispute.resolution = resolution
+        dispute.admin_notes = admin_notes
+        dispute.save()
+        
+        # Update task status based on decision
+        if decision == 'completed':
+            dispute.post.task_status = 'completed'
+            dispute.post.completed_at = timezone.now()
+            notification_msg = "Առաջադրանքը նշված է որպես ավարտված: Վճարումը փոխանցվել է աշխատողին:"
+        elif decision == 'cancelled':
+            dispute.post.task_status = 'cancelled'
+            notification_msg = "Առաջադրանքը չեղարկված է: Գումարը վերադարձվել է հայտարարության սեփականատիրոջը:"
+        elif decision == 'refunded':
+            dispute.post.task_status = 'cancelled'
+            notification_msg = "Ամբողջական փոխհատուցում է կատարվել հայտարարության սեփականատիրոջը:"
+        elif decision == 'split':
+            worker_percentage = request.POST.get('worker_percentage', 50)
+            dispute.post.task_status = 'completed'
+            notification_msg = f"Վճարումը բաժանված է {worker_percentage}% աշխատողին և {100-int(worker_percentage)}% սեփականատիրոջը:"
+        
+        dispute.post.save()
+        
+        # Create notifications
+        create_dispute_notifications(dispute, resolution, notification_msg)
+        
+        messages.success(request, 'Դիսպուտը հաջողությամբ լուծված է')
+        
+    except Exception as e:
+        logger.error(f"Error resolving dispute {dispute.id}: {e}")
+        messages.error(request, f'Սխալ որոշումը կատարելիս: {str(e)}')
     
-    # Check if user is involved in the dispute
-    if request.user not in [dispute.initiated_by, dispute.other_party]:
-        return JsonResponse({'success': False, 'error': 'Not authorized'})
     
-    evidence_text = request.POST.get('evidence', '').strip()
-    if not evidence_text:
-        return JsonResponse({'success': False, 'error': 'Evidence text is required'})
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        return JsonResponse({'success': True})
+    return redirect('dispute_detail', dispute_id=dispute.id)
+
+def send_message_action(request, dispute):
+    """Handle sending messages in dispute"""
+    try:
+        message_text = request.POST.get('message', '').strip()
+        image = request.FILES.get('image')
+        
+        if not message_text:
+            messages.error(request, 'Հաղորդագրությունը դատարկ չի կարող լինել')
+            return redirect('dispute_detail', dispute_id=dispute.id)
+        
+        # Create message
+        dispute_message = DisputeMessage.objects.create(
+            dispute=dispute,
+            sender=request.user,
+            message=message_text
+        )
+        
+        # Handle image upload
+        if image:
+            if image.size > 5 * 1024 * 1024:  # 5MB limit
+                messages.warning(request, 'Նկարի չափը չպետք է գերազանցի 5MB-ը')
+            else:
+                dispute_message.image = image
+                dispute_message.save()
+        
+        # Notify other party
+        other_party = dispute.other_party if request.user != dispute.other_party else dispute.initiated_by
+        if other_party:
+            Notification.objects.create(
+                user=other_party,
+                message=f"Նոր հաղորդագրություն դիսպուտում '{dispute.post.title}'",
+                post=dispute.post
+            )
+        
+        messages.success(request, 'Հաղորդագրությունը հաջողությամբ ուղարկված է')
+        
+    except Exception as e:
+        logger.error(f"Error sending dispute message: {e}")
+        messages.error(request, f'Սխալ հաղորդագրություն ուղարկելիս: {str(e)}')
     
-    # Determine which evidence field to update
-    if request.user == dispute.initiated_by:
-        if dispute.initiated_by == dispute.post.user:  # Owner
-            dispute.owner_evidence = evidence_text
-        else:  # Worker
-            dispute.worker_evidence = evidence_text
-    else:  # Other party
-        if request.user == dispute.post.user:  # Owner
-            dispute.owner_evidence = evidence_text
-        else:  # Worker
-            dispute.worker_evidence = evidence_text
+    return redirect('dispute_detail', dispute_id=dispute.id)
+
+def add_evidence_action(request, dispute):
+    """Handle evidence submission"""
+    try:
+        evidence_file = request.FILES.get('evidence_file')
+        description = request.POST.get('description', '').strip()
+        
+        if not evidence_file:
+            messages.error(request, 'Խնդրում ենք ընտրել ֆայլ')
+            return redirect('dispute_detail', dispute_id=dispute.id)
+        
+        if evidence_file.size > 10 * 1024 * 1024:  # 10MB limit
+            messages.error(request, 'Ֆայլի չափը չպետք է գերազանցի 10MB-ը')
+            return redirect('dispute_detail', dispute_id=dispute.id)
+        
+        # Create evidence
+        DisputeEvidence.objects.create(
+            dispute=dispute,
+            submitted_by=request.user,
+            file=evidence_file,
+            description=description,
+            is_initial=False
+        )
+        
+        messages.success(request, 'Ապացույցը հաջողությամբ ավելացված է')
+        
+    except Exception as e:
+        logger.error(f"Error adding evidence: {e}")
+        messages.error(request, f'Սխալ ապացույց ավելացնելիս: {str(e)}')
     
-    dispute.save()
+    return redirect('dispute_detail', dispute_id=dispute.id)
+
+def reopen_dispute_action(request, dispute):
+    """Reopen a resolved dispute"""
+    try:
+        if dispute.status == 'resolved':
+            dispute.status = 'under_review'
+            dispute.resolved_by = None
+            dispute.resolution = ''
+            dispute.resolved_at = None
+            dispute.save()
+            
+            # Update post status
+            dispute.post.task_status = 'under_review'
+            dispute.post.save()
+            
+            # Create notifications
+            create_dispute_notifications(dispute, "Դիսպուտը վերաբացված է վերանայման համար", "")
+            
+            messages.success(request, 'Դիսպուտը հաջողությամբ վերաբացված է')
+        else:
+            messages.warning(request, 'Դիսպուտն արդեն ակտիվ է')
+            
+    except Exception as e:
+        logger.error(f"Error reopening dispute: {e}")
+        messages.error(request, f'Սխալ դիսպուտը վերաբացելիս: {str(e)}')
     
-    # Notify admins
-    admin_users = User.objects.filter(profile__role__in=['admin', 'superadmin'])
-    for admin_user in admin_users:
+    return redirect('dispute_detail', dispute_id=dispute.id)
+
+def create_dispute_notifications(dispute, resolution, additional_info):
+    """Create notifications for both parties in dispute"""
+    Notification.objects.create(
+        user=dispute.initiated_by,
+        message=f"Դիսպուտը '{dispute.post.title}' առաջադրանքի համար լուծված է: {resolution} {additional_info}",
+        post=dispute.post
+    )
+    
+    if dispute.other_party:
         Notification.objects.create(
-            user=admin_user,
-            message=f"New evidence submitted for dispute #{dispute.id} on task '{dispute.post.title}'",
+            user=dispute.other_party,
+            message=f"Դիսպուտը '{dispute.post.title}' առաջադրանքի համար լուծված է: {resolution} {additional_info}",
             post=dispute.post
         )
-    
-    return JsonResponse({'success': True, 'message': 'Evidence submitted successfully'})
+
+
+
 
 
 
@@ -3048,6 +3370,757 @@ def password_reset_complete(request):
     """Show password reset complete page"""
     return render(request, 'password_reset_complete.html')
 
+
+
+
+
+
+
+
+
+
+
+
+# Add these dispute views to your views.py
+
+
+
+
+@csrf_exempt
+@login_required
+def send_dispute_message(request, dispute_id):
+    """Send message in dispute chat with multiple images"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+    
+    try:
+        dispute = get_object_or_404(TaskDispute, id=dispute_id)
+        
+        # Check if user is involved in the dispute or is admin
+        if (request.user != dispute.initiated_by and 
+            request.user != dispute.other_party and
+            not request.user.profile.role in ['admin', 'superadmin']):
+            return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+        
+        # Check if dispute is resolved
+        if dispute.is_resolved:
+            return JsonResponse({'success': False, 'error': 'Dispute is already resolved'})
+        
+        message_text = request.POST.get('message', '').strip()
+        if not message_text:
+            return JsonResponse({'success': False, 'error': 'Message is required'})
+        
+        # Create the message
+        message = DisputeMessage.objects.create(
+            dispute=dispute,
+            sender=request.user,
+            message=message_text
+        )
+        
+        # Handle multiple image uploads
+        image_count = 0
+        for key in request.FILES:
+            if key.startswith('image_'):
+                image_file = request.FILES[key]
+                if image_file.size > 5 * 1024 * 1024:  # 5MB limit
+                    continue
+                
+                # For simplicity, we'll store the first image with the message
+                # For multiple images, you might want to create separate evidence records
+                if image_count == 0:  # Only attach first image to message
+                    message.image = image_file
+                    message.save()
+                
+                # Also create evidence record for all images
+                DisputeEvidence.objects.create(
+                    dispute=dispute,
+                    submitted_by=request.user,
+                    file=image_file,
+                    description=f"Chat evidence - {message_text[:50]}...",
+                    is_initial=False
+                )
+                image_count += 1
+        
+        # Update dispute status if it was pending and admin is responding
+        if dispute.status == 'pending' and request.user.profile.role in ['admin', 'superadmin']:
+            dispute.status = 'under_review'
+            dispute.save()
+        
+        # Notify other party
+        other_party = dispute.other_party if request.user != dispute.other_party else dispute.initiated_by
+        if other_party:
+            Notification.objects.create(
+                user=other_party,
+                message=f"New message in dispute for task '{dispute.post.title}'",
+                post=dispute.post
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'sender': message.sender.username,
+                'sender_id': message.sender.id,
+                'message': message.message,
+                'image': message.image.url if message.image else None,
+                'created_at': message.created_at.strftime('%b %d, %Y %I:%M %p'),
+                'is_own_message': True,
+                'is_admin': request.user.profile.role in ['admin', 'superadmin'] if hasattr(request.user, 'profile') else False
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error sending dispute message: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+
+
+
+# Add these API views to your views.py
+
+@require_http_methods(["GET"])
+@login_required
+def get_dispute_messages_api(request, dispute_id):
+    """API endpoint to get dispute messages for real-time updates"""
+    try:
+        dispute = get_object_or_404(TaskDispute, id=dispute_id)
+        
+        # Check authorization
+        if (request.user != dispute.initiated_by and 
+            request.user != dispute.other_party and
+            not request.user.profile.role in ['admin', 'superadmin']):
+            return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+        
+        messages = DisputeMessage.objects.filter(dispute=dispute).select_related('sender').order_by('created_at')
+        
+        messages_data = []
+        for msg in messages:
+            messages_data.append({
+                'id': msg.id,
+                'sender': {
+                    'id': msg.sender.id,
+                    'username': msg.sender.username,
+                    'is_admin': msg.sender.profile.role in ['admin', 'superadmin'] if hasattr(msg.sender, 'profile') else False,
+                    'is_owner': msg.sender == dispute.post.user,
+                    'is_worker': msg.sender == dispute.worker
+                },
+                'message': msg.message,
+                'image_url': msg.image.url if msg.image else None,
+                'created_at': msg.created_at.isoformat(),
+                'formatted_time': msg.created_at.strftime('%b %d, %Y %I:%M %p'),
+                'is_own_message': msg.sender == request.user
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'messages': messages_data,
+            'total_count': len(messages_data),
+            'dispute_status': dispute.status
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting dispute messages API: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@require_http_methods(["GET"])
+@login_required
+def get_dispute_evidence_api(request, dispute_id):
+    """API endpoint to get dispute evidence"""
+    try:
+        dispute = get_object_or_404(TaskDispute, id=dispute_id)
+        
+        # Check authorization
+        if (request.user != dispute.initiated_by and 
+            request.user != dispute.other_party and
+            not request.user.profile.role in ['admin', 'superadmin']):
+            return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+        
+        evidence = DisputeEvidence.objects.filter(dispute=dispute).select_related('submitted_by').order_by('-created_at')
+        
+        evidence_data = []
+        for ev in evidence:
+            evidence_data.append({
+                'id': ev.id,
+                'submitted_by': {
+                    'id': ev.submitted_by.id,
+                    'username': ev.submitted_by.username
+                },
+                'file_url': ev.file.url if ev.file else None,
+                'file_type': ev.file_type,
+                'filename': ev.filename,
+                'description': ev.description,
+                'is_initial': ev.is_initial,
+                'created_at': ev.created_at.isoformat(),
+                'formatted_time': ev.created_at.strftime('%b %d, %Y %I:%M %p'),
+                'is_image': ev.is_image,
+                'icon_class': ev.get_file_icon()
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'evidence': evidence_data,
+            'total_count': len(evidence_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting dispute evidence API: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@require_http_methods(["POST"])
+@login_required
+def submit_evidence_api(request, dispute_id):
+    """API endpoint to submit evidence"""
+    try:
+        dispute = get_object_or_404(TaskDispute, id=dispute_id)
+        
+        # Check authorization
+        if (request.user != dispute.initiated_by and 
+            request.user != dispute.other_party and
+            not request.user.profile.role in ['admin', 'superadmin']):
+            return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+        
+        evidence_file = request.FILES.get('evidence_file')
+        description = request.POST.get('description', '').strip()
+        
+        if not evidence_file:
+            return JsonResponse({'success': False, 'error': 'File is required'})
+        
+        if evidence_file.size > 10 * 1024 * 1024:  # 10MB limit
+            return JsonResponse({'success': False, 'error': 'File size must be less than 10MB'})
+        
+        # Create evidence record
+        evidence = DisputeEvidence.objects.create(
+            dispute=dispute,
+            submitted_by=request.user,
+            file=evidence_file,
+            description=description,
+            is_initial=False
+        )
+        
+        # Notify other party
+        other_party = dispute.other_party if request.user != dispute.other_party else dispute.initiated_by
+        if other_party:
+            Notification.objects.create(
+                user=other_party,
+                message=f"New evidence submitted for dispute '{dispute.post.title}'",
+                post=dispute.post
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Evidence submitted successfully',
+            'evidence_id': evidence.id,
+            'evidence': {
+                'id': evidence.id,
+                'submitted_by': {
+                    'id': evidence.submitted_by.id,
+                    'username': evidence.submitted_by.username
+                },
+                'file_url': evidence.file.url if evidence.file else None,
+                'file_type': evidence.file_type,
+                'filename': evidence.filename,
+                'description': evidence.description,
+                'is_initial': evidence.is_initial,
+                'created_at': evidence.created_at.isoformat(),
+                'formatted_time': evidence.created_at.strftime('%b %d, %Y %I:%M %p'),
+                'is_image': evidence.is_image,
+                'icon_class': evidence.get_file_icon()
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error submitting evidence API: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+
+
+@require_http_methods(["POST"])
+@admin_required
+def resolve_dispute_admin_api(request, dispute_id):
+    """API endpoint for admin to resolve disputes - Updated with dispute_resolved"""
+    try:
+        dispute = get_object_or_404(TaskDispute, id=dispute_id)
+        
+        data = json.loads(request.body)
+        decision = data.get('decision')
+        resolution = data.get('resolution', '').strip()
+        admin_notes = data.get('admin_notes', '')
+        worker_percentage = data.get('worker_percentage', 50)
+        
+        if not decision or not resolution:
+            return JsonResponse({'success': False, 'error': 'Decision and resolution are required'})
+        
+        # Validate decision
+        valid_decisions = ['completed', 'cancelled', 'refunded', 'split', 'dismissed']
+        if decision not in valid_decisions:
+            return JsonResponse({'success': False, 'error': 'Invalid decision'})
+        
+        # Update dispute with dispute_resolved = True
+        dispute.status = 'resolved'
+        dispute.dispute_resolved = True  # NEW: Set dispute as resolved
+        dispute.resolved_by = request.user
+        dispute.resolved_at = timezone.now()
+        dispute.resolution = resolution
+        dispute.admin_notes = admin_notes
+        dispute.admin_decision = decision
+        
+        if decision == 'split':
+            dispute.worker_percentage = worker_percentage
+            dispute.owner_percentage = 100 - worker_percentage
+        
+        dispute.save()
+        
+        # Update post status based on decision
+        if decision == 'completed':
+            dispute.post.task_status = 'completed'
+            dispute.post.completed_at = timezone.now()
+        elif decision in ['cancelled', 'refunded']:
+            dispute.post.task_status = 'cancelled'
+        elif decision == 'split':
+            dispute.post.task_status = 'completed'
+        elif decision == 'dismissed':
+            # Return to previous status
+            if dispute.post.task_status == 'under_review':
+                dispute.post.task_status = 'in_progress'
+        
+        dispute.post.save()
+        
+        # Create notifications for both parties
+        notification_message = f"Dispute for task '{dispute.post.title}' has been resolved: {resolution}"
+        
+        Notification.objects.create(
+            user=dispute.initiated_by,
+            message=notification_message,
+            post=dispute.post
+        )
+        
+        if dispute.other_party:
+            Notification.objects.create(
+                user=dispute.other_party,
+                message=notification_message,
+                post=dispute.post
+            )
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'Dispute resolved successfully',
+            'resolution': resolution,
+            'dispute_status': dispute.status,
+            'dispute_resolved': dispute.dispute_resolved  # NEW: Return resolution status
+        })
+        
+    except Exception as e:
+        logger.error(f"Error resolving dispute API: {e}")
+        return JsonResponse({'success': False, 'error': f'Internal server error: {str(e)}'})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@login_required
+@require_http_methods(["GET"])
+def check_task_dispute(request, post_id):
+    """Check if dispute exists for a task - Updated with dispute_resolved"""
+    try:
+        post = get_object_or_404(Post, id=post_id)
+        
+        # Check if user is authorized (owner or assigned worker)
+        if request.user not in [post.user, post.assigned_to]:
+            return JsonResponse({'exists': False, 'error': 'Unauthorized'})
+        
+        # Check for existing dispute that is NOT resolved
+        dispute = TaskDispute.objects.filter(
+            post=post,
+            initiated_by__in=[post.user, post.assigned_to]
+        ).exclude(dispute_resolved=True).first()  # NEW: Exclude resolved disputes
+        
+        if dispute:
+            return JsonResponse({
+                'exists': True,
+                'dispute_id': dispute.id,
+                'resolved': dispute.dispute_resolved,  # NEW: Use dispute_resolved field
+                'status': dispute.status,
+                'can_dispute_again': not dispute.dispute_resolved  # NEW: Check if can dispute again
+            })
+        else:
+            return JsonResponse({'exists': False})
+            
+    except Exception as e:
+        logger.error(f"Error checking dispute: {e}")
+        return JsonResponse({'exists': False, 'error': str(e)})
+
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_dispute_messages_simple(request, dispute_id):
+    """Get dispute messages - matches /dispute/{disputeId}/get-messages/"""
+    try:
+        dispute = get_object_or_404(TaskDispute, id=dispute_id)
+        
+        # Check if user is authorized to view this dispute
+        if request.user not in [dispute.initiated_by, dispute.other_party] and not request.user.is_staff:
+            return JsonResponse({'success': False, 'error': 'Unauthorized'})
+        
+        messages = DisputeMessage.objects.filter(dispute=dispute).select_related('sender').order_by('created_at')
+        
+        messages_data = []
+        for msg in messages:
+            # Determine message type based on sender
+            is_admin = msg.sender.is_staff or (hasattr(msg.sender, 'profile') and msg.sender.profile.role in ['admin', 'superadmin'])
+            
+            message_data = {
+                'id': msg.id,
+                'sender': msg.sender.username,
+                'message': msg.message or "",  # Ensure message is never None
+                'created_at': msg.created_at.strftime('%Y-%m-%d %H:%M'),
+                'is_admin': is_admin,
+                'images': []  # Initialize empty images array
+            }
+            
+            # DEBUG: Log image information
+            print(f"Message {msg.id} - Image field: {msg.image}")
+            print(f"Message {msg.id} - Image name: {getattr(msg.image, 'name', 'No name')}")
+            
+            # FIXED: Check if image exists and has a file
+            if msg.image and msg.image.name:
+                try:
+                    # Get the absolute URL for the image
+                    image_url = msg.image.url
+                    absolute_image_url = request.build_absolute_uri(image_url)
+                    
+                    message_data['images'] = [{
+                        'url': absolute_image_url,
+                        'filename': os.path.basename(msg.image.name)
+                    }]
+                    print(f"Image URL for message {msg.id}: {absolute_image_url}")
+                    
+                except Exception as e:
+                    print(f"Error getting image URL for message {msg.id}: {e}")
+                    message_data['images'] = []
+            else:
+                print(f"No image found for message {msg.id}")
+                message_data['images'] = []
+            
+            messages_data.append(message_data)
+        
+        print(f"Total messages found: {len(messages_data)}")
+        
+        return JsonResponse({
+            'success': True,
+            'messages': messages_data,
+            'resolved': dispute.status == 'resolved'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting dispute messages: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@require_http_methods(["POST"])
+def send_dispute_message_simple(request, dispute_id):
+    """Send message in dispute - matches /dispute/{disputeId}/send-message/"""
+    try:
+        dispute = get_object_or_404(TaskDispute, id=dispute_id)
+        
+        # Check if user is authorized
+        if request.user not in [dispute.initiated_by, dispute.other_party] and not request.user.is_staff:
+            return JsonResponse({'success': False, 'error': 'Unauthorized'})
+        
+        # Check if dispute is resolved
+        if dispute.status == 'resolved':
+            return JsonResponse({'success': False, 'error': 'Dispute is already resolved'})
+        
+        message_text = request.POST.get('message', '').strip()
+        images = request.FILES.getlist('images')
+        
+        print(f"Received message: '{message_text}', images count: {len(images)}")
+        
+        # Allow sending images without text
+        if not message_text and not images:
+            return JsonResponse({'success': False, 'error': 'Message or image is required'})
+        
+        # Handle multiple images by creating separate messages for each
+        created_messages = []
+        
+        if images:
+            # Create a message for each image
+            for image in images:
+                if image.size > 5 * 1024 * 1024:  # 5MB limit
+                    continue
+                
+                try:
+                    # Create a new message for each image
+                    dispute_message = DisputeMessage.objects.create(
+                        dispute=dispute,
+                        sender=request.user,
+                        message=message_text if not created_messages else ""  # Only add text to first message
+                    )
+                    
+                    # Save the image
+                    dispute_message.image.save(
+                        f"dispute_{dispute_id}_{dispute_message.id}_{image.name}",
+                        ContentFile(image.read())
+                    )
+                    dispute_message.save()
+                    
+                    created_messages.append(dispute_message)
+                    print(f"Created message {dispute_message.id} with image: {dispute_message.image.name}")
+                    
+                except Exception as e:
+                    print(f"Error saving image: {e}")
+                    continue
+        
+        # If no images but has text, create a text-only message
+        if not images and message_text:
+            dispute_message = DisputeMessage.objects.create(
+                dispute=dispute,
+                sender=request.user,
+                message=message_text
+            )
+            created_messages.append(dispute_message)
+            print(f"Created text-only message {dispute_message.id}")
+        
+        # If we have multiple images and text, we might have created multiple messages
+        # Use the first created message for the response
+        if created_messages:
+            response_message = created_messages[0]
+        else:
+            return JsonResponse({'success': False, 'error': 'Failed to create message'})
+        
+        # Update dispute status if admin is responding
+        if request.user.is_staff and dispute.status == 'pending':
+            dispute.status = 'under_review'
+            dispute.save()
+        
+        # Prepare response data
+        response_data = {
+            'success': True,
+            'message': {
+                'id': response_message.id,
+                'sender': response_message.sender.username,
+                'message': response_message.message or "",
+                'created_at': response_message.created_at.strftime('%Y-%m-%d %H:%M'),
+                'is_admin': request.user.is_staff or (hasattr(request.user, 'profile') and request.user.profile.role in ['admin', 'superadmin']),
+                'images': []
+            }
+        }
+        
+        # Add image to response if exists
+        if response_message.image and response_message.image.name:
+            try:
+                image_url = request.build_absolute_uri(response_message.image.url)
+                response_data['message']['images'] = [{
+                    'url': image_url,
+                    'filename': os.path.basename(response_message.image.name)
+                }]
+                print(f"Response image URL: {image_url}")
+            except Exception as e:
+                print(f"Error getting response image URL: {e}")
+        
+        # If we created multiple messages, notify about them
+        if len(created_messages) > 1:
+            response_data['additional_messages'] = len(created_messages) - 1
+        
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        logger.error(f"Error sending dispute message: {e}")
+        print(f"Detailed error: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+@require_http_methods(["POST"])
+def create_task_dispute(request, post_id):
+    """Create dispute for a task - matches /task/{postId}/create-dispute/"""
+    try:
+        post = get_object_or_404(Post, id=post_id)
+        user = request.user
+        
+        # Check if user is authorized to create dispute
+        if user not in [post.user, post.assigned_to]:
+            return JsonResponse({'success': False, 'error': 'Unauthorized'})
+        
+        resolved_dispute = TaskDispute.objects.filter(
+            post=post,
+            initiated_by__in=[post.user, post.assigned_to],
+            dispute_resolved=True  # NEW: Check for resolved disputes
+        ).exists()
+        
+        if resolved_dispute:
+            return JsonResponse({
+                'success': False,
+                'error': 'A dispute for this task has already been resolved and cannot be disputed again'
+            })
+       
+       
+       
+       
+       
+        # Check if dispute already exists
+        existing_dispute = TaskDispute.objects.filter(
+            post=post,
+            initiated_by__in=[post.user, post.assigned_to],
+            status__in=['pending', 'under_review']
+        ).first()
+        
+        if existing_dispute:
+            return JsonResponse({
+                'success': True,
+                'dispute_id': existing_dispute.id,
+                'message': 'Dispute already exists'
+            })
+        
+        # Get message and files from request
+        message_text = request.POST.get('message', '').strip()
+        images = request.FILES.getlist('images')
+        
+        print(f"Creating dispute - Message: '{message_text}', Images: {len(images)}")
+        
+        # Allow creating dispute with only images
+        if not message_text and not images:
+            return JsonResponse({'success': False, 'error': 'Message or image is required'})
+        
+        # Determine other party
+        other_party = post.assigned_to if user == post.user else post.user
+        
+        # Create dispute
+        dispute = TaskDispute.objects.create(
+            post=post,
+            initiated_by=user,
+            other_party=other_party,
+            status='pending',
+            reason=message_text or 'Dispute created by user'
+        )
+        
+        # Update post status
+        post.task_status = 'under_review'
+        post.save()
+        
+        created_messages = []
+        
+        # Handle images first
+        if images:
+            for image in images:
+                if image.size > 5 * 1024 * 1024:  # 5MB limit
+                    continue
+                
+                try:
+                    # Create message for each image
+                    dispute_message = DisputeMessage.objects.create(
+                        dispute=dispute,
+                        sender=user,
+                        message=message_text if not created_messages else ""  # Text only on first message
+                    )
+                    
+                    # Save image
+                    dispute_message.image.save(
+                        f"dispute_{dispute.id}_{dispute_message.id}_{image.name}",
+                        ContentFile(image.read())
+                    )
+                    dispute_message.save()
+                    
+                    created_messages.append(dispute_message)
+                    print(f"Created initial message {dispute_message.id} with image")
+                    
+                except Exception as e:
+                    print(f"Error saving initial image: {e}")
+                    continue
+        
+        # If no images but has text, create text message
+        if not images and message_text:
+            dispute_message = DisputeMessage.objects.create(
+                dispute=dispute,
+                sender=user,
+                message=message_text
+            )
+            created_messages.append(dispute_message)
+            print(f"Created initial text message {dispute_message.id}")
+        
+        # Create evidence records for all uploaded images
+        for image in images:
+            if image.size > 5 * 1024 * 1024:
+                continue
+                
+            try:
+                DisputeEvidence.objects.create(
+                    dispute=dispute,
+                    submitted_by=user,
+                    file=image,
+                    description='Initial dispute evidence',
+                    is_initial=True
+                )
+            except Exception as e:
+                print(f"Error creating evidence record: {e}")
+        
+        # Notify admins
+        admin_users = User.objects.filter(profile__role__in=['admin', 'superadmin'])
+        for admin_user in admin_users:
+            Notification.objects.create(
+                user=admin_user,
+                message=f"New dispute created for task '{post.title}'",
+                post=post
+            )
+        
+        # Notify other party
+        if other_party:
+            Notification.objects.create(
+                user=other_party,
+                message=f"A dispute has been created for task '{post.title}'",
+                post=post
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'dispute_id': dispute.id,
+            'message': 'Dispute created successfully',
+            'messages_created': len(created_messages)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating dispute: {e}")
+        print(f"Detailed error creating dispute: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+    
+
+# Also add this utility function to help with image URLs
+def get_image_urls_for_message(message):
+    """Helper function to get all image URLs for a message"""
+    urls = []
+    if message.image and hasattr(message.image, 'url'):
+        urls.append({
+            'url': message.image.url,
+            'filename': os.path.basename(message.image.name)
+        })
+    return urls
 
 
 

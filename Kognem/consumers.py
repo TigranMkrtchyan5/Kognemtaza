@@ -90,3 +90,5 @@ class GlobalConsumer(AsyncWebsocketConsumer):
             "type": "broadcast",
             "message": event["message"],
         }))
+
+

@@ -115,8 +115,8 @@ urlpatterns = [
 
 
     
-    
-    path('dispute/<int:dispute_id>/submit-evidence/', views.submit_dispute_evidence, name='submit_dispute_evidence'),
+    # path('admin/dispute/<int:dispute_id>/resolve/', views.resolve_dispute_api, name='resolve_dispute_api'),
+    # path('dispute/<int:dispute_id>/submit-evidence/', views.submit_dispute_evidence, name='submit_dispute_evidence'),
     
     # Update the mark_incomplete URL to use the new view
     path('task/<int:post_id>/incomplete/', views.mark_incomplete, name='mark_incomplete'),
@@ -124,15 +124,63 @@ urlpatterns = [
 
     path('task/<int:post_id>/worker-dispute/', views.worker_dispute_incomplete, name='worker_dispute_incomplete'),
     path('task/<int:post_id>/contact-admin/', views.contact_admin, name='contact_admin'),
-    path('dispute/<int:dispute_id>/send-message/', views.send_dispute_message, name='send_dispute_message'),
-    path('dispute/<int:dispute_id>/get-messages/', views.get_dispute_messages, name='get_dispute_messages'),
+   
+    # path('dispute/<int:dispute_id>/get-messages/', views.get_dispute_messages, name='get_dispute_messages'),
     
     # Admin dispute URLs
-    path('admin/disputes/', views.admin_disputes, name='admin_disputes'),
+   
     path('admin/disputes/<int:dispute_id>/', views.dispute_detail, name='dispute_detail'),
 
     path('disputes/<int:dispute_id>/reopen/', views.reopen_dispute, name='reopen_dispute'),
+    # urls.py
+    # User version
+    path('dispute/<int:dispute_id>/', views.dispute_detail, name='user_dispute_detail'),
 
+# Admin version
+    path('admin/disputes/<int:dispute_id>/', views.dispute_detail, name='admin_dispute_detail'),
+
+
+    # Add these URLs to your urlpatterns
+
+    # ... your existing URLs ...
     
+    # Dispute URLs
+    # path('create-dispute/', views.create_dispute, name='create_dispute'),
+    # path('dispute/<int:dispute_id>/get-chat/', views.get_dispute_chat, name='get_dispute_chat'),
+   
+    # path('dispute/<int:dispute_id>/resolve/', views.resolve_dispute_api, name='resolve_dispute_api'),
+    # path('post/<int:post_id>/check-dispute/', views.check_dispute_status, name='check_dispute_status'),
+    path('dispute/<int:dispute_id>/', views.dispute_detail, name='dispute_detail'),
+    path('admin/disputes/', views.admin_disputes, name='admin_disputes'),
+    
+    # Keep existing dispute URLs for backward compatibility
+   
+    path('task/<int:post_id>/contact-admin/', views.contact_admin, name='contact_admin'),
+
+
+
+
+    path('api/disputes/<int:dispute_id>/messages/', views.get_dispute_messages_api, name='get_dispute_messages_api'),
+    path('api/disputes/<int:dispute_id>/evidence/', views.get_dispute_evidence_api, name='get_dispute_evidence_api'),
+    path('api/disputes/<int:dispute_id>/submit-evidence/', views.submit_evidence_api, name='submit_evidence_api'),
+
+    path('admin/dispute/<int:dispute_id>/resolve/', views.resolve_dispute_admin_api, name='resolve_dispute_api'),
+    # path('api/disputes/<int:dispute_id>/resolve/', views.resolve_dispute_admin_api, name='resolve_dispute_admin_api'),
+
+
+
+
+
+
+    path('task/<int:post_id>/check-dispute/', views.check_task_dispute, name='check_task_dispute'),
+    path('dispute/<int:dispute_id>/get-messages/', views.get_dispute_messages_simple, name='get_dispute_messages_simple'),
+    path('task/<int:post_id>/create-dispute/', views.create_task_dispute, name='create_task_dispute'),
+    path('dispute/<int:dispute_id>/send-message/', views.send_dispute_message_simple, name='send_dispute_message_simple'),
+    
+    
+    
+    # Your existing dispute URLs
+
+
 ]
 

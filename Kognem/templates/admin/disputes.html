@@ -147,6 +147,32 @@
             transition: all 0.3s ease;
         }
 
+        .priority-high { border-left: 4px solid var(--danger) !important; }
+        .priority-medium { border-left: 4px solid var(--warning) !important; }
+        .priority-low { border-left: 4px solid var(--info) !important; }
+
+        .time-indicator {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        .time-urgent { background: var(--danger); color: white; }
+        .time-warning { background: var(--warning); color: black; }
+        .time-normal { background: var(--info); color: white; }
+
+        .message-count {
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
+
         @media (max-width: 768px) {
             .sidebar {
                 width: 100%;
@@ -234,10 +260,10 @@
                         <p class="text-muted mb-0">Manage and resolve disputes between task owners and workers</p>
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-outline-primary">
+                        <button class="btn btn-outline-primary" onclick="exportDisputes()">
                             <i class="fas fa-download me-2"></i>Export
                         </button>
-                        <button class="btn btn-primary">
+                        <button class="btn btn-primary" onclick="location.reload()">
                             <i class="fas fa-sync-alt me-2"></i>Refresh
                         </button>
                     </div>
@@ -307,6 +333,7 @@
                     </div>
                 </div>
 
+
                 <!-- Filter Tabs -->
                 <div class="card mb-4">
                     <div class="card-body">
@@ -342,36 +369,58 @@
                 <!-- Disputes List -->
                 <div class="card">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            {% if current_status == 'all' %}All Disputes
-                            {% elif current_status == 'pending' %}Pending Disputes
-                            {% elif current_status == 'under_review' %}Disputes Under Review
-                            {% elif current_status == 'resolved' %}Resolved Disputes
-                            {% endif %}
-                        </h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">
+                                {% if current_status == 'all' %}All Disputes
+                                {% elif current_status == 'pending' %}Pending Disputes
+                                {% elif current_status == 'under_review' %}Disputes Under Review
+                                {% elif current_status == 'resolved' %}Resolved Disputes
+                                {% endif %}
+                            </h5>
+                            <div class="d-flex align-items-center">
+                                <input type="text" class="form-control form-control-sm me-2" placeholder="Search disputes..." id="searchInput" onkeyup="searchDisputes()">
+                                <span class="badge bg-light text-dark">{{ disputes|length }} displayed</span>
+                            </div>
+                        </div>
                     </div>
                     <div class="card-body">
                         {% if disputes %}
                             {% for dispute in disputes %}
-                            <div class="dispute-card p-4 {{ dispute.status }}">
+                            <div class="dispute-card p-4 {{ dispute.status }} {% if dispute.priority == 'high' %}priority-high{% elif dispute.priority == 'medium' %}priority-medium{% else %}priority-low{% endif %}" 
+                                 data-dispute-id="{{ dispute.id }}" 
+                                 data-priority="{{ dispute.priority }}"
+                                 data-type="{{ dispute.dispute_type }}">
                                 <div class="row align-items-center">
                                     <div class="col-md-8">
                                         <div class="d-flex align-items-center mb-2">
                                             <span class="badge badge-{{ dispute.status }} me-2">
                                                 {{ dispute.get_status_display }}
                                             </span>
-                                            <span class="badge bg-secondary">
+                                            <span class="badge bg-secondary me-2">
                                                 {{ dispute.get_dispute_type_display }}
                                             </span>
-                                            <small class="text-muted ms-3">
+                                            {% if dispute.priority == 'high' %}
+                                            <span class="badge bg-danger me-2">High Priority</span>
+                                            {% elif dispute.priority == 'medium' %}
+                                            <span class="badge bg-warning me-2">Medium Priority</span>
+                                            {% endif %}
+                                            
+                                            <span class="time-indicator {% if dispute.is_urgent %}time-urgent{% elif dispute.is_warning %}time-warning{% else %}time-normal{% endif %} me-2">
+                                                {{ dispute.time_since_created }}
+                                            </span>
+                                            
+                                            <small class="text-muted">
                                                 #{{ dispute.id }} • {{ dispute.created_at|date:"M d, Y H:i" }}
                                             </small>
                                         </div>
                                         
                                         <h5 class="mb-2">
-                                            <a href="{% url 'dispute_detail' dispute.id %}" class="task-title">
+                                            <a href="{% url 'admin_dispute_detail' dispute.id %}" class="task-title">
                                                 {{ dispute.post.title }}
                                             </a>
+                                            {% if dispute.messages.count > 0 %}
+                                            <span class="message-count">{{ dispute.messages.count }}</span>
+                                            {% endif %}
                                         </h5>
                                         
                                         <div class="d-flex align-items-center mb-2">
@@ -385,7 +434,7 @@
                                                 </div>
                                             </div>
                                             
-                                            <div class="d-flex align-items-center">
+                                            <div class="d-flex align-items-center me-4">
                                                 <div class="user-avatar me-2 bg-secondary">
                                                     {{ dispute.other_party.username|first|upper }}
                                                 </div>
@@ -394,6 +443,18 @@
                                                     <div class="fw-bold">{{ dispute.other_party.username }}</div>
                                                 </div>
                                             </div>
+
+                                            {% if dispute.resolved_by %}
+                                            <div class="d-flex align-items-center">
+                                                <div class="user-avatar me-2 bg-success">
+                                                    {{ dispute.resolved_by.username|first|upper }}
+                                                </div>
+                                                <div>
+                                                    <small class="text-muted">Resolved by</small>
+                                                    <div class="fw-bold">{{ dispute.resolved_by.username }}</div>
+                                                </div>
+                                            </div>
+                                            {% endif %}
                                         </div>
 
                                         <div class="d-flex gap-2 mb-2">
@@ -407,11 +468,22 @@
                                                 <i class="fas fa-file-alt me-1"></i>Owner Evidence
                                             </span>
                                             {% endif %}
+                                            {% if dispute.evidence.count > 0 %}
+                                            <span class="evidence-badge">
+                                                <i class="fas fa-paperclip me-1"></i>{{ dispute.evidence.count }} Files
+                                            </span>
+                                            {% endif %}
                                         </div>
 
                                         {% if dispute.reason %}
-                                        <p class="text-muted mb-0">
-                                            <strong>Reason:</strong> {{ dispute.reason|truncatewords:20 }}
+                                        <p class="text-muted mb-2">
+                                            <strong>Reason:</strong> {{ dispute.reason|truncatewords:30 }}
+                                        </p>
+                                        {% endif %}
+
+                                        {% if dispute.resolution %}
+                                        <p class="text-success mb-0">
+                                            <strong>Resolution:</strong> {{ dispute.resolution|truncatewords:20 }}
                                         </p>
                                         {% endif %}
                                     </div>
@@ -419,16 +491,19 @@
                                     <div class="col-md-4 text-end">
                                         <div class="mb-3">
                                             <strong class="h5">{{ dispute.post.price }} AMD</strong>
+                                            {% if dispute.admin_decision %}
+                                            <div class="text-muted small">
+                                                Decision: {{ dispute.get_admin_decision_display }}
+                                            </div>
+                                            {% endif %}
                                         </div>
                                         <div class="d-flex gap-2 justify-content-end">
-                                            <a href="{% url 'dispute_detail' dispute.id %}" class="btn btn-primary action-btn">
-                                                <i class="fas fa-eye me-1"></i> Review
+                                            <a href="{% url 'admin_dispute_detail' dispute.id %}" class="btn btn-primary action-btn">
+                                                <i class="fas fa-eye me-1"></i> 
+                                                {% if dispute.status == 'resolved' %}View{% else %}Review{% endif %}
                                             </a>
-                                            {% if dispute.status == 'pending' %}
-                                            <button class="btn btn-outline-warning action-btn">
-                                                <i class="fas fa-play me-1"></i> Start Review
-                                            </button>
-                                            {% endif %}
+                                            
+                                            
                                         </div>
                                     </div>
                                 </div>
@@ -488,18 +563,354 @@
         </div>
     </div>
 
+    <!-- Enhanced Resolution Modal -->
+    <div class="modal fade" id="resolutionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-white">
+                    <h5 class="modal-title"><i class="fas fa-gavel me-2"></i>Resolve Dispute</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="disputeInfo" class="mb-4 p-3 bg-light rounded">
+                        <!-- Dispute info will be loaded here -->
+                    </div>
+                    
+                    <form id="resolutionForm">
+                        <input type="hidden" id="disputeId" name="dispute_id">
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Final Decision</label>
+                                    <select class="form-select" id="decision" name="decision" required onchange="updateDecisionHelp()">
+                                        <option value="">Select decision...</option>
+                                        <option value="completed">✅ Mark as Completed</option>
+                                        <option value="cancelled">❌ Cancel Task</option>
+                                        <option value="refunded">💰 Issue Full Refund</option>
+                                        <option value="split">⚖️ Split Payment</option>
+                                        <option value="dismissed">🚫 Dismiss Dispute</option>
+                                    </select>
+                                    <div class="form-text" id="decisionHelp">
+                                        Select the appropriate resolution for this dispute
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="splitPaymentSection" style="display: none;">
+                                    <label class="form-label fw-bold">Payment Split</label>
+                                    <div class="input-group mb-3">
+                                        <span class="input-group-text">Worker</span>
+                                        <input type="number" class="form-control" id="workerPercentage" name="worker_percentage" min="0" max="100" value="50">
+                                        <span class="input-group-text">%</span>
+                                        <span class="input-group-text">Owner</span>
+                                        <input type="number" class="form-control" id="ownerPercentage" name="owner_percentage" min="0" max="100" value="50" readonly>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Resolution Details</label>
+                            <textarea class="form-control" id="resolution" name="resolution" rows="4" 
+                                      placeholder="Provide detailed explanation of your decision that will be shown to both parties..." required></textarea>
+                            <div class="form-text">This message will be visible to both the task owner and worker</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Admin Notes (Internal)</label>
+                            <textarea class="form-control" id="admin_notes" name="admin_notes" rows="3" 
+                                      placeholder="Internal notes for other admins (not visible to users)..."></textarea>
+                            <div class="form-text">These notes are for internal use only and won't be shared with users</div>
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="notifyUsers" name="notify_users" checked>
+                            <label class="form-check-label" for="notifyUsers">
+                                Send notification to both parties about this resolution
+                            </label>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="submitResolution()">
+                        <i class="fas fa-check me-1"></i> Submit Resolution
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Auto-refresh page every 30 seconds for pending disputes
-        {% if current_status == 'pending' %}
+        {% if current_status == 'pending' or current_status == 'under_review' %}
         setTimeout(function() {
             window.location.reload();
         }, 30000);
         {% endif %}
 
-        // Add search functionality
+        // Enhanced Resolution Modal Functions
+        function openResolutionModal(disputeId) {
+            document.getElementById('disputeId').value = disputeId;
+            
+            // Load dispute info
+            fetch(`/api/disputes/${disputeId}/info/`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        document.getElementById('disputeInfo').innerHTML = `
+                            <h6>Dispute #${data.dispute.id}</h6>
+                            <p class="mb-1"><strong>Task:</strong> ${data.dispute.task_title}</p>
+                            <p class="mb-1"><strong>Initiator:</strong> ${data.dispute.initiator}</p>
+                            <p class="mb-1"><strong>Other Party:</strong> ${data.dispute.other_party}</p>
+                            <p class="mb-0"><strong>Amount:</strong> ${data.dispute.amount} AMD</p>
+                        `;
+                    }
+                });
+            
+            const modal = new bootstrap.Modal(document.getElementById('resolutionModal'));
+            modal.show();
+        }
+
+        function updateDecisionHelp() {
+            const decision = document.getElementById('decision').value;
+            const helpText = document.getElementById('decisionHelp');
+            const splitSection = document.getElementById('splitPaymentSection');
+            
+            switch(decision) {
+                case 'completed':
+                    helpText.innerHTML = '✅ <strong>Mark as Completed:</strong> Task will be marked as completed and payment released to worker';
+                    splitSection.style.display = 'none';
+                    break;
+                case 'cancelled':
+                    helpText.innerHTML = '❌ <strong>Cancel Task:</strong> Task will be cancelled and no payments will be processed';
+                    splitSection.style.display = 'none';
+                    break;
+                case 'refunded':
+                    helpText.innerHTML = '💰 <strong>Full Refund:</strong> Full refund will be issued to task owner';
+                    splitSection.style.display = 'none';
+                    break;
+                case 'split':
+                    helpText.innerHTML = '⚖️ <strong>Split Payment:</strong> Payment will be split between worker and owner according to specified percentages';
+                    splitSection.style.display = 'block';
+                    break;
+                case 'dismissed':
+                    helpText.innerHTML = '🚫 <strong>Dismiss Dispute:</strong> Dispute will be dismissed and task returned to previous status';
+                    splitSection.style.display = 'none';
+                    break;
+                default:
+                    helpText.innerHTML = 'Select the appropriate resolution for this dispute';
+                    splitSection.style.display = 'none';
+            }
+        }
+
+        // Update owner percentage when worker percentage changes
+        document.getElementById('workerPercentage').addEventListener('input', function() {
+            const workerPct = parseInt(this.value) || 0;
+            const ownerPct = 100 - workerPct;
+            document.getElementById('ownerPercentage').value = ownerPct;
+        });
+
+        function submitResolution() {
+            const disputeId = document.getElementById('disputeId').value;
+            const decision = document.getElementById('decision').value;
+            const resolution = document.getElementById('resolution').value;
+            const adminNotes = document.getElementById('admin_notes').value;
+            const workerPercentage = document.getElementById('workerPercentage').value;
+            
+            if (!decision || !resolution) {
+                alert('Please select a decision and provide resolution details.');
+                return;
+            }
+            
+            const submitBtn = document.querySelector('#resolutionModal .btn-success');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Processing...';
+            submitBtn.disabled = true;
+            
+            fetch(`/admin/dispute/${disputeId}/resolve/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    decision: decision,
+                    resolution: resolution,
+                    admin_notes: adminNotes,
+                    worker_percentage: workerPercentage
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('✅ Dispute resolved successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('resolutionModal')).hide();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification('❌ Error: ' + data.error, 'error');
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                showNotification('❌ Network error: ' + error, 'error');
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        }
+
+        function startReview(disputeId) {
+            fetch(`/admin/dispute/${disputeId}/start-review/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('✅ Review started successfully!', 'success');
+                    location.reload();
+                } else {
+                    showNotification('❌ Error: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showNotification('❌ Network error: ' + error, 'error');
+            });
+        }
+
+        function markAllUnderReview() {
+            if (confirm('Are you sure you want to start review for all pending disputes?')) {
+                fetch('/admin/disputes/start-all-review/', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showNotification(`✅ Started review for ${data.count} disputes!`, 'success');
+                        location.reload();
+                    } else {
+                        showNotification('❌ Error: ' + data.error, 'error');
+                    }
+                })
+                .catch(error => {
+                    showNotification('❌ Network error: ' + error, 'error');
+                });
+            }
+        }
+
+        // Search and Filter Functions
+        function searchDisputes() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const disputes = document.querySelectorAll('.dispute-card');
+            
+            disputes.forEach(dispute => {
+                const text = dispute.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    dispute.style.display = 'block';
+                } else {
+                    dispute.style.display = 'none';
+                }
+            });
+        }
+
+        function filterByPriority() {
+            const priority = document.getElementById('priorityFilter').value;
+            const disputes = document.querySelectorAll('.dispute-card');
+            
+            disputes.forEach(dispute => {
+                if (!priority || dispute.dataset.priority === priority) {
+                    dispute.style.display = 'block';
+                } else {
+                    dispute.style.display = 'none';
+                }
+            });
+        }
+
+        function filterByType() {
+            const type = document.getElementById('typeFilter').value;
+            const disputes = document.querySelectorAll('.dispute-card');
+            
+            disputes.forEach(dispute => {
+                if (!type || dispute.dataset.type === type) {
+                    dispute.style.display = 'block';
+                } else {
+                    dispute.style.display = 'none';
+                }
+            });
+        }
+
+        function exportDisputes() {
+            // Implement CSV export functionality
+            showNotification('📊 Export feature coming soon!', 'info');
+        }
+
+        // Helper Functions
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        function showNotification(message, type = 'info') {
+            // Remove existing notifications
+            const existingNotifications = document.querySelectorAll('.custom-notification');
+            existingNotifications.forEach(notif => notif.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `custom-notification alert alert-${type} alert-dismissible fade show`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 9999;
+                min-width: 300px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            `;
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
-            // You can add search functionality here if needed
+            console.log('Admin disputes page loaded');
+            
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.key === 'r') {
+                    e.preventDefault();
+                    location.reload();
+                }
+            });
         });
     </script>
 </body>

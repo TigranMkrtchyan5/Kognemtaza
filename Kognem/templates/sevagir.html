@@ -1,270 +1,2510 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Work Completed - Review</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kognem — Իմ Հայտարարությունները{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary: #6C63FF;
+        --primary-dark: #5A52D5;
+        --primary-light: #8B85FF;
+        --secondary: #FF6584;
+        --secondary-dark: #E04F6D;
+        --secondary-light: #FF8BA0;
+        --accent: #36D1DC;
+        --light-bg: #FFFFFF;
+        --light-secondary: #F8F9FA;
+        --light-border: #E9ECEF;
+        --text-dark: #2D3748;
+        --text-medium: #4A5568;
+        --text-light: #718096;
+        --shadow-light: 0 4px 6px rgba(0, 0, 0, 0.03);
+        --shadow-medium: 0 10px 15px rgba(0, 0, 0, 0.07);
+        --shadow-large: 0 20px 25px rgba(0, 0, 0, 0.1);
         
-        body {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
+        /* Status Colors */
+        --status-active: #10B981;
+        --status-pending: #8B5CF6;
+        --status-rejected: #EF4444;
+        --status-in-progress: #F59E0B;
+        --status-completed: #3B82F6;
+        --status-cancelled: #EF4444;
+        --status-incomplete: #DC2626;
+        --status-waiting: #7C3AED;
+        --status-disputed: #D97706;
+        --status-worker: #059669;
+        --status-owner: #7C3AED;
+        --status-under-review: #D97706;
+        --status-resolved: #10B981;
+    }
+
+    .page-main {
+        min-height: 80vh;
+        padding: 40px 20px;
+        background: var(--light-bg);
+    }
+
+    .profile-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .profile-header {
+        text-align: center;
+        margin-bottom: 50px;
+    }
+
+    .profile-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 15px;
+        color: var(--primary);
+        line-height: 1.2;
+    }
+
+    .profile-subtitle {
+        font-size: 1.1rem;
+        color: var(--text-medium);
+        font-weight: 500;
+        line-height: 1.6;
+    }
+
+    /* View Type Tabs */
+    .view-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        flex-wrap: wrap;
+    }
+
+    .view-tab {
+        padding: 12px 24px;
+        border: 2px solid var(--light-border);
+        border-radius: 12px;
+        background: white;
+        color: var(--text-medium);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .view-tab:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .view-tab.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    /* Combined Statistics */
+    .combined-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        border: 1px solid var(--light-border);
+        border-radius: 16px;
+        padding: 25px;
+        text-align: center;
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--primary);
+    }
+
+    .stat-card.worker::before {
+        background: var(--secondary);
+    }
+
+    .stat-card.combined::before {
+        background: linear-gradient(90deg, var(--primary) 50%, var(--secondary) 50%);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .stat-number {
+        font-size: 2.2rem;
+        font-weight: 800;
+        margin-bottom: 8px;
+        line-height: 1;
+        color: var(--primary);
+    }
+
+    .stat-card.worker .stat-number {
+        color: var(--secondary);
+    }
+
+    .stat-card.combined .stat-number {
+        color: var(--text-dark);
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-medium);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .stat-subtitle {
+        font-size: 0.8rem;
+        color: var(--text-light);
+        margin-top: 5px;
+    }
+
+    /* Filter Tabs */
+    .filter-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+    }
+
+    .filter-tab {
+        padding: 12px 24px;
+        border: 2px solid var(--light-border);
+        border-radius: 12px;
+        background: white;
+        color: var(--text-medium);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .filter-tab:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+
+    .filter-tab.active {
+        background: var(--primary);
+        border-color: var(--primary);
+        color: white;
+    }
+
+    /* Posts Grid */
+    .posts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+
+    .post-card {
+        background: white;
+        border: 1px solid var(--light-border);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: var(--shadow-light);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .post-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-medium);
+        border-color: var(--primary-light);
+    }
+
+    .post-image-container {
+        position: relative;
+        height: 220px;
+        overflow: hidden;
+        background: var(--light-secondary);
+    }
+
+    .post-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .post-card:hover .post-image {
+        transform: scale(1.05);
+    }
+
+    /* Role and Status Badges */
+    .post-badges {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        right: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        z-index: 2;
+    }
+
+    .role-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(8px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .role-badge.owner { background: var(--status-owner); }
+    .role-badge.worker { background: var(--status-worker); }
+
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: white;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        backdrop-filter: blur(8px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .status-pending { background: var(--status-pending); }
+    .status-approved { background: var(--status-active); }
+    .status-rejected { background: var(--status-rejected); }
+    .status-open { background: var(--status-active); }
+    .status-in_progress { background: var(--status-in-progress); }
+    .status-completed { background: var(--status-completed); }
+    .status-cancelled { background: var(--status-cancelled); }
+    .status-incomplete { background: var(--status-incomplete); }
+    .status-waiting_approval { background: var(--status-waiting); }
+    .status-disputed { background: var(--status-disputed); }
+    .status-under_review { background: var(--status-under-review); }
+    .status-resolved { background: var(--status-resolved); }
+
+    .post-content {
+        padding: 25px;
+    }
+
+    .post-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 15px;
+        line-height: 1.4;
+    }
+
+    .post-description {
+        color: var(--text-dark);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 20px;
+        background: var(--light-secondary);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid var(--primary);
+    }
+
+    /* Info Cards */
+    .info-card {
+        background: var(--light-secondary);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        border-left: 4px solid var(--primary);
+        font-size: 0.9rem;
+        color: var(--text-dark);
+    }
+
+    .info-card.worker {
+        border-left-color: var(--secondary);
+    }
+
+    .info-card.warning {
+        border-left-color: var(--status-incomplete);
+        background: rgba(220, 38, 38, 0.05);
+    }
+
+    .info-card.success {
+        border-left-color: var(--status-active);
+        background: rgba(16, 185, 129, 0.05);
+    }
+
+    .info-card.info {
+        border-left-color: var(--status-waiting);
+        background: rgba(124, 58, 237, 0.05);
+    }
+
+    .info-card.dispute {
+        border-left-color: var(--status-disputed);
+        background: rgba(217, 119, 6, 0.05);
+    }
+
+    .info-card.pending {
+        border-left-color: var(--status-pending);
+        background: rgba(139, 92, 246, 0.05);
+    }
+
+    .info-card.review {
+        border-left-color: var(--status-under-review);
+        background: rgba(217, 119, 6, 0.05);
+    }
+
+    /* View Count Styles */
+    .view-count {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        color: var(--text-medium);
+        font-weight: 600;
+        background: rgba(108, 99, 255, 0.1);
+        padding: 6px 12px;
+        border-radius: 12px;
+    }
+
+    .view-count-high {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--status-active);
+    }
+
+    .view-count-high i {
+        color: var(--status-active);
+    }
+
+    .post-views-stats {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 15px;
+        padding-top: 15px;
+        border-top: 1px solid var(--light-border);
+    }
+
+    .views-section {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+    }
+
+    .view-stat {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.8rem;
+        color: var(--text-light);
+    }
+
+    .view-stat i {
+        color: var(--primary);
+    }
+
+    .view-stat .count {
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    /* Button System */
+    .button-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+    }
+
+    .btn {
+        padding: 10px 16px;
+        border: 2px solid transparent;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-align: center;
+        justify-content: center;
+        flex: 1;
+        min-width: 120px;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-medium);
+    }
+
+    .btn-primary { 
+        background: var(--primary); 
+        color: white; 
+        border-color: var(--primary);
+    }
+    
+    .btn-secondary { 
+        background: white; 
+        color: var(--text-dark); 
+        border-color: var(--light-border);
+    }
+    
+    .btn-secondary:hover {
+        background: var(--light-secondary);
+        border-color: var(--primary);
+    }
+    
+    .btn-success { 
+        background: var(--status-active); 
+        color: white; 
+        border-color: var(--status-active);
+    }
+    
+    .btn-warning { 
+        background: var(--status-in-progress); 
+        color: white; 
+        border-color: var(--status-in-progress);
+    }
+    
+    .btn-danger { 
+        background: var(--status-rejected); 
+        color: white; 
+        border-color: var(--status-rejected);
+    }
+    
+    .btn-info { 
+        background: var(--status-waiting); 
+        color: white; 
+        border-color: var(--status-waiting);
+    }
+    
+    .btn-dispute { 
+        background: var(--status-disputed); 
+        color: white; 
+        border-color: var(--status-disputed);
+    }
+    
+    .btn-gray { 
+        background: var(--status-cancelled); 
+        color: white; 
+        border-color: var(--status-cancelled);
+    }
+
+    .btn-full {
+        flex: 1;
+        min-width: 100%;
+    }
+
+    /* Post Meta */
+    .post-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-top: 15px;
+        border-top: 1px solid var(--light-border);
+    }
+
+    .post-price {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--primary);
+    }
+
+    .post-date {
+        font-size: 0.85rem;
+        color: var(--text-light);
+        font-weight: 500;
+    }
+
+    /* Applications Count */
+    .applications-count {
+        background: var(--primary-light);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 60px 40px;
+        background: white;
+        border: 1px solid var(--light-border);
+        border-radius: 20px;
+        box-shadow: var(--shadow-light);
+    }
+
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--text-light);
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 15px;
+    }
+
+    .empty-description {
+        color: var(--text-medium);
+        margin-bottom: 30px;
+        line-height: 1.6;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .action-btn-large {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 28px;
+        background: var(--primary);
+        color: white;
+        text-decoration: none;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        box-shadow: var(--shadow-light);
+        border: 2px solid var(--primary);
+    }
+
+    .action-btn-large:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-large);
+    }
+
+    .action-btn-large.secondary {
+        background: var(--secondary);
+        border-color: var(--secondary);
+    }
+
+    /* Review Popup Styles */
+    .review-popup-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .review-popup-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .review-popup {
+        background: white;
+        border-radius: 20px;
+        max-width: 500px;
+        width: 100%;
+        box-shadow: var(--shadow-large);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+        overflow: hidden;
+    }
+
+    .review-popup-overlay.active .review-popup {
+        transform: translateY(0);
+    }
+
+    .review-header {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        padding: 30px;
+        text-align: center;
+        color: white;
+    }
+
+    .review-header i {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+        display: block;
+    }
+
+    .review-header h3 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 0 0 10px;
+    }
+
+    .review-header p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 1rem;
+    }
+
+    .review-content {
+        padding: 30px;
+    }
+
+    .review-task-info {
+        text-align: center;
+        margin-bottom: 25px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid var(--light-border);
+    }
+
+    .review-task-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+    }
+
+    .review-task-user {
+        color: var(--text-medium);
+        font-size: 1rem;
+    }
+
+    .star-rating-review {
+        text-align: center;
+        margin: 30px 0;
+    }
+
+    .star-rating-review .star {
+        font-size: 2.8rem;
+        color: #E0E0E0;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin: 0 8px;
+    }
+
+    .star-rating-review .star:hover {
+        transform: scale(1.2);
+    }
+
+    .star-rating-review .star.active {
+        color: #FFD700;
+    }
+
+    .rating-text {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 1.1rem;
+        color: var(--text-medium);
+        font-weight: 600;
+        min-height: 30px;
+    }
+
+    .review-comment {
+        margin-top: 25px;
+    }
+
+    .review-comment label {
+        display: block;
+        margin-bottom: 12px;
+        color: var(--text-dark);
+        font-weight: 600;
+        font-size: 1rem;
+    }
+
+    .review-comment textarea {
+        width: 100%;
+        padding: 16px;
+        border: 2px solid var(--light-border);
+        border-radius: 12px;
+        resize: vertical;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--light-secondary);
+        min-height: 100px;
+        font-family: inherit;
+    }
+
+    .review-comment textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+    }
+
+    .quick-comments {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .quick-comment-btn {
+        padding: 10px 15px;
+        border: 1px solid var(--light-border);
+        border-radius: 8px;
+        background: white;
+        color: var(--text-medium);
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .quick-comment-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: rgba(108, 99, 255, 0.05);
+    }
+
+    .review-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+
+    .review-actions .btn {
+        flex: 1;
+        padding: 14px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .review-success {
+        text-align: center;
+        padding: 40px 30px;
+    }
+
+    .review-success i {
+        font-size: 4rem;
+        color: var(--status-active);
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    .review-success h4 {
+        color: var(--text-dark);
+        margin-bottom: 15px;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .review-success p {
+        color: var(--text-medium);
+        line-height: 1.6;
+        margin-bottom: 25px;
+    }
+
+    /* Dispute Modal Styles */
+    .dispute-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .dispute-modal.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .dispute-modal-content {
+        background: white;
+        border-radius: 20px;
+        max-width: 800px;
+        width: 100%;
+        box-shadow: var(--shadow-large);
+        transform: translateY(20px);
+        transition: transform 0.3s ease;
+        overflow: hidden;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .dispute-modal.active .dispute-modal-content {
+        transform: translateY(0);
+    }
+
+    .dispute-header {
+        background: linear-gradient(135deg, var(--status-disputed) 0%, #E67E22 100%);
+        padding: 25px;
+        text-align: center;
+        color: white;
+        flex-shrink: 0;
+    }
+
+    .dispute-header i {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+        display: block;
+    }
+
+    .dispute-header h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 10px;
+    }
+
+    .dispute-header p {
+        margin: 0;
+        opacity: 0.9;
+        font-size: 0.95rem;
+    }
+
+    .dispute-body {
+        padding: 25px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    /* Dispute Chat Styles */
+    .dispute-chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--light-border);
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+    }
+
+    .dispute-messages {
+        flex: 1;
+        padding: 20px;
+        overflow-y: auto;
+        max-height: 400px;
+        background: #f8f9fa;
+    }
+
+    .message {
+        margin-bottom: 20px;
+        max-width: 80%;
+    }
+
+    .message.own {
+        margin-left: auto;
+    }
+
+    .message.other {
+        margin-right: auto;
+    }
+
+    .message-bubble {
+        padding: 12px 16px;
+        border-radius: 18px;
+        position: relative;
+        word-wrap: break-word;
+    }
+
+    .message.own .message-bubble {
+        background: var(--primary);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+
+    .message.other .message-bubble {
+        background: white;
+        color: var(--text-dark);
+        border: 1px solid var(--light-border);
+        border-bottom-left-radius: 4px;
+    }
+
+    .message-sender {
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: var(--text-medium);
+    }
+
+    .message.own .message-sender {
+        text-align: right;
+        color: rgba(255, 255, 255, 0.8);
+    }
+
+    .message-time {
+        font-size: 0.7rem;
+        margin-top: 4px;
+        opacity: 0.7;
+    }
+
+    .message.own .message-time {
+        text-align: right;
+    }
+
+    .message-images {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+    }
+
+    .message-image {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        border: 1px solid var(--light-border);
+    }
+
+    .message-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .dispute-input-area {
+        padding: 20px;
+        border-top: 1px solid var(--light-border);
+        background: white;
+        flex-shrink: 0;
+    }
+
+    .dispute-form-group {
+        margin-bottom: 15px;
+    }
+
+    .dispute-form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-dark);
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .dispute-form-group textarea {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid var(--light-border);
+        border-radius: 12px;
+        resize: vertical;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: var(--light-secondary);
+        min-height: 80px;
+        font-family: inherit;
+    }
+
+    .dispute-form-group textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(108, 99, 255, 0.1);
+    }
+
+    /* Multiple File Upload */
+    .file-upload-area {
+        border: 2px dashed var(--light-border);
+        border-radius: 12px;
+        padding: 25px;
+        text-align: center;
+        background: var(--light-secondary);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-bottom: 15px;
+    }
+
+    .file-upload-area:hover {
+        border-color: var(--primary);
+        background: rgba(108, 99, 255, 0.05);
+    }
+
+    .file-upload-area i {
+        font-size: 2.5rem;
+        color: var(--text-light);
+        margin-bottom: 15px;
+        display: block;
+    }
+
+    .file-upload-area p {
+        margin: 0;
+        color: var(--text-medium);
+        font-weight: 500;
+    }
+
+    .file-upload-area small {
+        color: var(--text-light);
+        margin-top: 8px;
+        display: block;
+    }
+
+    #fileInput {
+        display: none;
+    }
+
+    .file-preview-container {
+        margin-top: 20px;
+    }
+
+    .file-preview-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .file-preview {
+        position: relative;
+        border-radius: 8px;
+        overflow: hidden;
+        height: 100px;
+        background: var(--light-secondary);
+    }
+
+    .file-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .file-preview .remove-file {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .dispute-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .dispute-actions .btn {
+        flex: 1;
+        padding: 14px;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    /* Resolution Card */
+    .resolution-card {
+        background: var(--light-secondary);
+        border: 2px solid var(--status-active);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .resolution-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .resolution-header i {
+        font-size: 1.5rem;
+        color: var(--status-active);
+    }
+
+    .resolution-header h4 {
+        margin: 0;
+        color: var(--status-active);
+        font-size: 1.2rem;
+    }
+
+    .resolution-details {
+        color: var(--text-dark);
+        line-height: 1.6;
+    }
+
+    .resolution-outcome {
+        font-weight: 600;
+        margin-top: 10px;
+        padding: 8px 12px;
+        background: rgba(16, 185, 129, 0.1);
+        border-radius: 6px;
+        display: inline-block;
+    }
+
+    /* Image Modal */
+    .image-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10001;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .image-modal.active {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .image-modal-content {
+        max-width: 90%;
+        max-height: 90%;
+        position: relative;
+    }
+
+    .image-modal-content img {
+        max-width: 100%;
+        max-height: 90vh;
+        border-radius: 8px;
+    }
+
+    .image-modal-close {
+        position: absolute;
+        top: -40px;
+        right: 0;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 2rem;
+        cursor: pointer;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .posts-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
         }
-        
-        .review-container {
-            background-color: white;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            width: 100%;
-            max-width: 500px;
-            padding: 30px;
-            animation: fadeIn 0.5s ease-out;
+
+        .profile-title {
+            font-size: 2rem;
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .review-header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-        
-        .review-header h2 {
-            color: #333;
-            margin-bottom: 8px;
-            font-size: 24px;
-        }
-        
-        .review-header p {
-            color: #666;
-            font-size: 16px;
-        }
-        
-        .rating-section {
-            margin-bottom: 25px;
-            text-align: center;
-        }
-        
-        .stars {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
-        }
-        
-        .star {
-            font-size: 40px;
-            color: #ddd;
-            cursor: pointer;
-            transition: color 0.2s, transform 0.2s;
-            margin: 0 5px;
-        }
-        
-        .star:hover {
-            transform: scale(1.2);
-        }
-        
-        .star.active {
-            color: #ffc107;
-        }
-        
-        .rating-text {
-            color: #666;
-            font-size: 16px;
-            margin-top: 10px;
-            min-height: 24px;
-        }
-        
-        .description-section {
-            margin-bottom: 25px;
-        }
-        
-        .description-section label {
-            display: block;
-            margin-bottom: 8px;
-            color: #333;
-            font-weight: 500;
-        }
-        
-        textarea {
-            width: 100%;
-            height: 120px;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            resize: vertical;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        
-        textarea:focus {
-            outline: none;
-            border-color: #6a11cb;
-            box-shadow: 0 0 0 2px rgba(106, 17, 203, 0.2);
-        }
-        
-        .button-group {
-            display: flex;
+
+        .combined-stats {
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
         }
-        
-        button {
-            flex: 1;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
+
+        .view-tabs, .filter-tabs {
+            flex-direction: column;
         }
-        
-        .submit-btn {
-            background-color: #6a11cb;
-            color: white;
+
+        .button-group {
+            flex-direction: column;
         }
-        
-        .submit-btn:hover {
-            background-color: #5a0db0;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(106, 17, 203, 0.3);
+
+        .btn {
+            min-width: 100%;
         }
-        
-        .skip-btn {
-            background-color: #f5f5f5;
-            color: #666;
-        }
-        
-        .skip-btn:hover {
-            background-color: #e9e9e9;
-        }
-        
-        .thank-you-message {
-            text-align: center;
+
+        .post-content {
             padding: 20px;
-            display: none;
         }
-        
-        .thank-you-message h3 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 22px;
+
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
         }
-        
-        .thank-you-message p {
-            color: #666;
-            margin-bottom: 20px;
+
+        .action-btn-large {
+            width: 100%;
+            justify-content: center;
         }
-        
-        @media (max-width: 480px) {
-            .review-container {
-                padding: 20px;
-            }
-            
-            .star {
-                font-size: 35px;
-            }
-            
-            .button-group {
-                flex-direction: column;
-            }
+
+        .post-badges {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
         }
-    </style>
-</head>
-<body>
-    <div class="review-container">
-        <!-- We'll get these values from URL parameters instead of template variables -->
-        <input type="hidden" id="postId">
-        <input type="hidden" id="reviewedUserId">
-        <input type="hidden" id="reviewType">
-        {% csrf_token %}
-        
-        <div class="review-content" id="reviewContent">
-            <div class="review-header">
-                <h2>How was your experience?</h2>
-                <p>Please rate your completed work session</p>
+
+        .status-badge {
+            align-self: flex-end;
+        }
+
+        .post-views-stats {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .views-section {
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .dispute-modal-content {
+            margin: 10px;
+            max-height: 95vh;
+        }
+
+        .message {
+            max-width: 90%;
+        }
+
+        .file-preview-grid {
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        }
+    }
+
+    @media (max-width: 480px) {
+        .combined-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .profile-title {
+            font-size: 1.8rem;
+        }
+
+        .empty-state {
+            padding: 40px 20px;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+        }
+
+        .post-meta {
+            flex-direction: column;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .views-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .dispute-actions {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<main class="page-main">
+    <section class="profile-container">
+        <!-- Header -->
+        <div class="profile-header">
+            <h1 class="profile-title">Իմ Հայտարարությունները</h1>
+            <p class="profile-subtitle">Կառավարեք և հետևեք Ձեր բոլոր հայտարարություններին և առաջադրանքներին</p>
+        </div>
+
+        <!-- View Type Tabs -->
+        <div class="view-tabs">
+            <a href="?view=all&filter={{ current_filter }}" class="view-tab {% if view_type == 'all' %}active{% endif %}">
+                <i class="fas fa-layer-group"></i> Բոլորը
+            </a>
+            <a href="?view=owner&filter={{ current_filter }}" class="view-tab {% if view_type == 'owner' %}active{% endif %}">
+                <i class="fas fa-user-tie"></i> Իմ Հայտարարությունները
+            </a>
+            <a href="?view=worker&filter={{ current_filter }}" class="view-tab {% if view_type == 'worker' %}active{% endif %}">
+                <i class="fas fa-tasks"></i> Իմ Առաջադրանքները
+            </a>
+        </div>
+
+        <!-- Combined Statistics -->
+        <div class="combined-stats">
+            <div class="stat-card combined">
+                <div class="stat-number">{{ total_combined }}</div>
+                <div class="stat-label">Ընդհանուր</div>
+                <div class="stat-subtitle">Բոլոր հայտարարություններ և առաջադրանքներ</div>
             </div>
-            
-            <div class="rating-section">
-                <div class="stars">
-                    <span class="star" data-rating="1">★</span>
-                    <span class="star" data-rating="2">★</span>
-                    <span class="star" data-rating="3">★</span>
-                    <span class="star" data-rating="4">★</span>
-                    <span class="star" data-rating="5">★</span>
-                </div>
-                <div class="rating-text" id="ratingText">Tap a star to rate</div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_posts }}</div>
+                <div class="stat-label">Իմ Հայտարարությունները</div>
+                <div class="stat-subtitle">Ակտիվ: {{ active_posts }} | Ընթացիկ: {{ in_progress_tasks }}</div>
             </div>
-            
-            <div class="description-section">
-                <label for="reviewDescription">Tell us more (optional)</label>
-                <textarea id="reviewDescription" placeholder="E.g., Completed quickly, faced some challenges, etc."></textarea>
-            </div>
-            
-            <div class="button-group">
-                <button class="submit-btn" id="submitBtn">Submit Review</button>
-                <button class="skip-btn" id="skipBtn">Skip</button>
+            <div class="stat-card worker">
+                <div class="stat-number">{{ total_worker }}</div>
+                <div class="stat-label">Իմ Առաջադրանքները</div>
+                <div class="stat-subtitle">Ընթացիկ: {{ in_progress_worker }} | Սպասում: {{ waiting_approval_worker }}</div>
             </div>
         </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <a href="?view={{ view_type }}&filter=all" class="filter-tab {% if current_filter == 'all' %}active{% endif %}">
+                <i class="fas fa-layer-group"></i> Բոլորը
+            </a>
+            <a href="?view={{ view_type }}&filter=active" class="filter-tab {% if current_filter == 'active' %}active{% endif %}">
+                <i class="fas fa-play-circle"></i> Ակտիվ
+            </a>
+            <a href="?view={{ view_type }}&filter=in_progress" class="filter-tab {% if current_filter == 'in_progress' %}active{% endif %}">
+                <i class="fas fa-tasks"></i> Ընթացիկ
+            </a>
+            <a href="?view={{ view_type }}&filter=waiting_approval" class="filter-tab {% if current_filter == 'waiting_approval' %}active{% endif %}">
+                <i class="fas fa-clock"></i> Սպասում
+            </a>
+            <a href="?view={{ view_type }}&filter=completed" class="filter-tab {% if current_filter == 'completed' %}active{% endif %}">
+                <i class="fas fa-check-circle"></i> Ավարտված
+            </a>
+            <a href="?view={{ view_type }}&filter=incomplete" class="filter-tab {% if current_filter == 'incomplete' %}active{% endif %}">
+                <i class="fas fa-times-circle"></i> Անավարտ
+            </a>
+            <a href="?view={{ view_type }}&filter=cancelled" class="filter-tab {% if current_filter == 'cancelled' %}active{% endif %}">
+                <i class="fas fa-ban"></i> Չեղարկված
+            </a>
+            <a href="?view={{ view_type }}&filter=rejected" class="filter-tab {% if current_filter == 'rejected' %}active{% endif %}">
+                <i class="fas fa-times"></i> Մերժված
+            </a>
+            <a href="?view={{ view_type }}&filter=under_review" class="filter-tab {% if current_filter == 'under_review' %}active{% endif %}">
+                <i class="fas fa-gavel"></i> Վերանայման տակ
+            </a>
+        </div>
+
+        {% if posts %}
+            <!-- Posts Grid -->
+            <div class="posts-grid">
+                {% for post in posts %}
+                <div class="post-card">
+                    <!-- Image -->
+                    <div class="post-image-container">
+                        {% if post.image %}
+                            <img src="{{ post.image.url }}" alt="{{ post.title }}" class="post-image">
+                        {% else %}
+                            <div style="display: flex; align-items: center; justify-content: center; height: 100%; background: var(--primary); color: white; font-size: 3rem;">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Role and Status Badges -->
+                        <div class="post-badges">
+                            <!-- Left: Role Badge -->
+                            {% if post.user == request.user %}
+                                <div class="role-badge owner">
+                                    <i class="fas fa-user-tie"></i> Սեփականատեր
+                                </div>
+                            {% elif post.assigned_to == request.user %}
+                                <div class="role-badge worker">
+                                    <i class="fas fa-tasks"></i> Աշխատող
+                                </div>
+                            {% else %}
+                                <div class="role-badge" style="background: transparent; box-shadow: none; border: none;"></div>
+                            {% endif %}
+                            
+                            <!-- Right: Status Badge -->
+                            <div class="status-badge 
+                                {% if post.task_status == 'under_review' or post.is_under_review %}status-under_review
+                                {% elif post.disputed_by_worker or post.disputed_by_owner %}status-disputed
+                                {% elif post.status == 'rejected' %}status-rejected
+                                {% elif post.status == 'pending' %}status-pending
+                                {% elif post.task_status == 'waiting_approval' %}status-waiting_approval
+                                {% elif post.task_status != 'open' %}status-{{ post.task_status }}
+                                {% else %}status-{{ post.status }}{% endif %}">
+                                
+                                {% if post.task_status == 'under_review' or post.is_under_review %}
+                                    Վերանայման տակ
+                                {% elif post.disputed_by_worker or post.disputed_by_owner %}
+                                    Վիճահարույց
+                                {% elif post.status == 'rejected' %}
+                                    Մերժված
+                                {% elif post.status == 'pending' %}
+                                    Սպասում
+                                {% elif post.task_status == 'in_progress' %}
+                                    Ընթացիկ
+                                {% elif post.task_status == 'completed' %}
+                                    Ավարտված
+                                {% elif post.task_status == 'incomplete' %}
+                                    Անավարտ
+                                {% elif post.task_status == 'cancelled' %}
+                                    Չեղարկված
+                                {% elif post.task_status == 'waiting_approval' %}
+                                    Սպասում
+                                {% elif post.status == 'approved' %}
+                                    Ակտիվ
+                                {% else %}
+                                    {{ post.get_status_display }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content -->
+                    <div class="post-content">
+                        <h3 class="post-title">{{ post.title }}</h3>
+                        
+                        <!-- Description -->
+                        <div class="post-description">
+                            {{ post.description|default:"Նկարագրություն չկա"|truncatewords:30 }}
+                        </div>
+
+                        <!-- Under Review Notice -->
+                        {% if post.task_status == 'under_review' or post.is_under_review %}
+                        <div class="info-card review">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i class="fas fa-gavel" style="color: var(--status-under-review); font-size: 1.2rem;"></i>
+                                <strong style="color: var(--status-under-review); font-size: 1rem;">Վերանայման Տակ</strong>
+                            </div>
+                            <p style="margin: 0; color: var(--text-dark); line-height: 1.5;">
+                                Այս առաջադրանքը ներկայումս վերանայվում է ադմինիստրացիայի կողմից: 
+                                Դուք չեք կարող խմբագրել, ջնջել կամ փոփոխել առաջադրանքը մինչև վերանայումն ավարտվի:
+                                {% if post.disputes.exists %}
+                                <br>Դիսպուտի ID: #{{ post.disputes.first.id }}
+                                {% endif %}
+                            </p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Role Information -->
+                        {% if post.user == request.user %}
+                            <div class="info-card">
+                                <i class="fas fa-user-tie"></i>
+                                <strong>Դուք եք հայտարարության սեփականատերը</strong>
+                                {% if post.assigned_to %}
+                                <br>Աշխատող: {{ post.assigned_to.username }}
+                                {% endif %}
+                            </div>
+                        {% elif post.assigned_to == request.user %}
+                            <div class="info-card worker">
+                                <i class="fas fa-tasks"></i>
+                                <strong>Դուք եք այս առաջադրանքի աշխատողը</strong>
+                                <br>Հայտարարության սեփականատեր: {{ post.user.username }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Pending Moderation Notice -->
+                        {% if post.status == 'pending' and post.user == request.user %}
+                        <div class="info-card pending">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <i class="fas fa-shield-alt" style="color: var(--status-pending); font-size: 1.2rem;"></i>
+                                <strong style="color: var(--status-pending); font-size: 1rem;">Ադմինիստրացիայի Ստուգում</strong>
+                            </div>
+                            <p style="margin: 0; color: var(--text-dark); line-height: 1.5;">
+                                Ձեր հայտարարությունը ներկայումս ստուգվում է ադմինիստրացիայի կողմից: 
+                                Ստուգումը սովորաբար տևում է մինչև 24 ժամ: Ստուգումից հետո հայտարարությունը կհրապարակվի:
+                            </p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Dispute Notice -->
+                        {% if post.disputed_by_worker or post.disputed_by_owner %}
+                        <div class="info-card dispute">
+                            <strong>⚠️ Վիճահարույց առաջադրանք</strong>
+                            <br>Այս առաջադրանքը ուղարկվել է աջակցության թիմին վերանայման համար:
+                            {% if post.dispute_reason %}
+                            <br><em>Պատճառ: {{ post.dispute_reason }}</em>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Rejection Reason -->
+                        {% if post.status == 'rejected' and post.rejection_reason %}
+                        <div class="info-card warning">
+                            <strong>Մերժման պատճառ:</strong>
+                            {{ post.rejection_reason }}
+                        </div>
+                        {% endif %}
+
+                        <!-- Incomplete Notice -->
+                        {% if post.task_status == 'incomplete' and not post.disputed_by_worker %}
+                        <div class="info-card warning">
+                            <strong>Առաջադրանքը նշված է որպես անավարտ</strong>
+                            {% if post.user == request.user %}
+                                Դուք կարող եք վերահաստատել այս առաջադրանքը նորից հրապարակելու համար:
+                            {% elif post.assigned_to == request.user %}
+                                Դուք կարող եք վիճարկել այս որոշումը, եթե համարում եք, որ առաջադրանքը ավարտված է:
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Waiting Approval Notice -->
+                        {% if post.task_status == 'waiting_approval' %}
+                        <div class="info-card info">
+                            <strong>⏳ Սպասում է հաստատման</strong>
+                            {% if post.assigned_to == request.user %}
+                                <br>Դուք նշել եք այս առաջադրանքը որպես ավարտված։ Սպասեք սեփականատիրոջ հաստատմանը։
+                            {% elif post.user == request.user %}
+                                <br>Աշխատողը նշել է այս առաջադրանքը որպես ավարտված։ Խնդրում ենք ստուգել և հաստատել։
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Meta Information -->
+                        <div class="post-meta">
+                            <div class="post-price">
+                                {% if post.price %}
+                                    {{ post.price }} դրամ
+                                {% else %}
+                                    Գին չկա
+                                {% endif %}
+                            </div>
+                            <div class="post-date">
+                                {{ post.created_at|date:"M d, Y" }}
+                            </div>
+                        </div>
+
+                        <!-- View Count and Applications Stats -->
+                        <div class="post-views-stats">
+                            <div class="views-section">
+                                <div class="view-stat">
+                                    <i class="fas fa-eye"></i>
+                                    <span class="count">{{ post.views_count|default:"0" }}</span> դիտում
+                                </div>
+                                {% if post.user == request.user and post.task_status == 'open' and post.status == 'approved' %}
+                                <div class="view-stat">
+                                    <i class="fas fa-users"></i>
+                                    <span class="count">{{ post.applications.count }}</span> դիմում
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- View Count Badge -->
+                            <div class="view-count {% if post.views_count > 10 %}view-count-high{% endif %}">
+                                <i class="fas fa-eye"></i>
+                                {{ post.views_count|default:"0" }} դիտում
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons - Hide when under review -->
+                        {% if not post.is_under_review and post.task_status != 'under_review' %}
+                        <div class="button-group">
+                            <!-- View Button -->
+                            <a href="{% url 'view_post' post.id %}" class="btn btn-primary">
+                                <i class="fas fa-eye"></i> Դիտել
+                            </a>
+
+                            <!-- Message Button -->
+                            {% if post.user == request.user and post.assigned_to and post.status == 'approved' %}
+                                <a href="{% url 'create_room' post.assigned_to.username %}" class="btn btn-secondary">
+                                    <i class="fas fa-comment"></i> Նամակ
+                                </a>
+                            {% elif post.assigned_to == request.user and post.status == 'approved' %}
+                                <a href="{% url 'create_room' post.user.username %}" class="btn btn-secondary">
+                                    <i class="fas fa-comment"></i> Նամակ
+                                </a>
+                            {% endif %}
+
+                            <!-- Applications Button for Open Tasks -->
+                            {% if post.task_status == 'open' and post.status == 'approved' and post.user == request.user %}
+                                <a href="{% url 'task_applications' post.id %}" class="btn btn-info">
+                                    <i class="fas fa-users"></i> Դիմումներ 
+                                    <span class="applications-count">{{ post.applications.count }}</span>
+                                </a>
+                            {% endif %}
+
+                            <!-- Edit Button for Owner -->
+                            {% if post.user == request.user %}
+                                <a href="{% url 'edit_post' post.id %}" class="btn btn-secondary">
+                                    <i class="fas fa-edit"></i> Խմբագրել
+                                </a>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <div class="button-group">
+                            <button class="btn btn-secondary" disabled>
+                                <i class="fas fa-edit"></i> Խմբագրել (Անհասանելի)
+                            </button>
+                            <button class="btn btn-secondary" disabled>
+                                <i class="fas fa-trash"></i> Ջնջել (Անհասանելի)
+                            </button>
+                        </div>
+                        {% endif %}
+
+                        <!-- Dispute Button - Show only when task is assigned and not already disputed -->
+                        {% if post.assigned_to and post.status == 'approved' and not post.is_under_review and post.task_status != 'under_review' and not post.disputed_by_worker and not post.disputed_by_owner %}
+                            {% if post.user == request.user or post.assigned_to == request.user %}
+                            <div class="button-group">
+                                <button onclick="openDisputeModal({{ post.id }})" class="btn btn-dispute">
+                                    <i class="fas fa-gavel"></i> Վիճարկել
+                                </button>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+
+                        <!-- View Dispute Button - Show when dispute exists -->
+                        {% if post.disputes.exists and not post.disputes.first.is_resolved %}
+                        <div class="button-group">
+                            <button onclick="openDisputeChat({{ post.disputes.first.id }})" class="btn btn-info">
+                                <i class="fas fa-comments"></i> Դիտել Դիսպուտը
+                            </button>
+                        </div>
+                        {% endif %}
+
+                        <!-- Task Management Buttons - ТОЛЬКО ДЛЯ APPROVED ПОСТОВ -->
+                        {% if post.status == 'approved' and not post.is_under_review and post.task_status != 'under_review' %}
+                            <!-- Task Management Buttons -->
+                            {% if post.task_status == 'incomplete' and post.user == request.user and not post.disputed_by_worker %}
+                            <div class="button-group">
+                                <button onclick="resubmitTask({{ post.id }})" class="btn btn-success btn-full">
+                                    <i class="fas fa-redo"></i> Վերահաստատել Առաջադրանքը
+                                </button>
+                            </div>
+                            {% endif %}
+
+                            <!-- Approval Actions for Owner -->
+                            {% if post.task_status == 'waiting_approval' and post.user == request.user and not post.disputed_by_owner %}
+                            <div class="button-group">
+                                <button onclick="approveCompletion({{ post.id }})" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Հաստատել
+                                </button>
+                                <button onclick="rejectCompletion({{ post.id }})" class="btn btn-danger">
+                                    <i class="fas fa-times"></i> Մերժել
+                                </button>
+                            </div>
+                            {% endif %}
+
+                            <!-- Task Management for Owner - Cancel is Red -->
+                            {% if post.task_status == 'in_progress' and post.user == request.user %}
+                            <div class="button-group">
+                                <button onclick="completeTask({{ post.id }})" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Ավարտել
+                                </button>
+                                <button onclick="markIncomplete({{ post.id }})" class="btn btn-warning">
+                                    <i class="fas fa-times"></i> Անավարտ
+                                </button>
+                                <button onclick="cancelTask({{ post.id }})" class="btn btn-danger">
+                                    <i class="fas fa-ban"></i> Չեղարկել
+                                </button>
+                            </div>
+                            {% endif %}
+
+                            <!-- Worker Actions - Cancel is Red -->
+                            {% if post.task_status == 'in_progress' and post.assigned_to == request.user %}
+                            <div class="button-group">
+                                <button onclick="workerCompleteTask({{ post.id }})" class="btn btn-success">
+                                    <i class="fas fa-check"></i> Ավարտել
+                                </button>
+                                <button onclick="workerMarkIncomplete({{ post.id }})" class="btn btn-warning">
+                                    <i class="fas fa-times"></i> Անավարտ
+                                </button>
+                                <button onclick="workerCancelTask({{ post.id }})" class="btn btn-danger">
+                                    <i class="fas fa-ban"></i> Չեղարկել
+                                </button>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <h3 class="empty-title">
+                    {% if view_type == 'owner' and current_filter == 'all' %}Դեռևս Հայտարարություններ Չկան
+                    {% elif view_type == 'worker' and current_filter == 'all' %}Վերագրված Առաջադրանքներ Չկան
+                    {% elif view_type == 'all' and current_filter == 'all' %}Հայտարարություններ և Առաջադրանքներ Չկան
+                    {% elif current_filter == 'active' %}Ակտիվ Հայտարարություններ Չկան
+                    {% elif current_filter == 'in_progress' %}Ընթացիկ Առաջադրանքներ Չկան
+                    {% elif current_filter == 'waiting_approval' %}Հաստատման Սպասող Առաջադրանքներ Չկան
+                    {% elif current_filter == 'completed' %}Ավարտված Առաջադրանքներ Չկան
+                    {% elif current_filter == 'incomplete' %}Անավարտ Առաջադրանքներ Չկան
+                    {% elif current_filter == 'cancelled' %}Չեղարկված Առաջադրանքներ Չկան
+                    {% elif current_filter == 'rejected' %}Մերժված Հայտարարություններ Չկան
+                    {% elif current_filter == 'under_review' %}Վերանայման Տակ Գտնվող Առաջադրանքներ Չկան
+                    {% else %}Հայտարարություններ Չկան{% endif %}
+                </h3>
+                <p class="empty-description">
+                    {% if view_type == 'owner' and current_filter == 'all' %}
+                    Դուք դեռ չունեք հայտարարություններ։ Ստեղծեք Ձեր առաջին հայտարարությունը հենց հիմա։
+                    {% elif view_type == 'worker' and current_filter == 'all' %}
+                    Դուք դեռ չունեք վերագրված առաջադրանքներ։ Դիմեք առաջադրանքների և սպասեք, որ Ձեզ վերագրեն։
+                    {% elif view_type == 'all' and current_filter == 'all' %}
+                    Դուք դեռ չունեք ոչ հայտարարություններ, ոչ վերագրված առաջադրանքներ։
+                    {% else %}
+                    Այս կատեգորիայում հայտարարություններ չկան։
+                    {% endif %}
+                </p>
+                <div class="action-buttons">
+                    {% if view_type != 'worker' %}
+                    <a href="{% url 'create_post' %}" class="action-btn-large">
+                        <i class="fas fa-plus-circle"></i>
+                        Ստեղծել Նոր Հայտարարություն
+                    </a>
+                    {% endif %}
+                    {% if view_type != 'owner' %}
+                    <a href="{% url 'ashxatanq' %}" class="action-btn-large secondary">
+                        <i class="fas fa-search"></i>
+                        Փնտրել Առաջադրանքներ
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </section>
+</main>
+
+<!-- Review Popup -->
+<div class="review-popup-overlay" id="reviewPopup">
+    <div class="review-popup">
+        <div class="review-header">
+            <i class="fas fa-star"></i>
+            <h3>Գնահատեք աշխատանքը</h3>
+            <p>Կիսվեք ձեր տպավորություններով</p>
+        </div>
         
-        <div class="thank-you-message" id="thankYouMessage">
-            <h3>Thank You!</h3>
-            <p>Your feedback has been submitted successfully.</p>
-            <button class="submit-btn" onclick="closeReview()">Close</button>
+        <div class="review-content">
+            <div id="reviewPopupContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // Function to get URL parameters
-        function getUrlParameter(name) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
-        }
-
-        // Set hidden fields from URL parameters
-        document.getElementById('postId').value = getUrlParameter('post_id');
-        document.getElementById('reviewedUserId').value = getUrlParameter('reviewed_user_id');
-        document.getElementById('reviewType').value = getUrlParameter('review_type');
-
-        // Debug: Log the values to console
-        console.log('Post ID:', getUrlParameter('post_id'));
-        console.log('Reviewed User ID:', getUrlParameter('reviewed_user_id'));
-        console.log('Review Type:', getUrlParameter('review_type'));
-
-        // Star rating functionality (your existing code)
-        const stars = document.querySelectorAll('.star');
-        const ratingText = document.getElementById('ratingText');
-        const submitBtn = document.getElementById('submitBtn');
-        const skipBtn = document.getElementById('skipBtn');
-        const reviewContent = document.getElementById('reviewContent');
-        const thankYouMessage = document.getElementById('thankYouMessage');
+<!-- Improved Dispute Modal -->
+<div class="dispute-modal" id="disputeModal">
+    <div class="dispute-modal-content">
+        <div class="dispute-header">
+            <i class="fas fa-gavel"></i>
+            <h3>Վիճարկել Առաջադրանքը</h3>
+            <p>Ուղարկեք հաղորդագրություն ադմինիստրատորներին ապացույցներով</p>
+        </div>
         
-        let selectedRating = 0;
+        <div class="dispute-body">
+            <div class="dispute-chat-container">
+                <div class="dispute-messages" id="disputeMessages">
+                    <!-- Messages will be loaded here -->
+                </div>
+                
+                <div class="dispute-input-area">
+                    <div class="dispute-form-group">
+                        <label for="disputeMessage">Ձեր հաղորդագրությունը</label>
+                        <textarea id="disputeMessage" placeholder="Բացատրեք իրավիճակը և տրամադրեք համապատասխան տեղեկատվություն..."></textarea>
+                    </div>
+                    
+                    <div class="file-upload-area" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Վերբեռնել Ապացույցներ</p>
+                        <small>Կարող եք վերբեռնել մինչև 5 նկար (PNG, JPG, JPEG)</small>
+                    </div>
+                    <input type="file" id="fileInput" multiple accept="image/*" style="display: none;">
+                    
+                    <div class="file-preview-container" id="filePreviewContainer">
+                        <div class="file-preview-grid" id="filePreviewGrid">
+                            <!-- File previews will be added here -->
+                        </div>
+                    </div>
+                    
+                    <div class="dispute-actions">
+                        <button onclick="closeDisputeModal()" class="btn btn-secondary">Փակել</button>
+                        <button onclick="submitDispute()" class="btn btn-primary">Ուղարկել Դիսպուտ</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dispute Chat Modal -->
+<div class="dispute-modal" id="disputeChatModal">
+    <div class="dispute-modal-content">
+        <div class="dispute-header">
+            <i class="fas fa-comments"></i>
+            <h3>Դիսպուտի Հաղորդակցություն</h3>
+            <p>Հաղորդակցվեք ադմինիստրատորների հետ այս դիսպուտի վերաբերյալ</p>
+        </div>
+        
+        <div class="dispute-body">
+            <!-- Resolution Card (shown when dispute is resolved) -->
+            <div class="resolution-card" id="resolutionCard" style="display: none;">
+                <div class="resolution-header">
+                    <i class="fas fa-check-circle"></i>
+                    <h4>Դիսպուտը Լուծված է</h4>
+                </div>
+                <div class="resolution-details" id="resolutionDetails">
+                    <!-- Resolution details will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="dispute-chat-container">
+                <div class="dispute-messages" id="disputeChatMessages">
+                    <!-- Chat messages will be loaded here -->
+                </div>
+                
+                <div class="dispute-input-area" id="disputeChatInput">
+                    <div class="dispute-form-group">
+                        <label for="chatMessage">Ձեր հաղորդագրությունը</label>
+                        <textarea id="chatMessage" placeholder="Մուտքագրեք ձեր հաղորդագրությունը..."></textarea>
+                    </div>
+                    
+                    <div class="file-upload-area" onclick="document.getElementById('chatFileInput').click()">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Վերբեռնել Նկար</p>
+                        <small>Կարող եք վերբեռնել մինչև 5 նկար</small>
+                    </div>
+                    <input type="file" id="chatFileInput" multiple accept="image/*" style="display: none;">
+                    
+                    <div class="file-preview-container" id="chatFilePreviewContainer">
+                        <div class="file-preview-grid" id="chatFilePreviewGrid">
+                            <!-- File previews will be added here -->
+                        </div>
+                    </div>
+                    
+                    <div class="dispute-actions">
+                        <button onclick="closeDisputeChat()" class="btn btn-secondary">Փակել</button>
+                        <button onclick="sendChatMessage()" class="btn btn-primary">Ուղարկել</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="image-modal" id="imageModal">
+    <div class="image-modal-content">
+        <button class="image-modal-close" onclick="closeImageModal()">&times;</button>
+        <img id="modalImage" src="" alt="Դիտել նկարը">
+    </div>
+</div>
+
+<script>
+    // Global variables
+    let currentPostId = null;
+    let currentDisputeId = null;
+    let selectedFiles = [];
+    let chatSelectedFiles = [];
+    let currentReviewData = null;
+    let selectedRating = 0;
+
+    // Dispute Modal Functions
+    function openDisputeModal(postId) {
+        currentPostId = postId;
+        document.getElementById('disputeModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        // Clear previous data
+        document.getElementById('disputeMessage').value = '';
+        selectedFiles = [];
+        updateFilePreviews();
+    }
+
+    function closeDisputeModal() {
+        document.getElementById('disputeModal').classList.remove('active');
+        document.body.style.overflow = 'auto';
+        currentPostId = null;
+    }
+
+    // File handling for dispute creation
+    document.getElementById('fileInput').addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        
+        // Check if adding these files would exceed the limit
+        if (selectedFiles.length + files.length > 5) {
+            alert('Դուք կարող եք վերբեռնել առավելագույնը 5 նկար');
+            return;
+        }
+        
+        // Add new files to selectedFiles array
+        files.forEach(file => {
+            if (file.type.startsWith('image/')) {
+                selectedFiles.push(file);
+            }
+        });
+        
+        updateFilePreviews();
+    });
+
+    function updateFilePreviews() {
+        const previewGrid = document.getElementById('filePreviewGrid');
+        const previewContainer = document.getElementById('filePreviewContainer');
+        
+        previewGrid.innerHTML = '';
+        
+        if (selectedFiles.length === 0) {
+            previewContainer.style.display = 'none';
+            return;
+        }
+        
+        previewContainer.style.display = 'block';
+        
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'file-preview';
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <button type="button" class="remove-file" onclick="removeFile(${index})">×</button>
+                `;
+                previewGrid.appendChild(preview);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeFile(index) {
+        selectedFiles.splice(index, 1);
+        updateFilePreviews();
+    }
+
+    function submitDispute() {
+        const message = document.getElementById('disputeMessage').value.trim();
+        
+        if (!message) {
+            alert('Խնդրում ենք մուտքագրել հաղորդագրություն');
+            return;
+        }
+        
+        const formData = new FormData();
+        formData.append('message', message);
+        formData.append('post_id', currentPostId);
+        
+        // Add all selected files
+        selectedFiles.forEach((file, index) => {
+            formData.append(`image_${index}`, file);
+        });
+        
+        fetch('/create-dispute/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Դիսպուտը հաջողությամբ ուղարկվել է');
+                closeDisputeModal();
+                location.reload();
+            } else {
+                alert('Սխալ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Ցանցի սխալ: ' + error);
+        });
+    }
+
+    // Dispute Chat Functions
+    function openDisputeChat(disputeId) {
+        currentDisputeId = disputeId;
+        document.getElementById('disputeChatModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+        
+        loadDisputeChat(disputeId);
+    }
+
+    function closeDisputeChat() {
+        document.getElementById('disputeChatModal').classList.remove('active');
+        document.body.style.overflow = 'auto';
+        currentDisputeId = null;
+        chatSelectedFiles = [];
+        updateChatFilePreviews();
+    }
+
+    function loadDisputeChat(disputeId) {
+        fetch(`/dispute/${disputeId}/get-chat/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayDisputeChat(data.dispute);
+            } else {
+                alert('Դիսպուտը բեռնելու սխալ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Ցանցի սխալ: ' + error);
+        });
+    }
+
+    function displayDisputeChat(dispute) {
+        const messagesContainer = document.getElementById('disputeChatMessages');
+        const resolutionCard = document.getElementById('resolutionCard');
+        const chatInput = document.getElementById('disputeChatInput');
+        
+        // Show resolution if dispute is resolved
+        if (dispute.is_resolved) {
+            resolutionCard.style.display = 'block';
+            document.getElementById('resolutionDetails').innerHTML = `
+                <p><strong>Լուծման ամսաթիվ:</strong> ${dispute.resolved_at}</p>
+                <p><strong>Արդյունք:</strong> <span class="resolution-outcome">${dispute.resolution_outcome}</span></p>
+                ${dispute.resolution_details ? `<p><strong>Մանրամասներ:</strong> ${dispute.resolution_details}</p>` : ''}
+            `;
+            
+            // Hide input area if dispute is resolved
+            chatInput.style.display = 'none';
+        } else {
+            resolutionCard.style.display = 'none';
+            chatInput.style.display = 'block';
+        }
+        
+        // Display messages
+        messagesContainer.innerHTML = '';
+        
+        dispute.messages.forEach(msg => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${msg.is_own_message ? 'own' : 'other'}`;
+            
+            let messageHTML = `
+                <div class="message-sender">${msg.sender}</div>
+                <div class="message-bubble">${msg.message}</div>
+                <div class="message-time">${msg.created_at}</div>
+            `;
+            
+            if (msg.images && msg.images.length > 0) {
+                messageHTML += `<div class="message-images">`;
+                msg.images.forEach(img => {
+                    messageHTML += `
+                        <div class="message-image" onclick="openImageModal('${img}')">
+                            <img src="${img}" alt="Ապացույց">
+                        </div>
+                    `;
+                });
+                messageHTML += `</div>`;
+            }
+            
+            messageDiv.innerHTML = messageHTML;
+            messagesContainer.appendChild(messageDiv);
+        });
+        
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // File handling for dispute chat
+    document.getElementById('chatFileInput').addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        
+        // Check if adding these files would exceed the limit
+        if (chatSelectedFiles.length + files.length > 5) {
+            alert('Դուք կարող եք վերբեռնել առավելագույնը 5 նկար');
+            return;
+        }
+        
+        // Add new files to chatSelectedFiles array
+        files.forEach(file => {
+            if (file.type.startsWith('image/')) {
+                chatSelectedFiles.push(file);
+            }
+        });
+        
+        updateChatFilePreviews();
+    });
+
+    function updateChatFilePreviews() {
+        const previewGrid = document.getElementById('chatFilePreviewGrid');
+        const previewContainer = document.getElementById('chatFilePreviewContainer');
+        
+        previewGrid.innerHTML = '';
+        
+        if (chatSelectedFiles.length === 0) {
+            previewContainer.style.display = 'none';
+            return;
+        }
+        
+        previewContainer.style.display = 'block';
+        
+        chatSelectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'file-preview';
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <button type="button" class="remove-file" onclick="removeChatFile(${index})">×</button>
+                `;
+                previewGrid.appendChild(preview);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function removeChatFile(index) {
+        chatSelectedFiles.splice(index, 1);
+        updateChatFilePreviews();
+    }
+
+    function sendChatMessage() {
+        const message = document.getElementById('chatMessage').value.trim();
+        
+        if (!message && chatSelectedFiles.length === 0) {
+            alert('Խնդրում ենք մուտքագրել հաղորդագրություն կամ վերբեռնել նկար');
+            return;
+        }
+        
+        const formData = new FormData();
+        if (message) {
+            formData.append('message', message);
+        }
+        formData.append('dispute_id', currentDisputeId);
+        
+        // Add all selected files
+        chatSelectedFiles.forEach((file, index) => {
+            formData.append(`image_${index}`, file);
+        });
+        
+        fetch('/dispute/send-message/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('chatMessage').value = '';
+                chatSelectedFiles = [];
+                updateChatFilePreviews();
+                loadDisputeChat(currentDisputeId);
+            } else {
+                alert('Սխալ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Ցանցի սխալ: ' + error);
+        });
+    }
+
+    // Image Modal Functions
+    function openImageModal(imageUrl) {
+        document.getElementById('modalImage').src = imageUrl;
+        document.getElementById('imageModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeImageModal() {
+        document.getElementById('imageModal').classList.remove('active');
+        document.body.style.overflow = 'auto';
+    }
+
+    // Task Management Functions (keep existing ones)
+    function completeTask(postId) {
+        if (confirm('Հաստատեք, որ առաջադրանքը ավարտված է?')) {
+            fetch(`/task/${postId}/complete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show review popup for owner to rate worker
+                    showReviewPopup({
+                        postId: postId,
+                        reviewedUserId: data.assigned_to_id,
+                        reviewType: 'owner_to_worker',
+                        taskTitle: data.task_title,
+                        userName: data.worker_username
+                    });
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function markIncomplete(postId) {
+        if (confirm('Հաստատեք, որ առաջադրանքը անավարտ է?')) {
+            fetch(`/task/${postId}/incomplete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function cancelTask(postId) {
+        if (confirm('Հաստատեք առաջադրանքի չեղարկումը?')) {
+            fetch(`/task/${postId}/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function resubmitTask(postId) {
+        if (confirm('Հաստատեք առաջադրանքի վերահաստատումը? Այն կրկին հասանելի կլինի այլ օգտատերերի համար:')) {
+            fetch(`/task/${postId}/resubmit/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function approveCompletion(postId) {
+        if (confirm('Հաստատեք առաջադրանքի ավարտը?')) {
+            fetch(`/task/${postId}/approve-completion/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show review popup for owner to rate worker after approval
+                    showReviewPopup({
+                        postId: postId,
+                        reviewedUserId: data.worker_id,
+                        reviewType: 'owner_to_worker',
+                        taskTitle: data.task_title,
+                        userName: data.worker_username
+                    });
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function rejectCompletion(postId) {
+        if (confirm('Մերժե՞լ ավարտը և նշել որպես անավարտ:')) {
+            fetch(`/task/${postId}/reject-completion/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    // Worker Task Management Functions
+    function workerCompleteTask(taskId) {
+        if (confirm('Հաստատեք, որ առաջադրանքը ավարտված է? Այն կուղարկվի սեփականատիրոջը հաստատման:')) {
+            fetch(`/task/${taskId}/worker/complete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show review popup for worker to rate owner
+                    showReviewPopup({
+                        postId: taskId,
+                        reviewedUserId: data.owner_id,
+                        reviewType: 'worker_to_owner',
+                        taskTitle: data.task_title,
+                        userName: data.owner_username
+                    });
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function workerMarkIncomplete(taskId) {
+        if (confirm('Հաստատեք, որ առաջադրանքը անավարտ է?')) {
+            fetch(`/task/${taskId}/worker/incomplete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    function workerCancelTask(taskId) {
+        if (confirm('Հաստատեք առաջադրանքի չեղարկումը?')) {
+            fetch(`/task/${taskId}/worker/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Սխալ: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Ցանցի սխալ: ' + error);
+            });
+        }
+    }
+
+    // Review Popup Functions (keep existing ones)
+    function showReviewPopup(reviewData) {
+        currentReviewData = reviewData;
+        selectedRating = 0;
+        
+        const popupContent = document.getElementById('reviewPopupContent');
         const ratingDescriptions = {
-            1: "Poor - Needs significant improvement",
-            2: "Fair - Could be better",
-            3: "Good - Met expectations",
-            4: "Very Good - Exceeded expectations",
-            5: "Excellent - Outstanding work!"
+            1: "Շատ վատ - Շատ անբավարար աշխատանք",
+            2: "Վատ - Կան բազմաթիվ թերություններ",
+            3: "Միջին - Բավարար աշխատանք",
+            4: "Լավ - Բարձրորակ աշխատանք",
+            5: "Գերազանց - Հիանալի աշխատանք"
         };
         
+        popupContent.innerHTML = `
+            <div class="review-task-info">
+                <div class="review-task-title">${reviewData.taskTitle}</div>
+                <div class="review-task-user">
+                    ${reviewData.reviewType === 'owner_to_worker' ? 'Աշխատող' : 'Հայտարարության սեփականատեր'}: ${reviewData.userName}
+                </div>
+            </div>
+            
+            <div class="star-rating-review">
+                <span class="star" data-rating="1">★</span>
+                <span class="star" data-rating="2">★</span>
+                <span class="star" data-rating="3">★</span>
+                <span class="star" data-rating="4">★</span>
+                <span class="star" data-rating="5">★</span>
+                <div class="rating-text" id="ratingText">Ընտրեք գնահատականը</div>
+            </div>
+            
+            <div class="review-comment">
+                <label for="reviewComment">Մեկնաբանություն (ըստ ցանկության)</label>
+                <textarea id="reviewComment" placeholder="Կիսվեք ձեր տպավորություններով..."></textarea>
+                
+                <div class="quick-comments">
+                    <div class="quick-comment-btn" onclick="setQuickComment('Աշխատանքը կատարվել է ժամանակին')">Աշխատանքը կատարվել է ժամանակին</div>
+                    <div class="quick-comment-btn" onclick="setQuickComment('Բարձր որակի աշխատանք')">Բարձր որակի աշխատանք</div>
+                    <div class="quick-comment-btn" onclick="setQuickComment('Լավ հաղորդակցություն')">Լավ հաղորդակցություն</div>
+                    <div class="quick-comment-btn" onclick="setQuickComment('Խորհուրդ կտայի ուրիշներին')">Խորհուրդ կտայի ուրիշներին</div>
+                </div>
+            </div>
+            
+            <div class="review-actions">
+                <button onclick="closeReviewPopup()" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Փակել
+                </button>
+                <button onclick="submitReview()" class="btn btn-primary" id="submitReviewBtn" disabled>
+                    <i class="fas fa-paper-plane"></i> Ուղարկել գնահատականը
+                </button>
+            </div>
+        `;
+        
         // Add event listeners to stars
+        const stars = popupContent.querySelectorAll('.star');
         stars.forEach(star => {
             star.addEventListener('click', () => {
                 selectedRating = parseInt(star.getAttribute('data-rating'));
                 updateStars();
-                ratingText.textContent = ratingDescriptions[selectedRating];
+                document.getElementById('ratingText').textContent = ratingDescriptions[selectedRating];
+                document.getElementById('submitReviewBtn').disabled = false;
             });
             
             star.addEventListener('mouseover', () => {
@@ -273,99 +2513,632 @@
             });
         });
         
-        // Reset stars when mouse leaves the star container
-        document.querySelector('.stars').addEventListener('mouseleave', () => {
-            updateStars();
-        });
+        // Reset stars when mouse leaves the container
+        const starContainer = popupContent.querySelector('.star-rating-review');
+        starContainer.addEventListener('mouseleave', updateStars);
         
-        function highlightStars(rating) {
-            stars.forEach(star => {
-                const starRating = parseInt(star.getAttribute('data-rating'));
-                if (starRating <= rating) {
-                    star.classList.add('active');
-                } else {
-                    star.classList.remove('active');
+        // Show popup
+        document.getElementById('reviewPopup').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function setQuickComment(comment) {
+        document.getElementById('reviewComment').value = comment;
+    }
+
+    function highlightStars(rating) {
+        const stars = document.querySelectorAll('.star-rating-review .star');
+        stars.forEach(star => {
+            const starRating = parseInt(star.getAttribute('data-rating'));
+            if (starRating <= rating) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+    }
+
+    function updateStars() {
+        const stars = document.querySelectorAll('.star-rating-review .star');
+        stars.forEach(star => {
+            const starRating = parseInt(star.getAttribute('data-rating'));
+            if (starRating <= selectedRating) {
+                star.classList.add('active');
+            } else {
+                star.classList.remove('active');
+            }
+        });
+    }
+
+    function closeReviewPopup() {
+        document.getElementById('reviewPopup').classList.remove('active');
+        document.body.style.overflow = 'auto';
+        currentReviewData = null;
+        selectedRating = 0;
+    }
+
+    function submitReview() {
+        if (selectedRating === 0) {
+            alert('Խնդրում ենք ընտրել գնահատական');
+            return;
+        }
+
+        const comment = document.getElementById('reviewComment').value;
+        
+        fetch('/submit-review/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                post_id: currentReviewData.postId,
+                reviewed_user_id: currentReviewData.reviewedUserId,
+                review_type: currentReviewData.reviewType,
+                rating: selectedRating,
+                comment: comment
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success state
+                const popupContent = document.getElementById('reviewPopupContent');
+                popupContent.innerHTML = `
+                    <div class="review-success">
+                        <i class="fas fa-check-circle"></i>
+                        <h4>Շնորհակալություն գնահատականի համար</h4>
+                        <p>Ձեր գնահատականը հաջողությամբ ուղարկվել է։ Այն կօգնի այլ օգտատերերին ընտրել հուսալի գործընկերներ։</p>
+                        <button onclick="closeReviewPopup()" class="btn btn-primary" style="min-width: 200px;">
+                            <i class="fas fa-check"></i> Հասկանալի է
+                        </button>
+                    </div>
+                `;
+                
+                // Auto close after 3 seconds
+                setTimeout(() => {
+                    closeReviewPopup();
+                    location.reload();
+                }, 3000);
+            } else {
+                alert('Սխալ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Ցանցի սխալ: ' + error);
+        });
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        const reviewPopup = document.getElementById('reviewPopup');
+        const disputeModal = document.getElementById('disputeModal');
+        const disputeChatModal = document.getElementById('disputeChatModal');
+        const imageModal = document.getElementById('imageModal');
+        
+        if (event.target === reviewPopup) {
+            closeReviewPopup();
+        }
+        if (event.target === disputeModal) {
+            closeDisputeModal();
+        }
+        if (event.target === disputeChatModal) {
+            closeDisputeChat();
+        }
+        if (event.target === imageModal) {
+            closeImageModal();
+        }
+    }
+
+    // Add scroll animations
+    document.addEventListener('DOMContentLoaded', () => {
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -30px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
                 }
             });
-        }
-        
-        function updateStars() {
-            stars.forEach(star => {
-                const starRating = parseInt(star.getAttribute('data-rating'));
-                if (starRating <= selectedRating) {
-                    star.classList.add('active');
-                } else {
-                    star.classList.remove('active');
-                }
+        }, observerOptions);
+
+        // Observe all animated elements
+        document.querySelectorAll('.view-tabs, .combined-stats, .filter-tabs, .posts-grid, .empty-state').forEach(element => {
+            element.style.animationPlayState = 'paused';
+            observer.observe(element);
+        });
+
+        // Add hover effects to post cards
+        const postCards = document.querySelectorAll('.post-card');
+        postCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px)';
             });
-        }
-        
-        // Get CSRF token function
-        function getCsrfToken() {
-            return document.querySelector('[name=csrfmiddlewaretoken]').value;
-        }
-        
-        // Submit review
-        submitBtn.addEventListener('click', async () => {
-            if (selectedRating === 0) {
-                alert('Please select a rating before submitting.');
-                return;
-            }
             
-            const description = document.getElementById('reviewDescription').value;
-            const postId = document.getElementById('postId').value;
-            const reviewedUserId = document.getElementById('reviewedUserId').value;
-            const reviewType = document.getElementById('reviewType').value;
-            
-            // Validate required fields
-            if (!postId || !reviewedUserId || !reviewType) {
-                alert('Error: Missing required data. Please refresh the page and try again.');
-                console.error('Missing data:', { postId, reviewedUserId, reviewType });
-                return;
-            }
-            
-            try {
-                const response = await fetch('{% url "submit_review" %}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': getCsrfToken()
-                    },
-                    body: JSON.stringify({
-                        post_id: postId,
-                        reviewed_user_id: reviewedUserId,
-                        review_type: reviewType,
-                        rating: selectedRating,
-                        comment: description
-                    })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Show thank you message
-                    reviewContent.style.display = 'none';
-                    thankYouMessage.style.display = 'block';
-                } else {
-                    alert('Error: ' + data.error);
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Network error occurred. Please try again.');
-            }
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
         });
+    });
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+@csrf_exempt
+@login_required
+def create_dispute(request):
+    """Create a new dispute with multiple images"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+    
+    try:
+        post_id = request.POST.get('post_id')
+        message = request.POST.get('message', '').strip()
         
-        // Skip review
-        skipBtn.addEventListener('click', () => {
-            if (confirm('Are you sure you want to skip leaving a review?')) {
-                window.close();
-            }
-        });
+        if not post_id or not message:
+            return JsonResponse({'success': False, 'error': 'Post ID and message are required'})
         
-        // Close review
-        function closeReview() {
-            window.close();
+        post = get_object_or_404(Post, id=post_id)
+        
+        # Check if user is involved in the task
+        if request.user not in [post.user, post.assigned_to]:
+            return JsonResponse({'success': False, 'error': 'Not authorized to create dispute for this task'})
+        
+        # Check if dispute already exists
+        existing_dispute = TaskDispute.objects.filter(
+            post=post,
+            status__in=['pending', 'under_review']
+        ).first()
+        
+        if existing_dispute:
+            return JsonResponse({
+                'success': False, 
+                'error': 'Dispute already exists for this task',
+                'dispute_id': existing_dispute.id
+            })
+        
+        # Determine dispute type
+        dispute_type = 'direct_message'
+        if request.user == post.user:
+            dispute_type = 'owner_disputed_completion'
+        elif request.user == post.assigned_to:
+            dispute_type = 'worker_disputed_incomplete'
+        
+        # Create the dispute
+        dispute = TaskDispute.objects.create(
+            post=post,
+            dispute_type=dispute_type,
+            initiated_by=request.user,
+            other_party=post.assigned_to if request.user == post.user else post.user,
+            reason=message,
+            status='pending'
+        )
+        
+        # Handle multiple image uploads
+        image_count = 0
+        for key in request.FILES:
+            if key.startswith('image_'):
+                image_file = request.FILES[key]
+                if image_file.size > 5 * 1024 * 1024:  # 5MB limit
+                    continue
+                
+                # Create evidence record
+                DisputeEvidence.objects.create(
+                    dispute=dispute,
+                    submitted_by=request.user,
+                    file=image_file,
+                    description=f"Initial evidence #{image_count + 1}",
+                    is_initial=True
+                )
+                image_count += 1
+                
+                if image_count >= 5:  # Max 5 images
+                    break
+        
+        # Update post status
+        post.task_status = 'under_review'
+        post.save()
+        
+        # Create initial message
+        DisputeMessage.objects.create(
+            dispute=dispute,
+            sender=request.user,
+            message=message
+        )
+        
+        # Notify admins
+        admin_users = User.objects.filter(profile__role__in=['admin', 'superadmin'])
+        for admin_user in admin_users:
+            Notification.objects.create(
+                user=admin_user,
+                message=f"New dispute created for task '{post.title}'. Dispute ID: {dispute.id}",
+                post=post
+            )
+        
+        # Notify other party
+        other_party = post.assigned_to if request.user == post.user else post.user
+        if other_party:
+            Notification.objects.create(
+                user=other_party,
+                message=f"A dispute has been created for task '{post.title}'. The task is now under admin review.",
+                post=post
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Dispute created successfully',
+            'dispute_id': dispute.id
+        })
+        
+    except Exception as e:
+        logger.error(f"Error creating dispute: {e}")
+        return JsonResponse({'success': False, 'error': f'Internal server error: {str(e)}'})
+
+@login_required
+def get_dispute_chat(request, dispute_id):
+    """Get dispute chat data including messages and evidence"""
+    try:
+        dispute = get_object_or_404(TaskDispute, id=dispute_id)
+        
+        # Check if user is involved in the dispute or is admin
+        if (request.user != dispute.initiated_by and 
+            request.user != dispute.other_party and
+            not request.user.profile.role in ['admin', 'superadmin']):
+            return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+        
+        # Get messages
+        messages = DisputeMessage.objects.filter(dispute=dispute).select_related('sender').order_by('created_at')
+        
+        # Get evidence
+        evidence = DisputeEvidence.objects.filter(dispute=dispute).select_related('submitted_by')
+        
+        messages_data = []
+        for msg in messages:
+            messages_data.append({
+                'id': msg.id,
+                'sender': msg.sender.username,
+                'sender_id': msg.sender.id,
+                'message': msg.message,
+                'image': msg.image.url if msg.image else None,
+                'created_at': msg.created_at.strftime('%b %d, %Y %I:%M %p'),
+                'is_own_message': msg.sender == request.user,
+                'is_admin': msg.sender.profile.role in ['admin', 'superadmin'] if hasattr(msg.sender, 'profile') else False
+            })
+        
+        evidence_data = []
+        for ev in evidence:
+            evidence_data.append({
+                'id': ev.id,
+                'submitted_by': ev.submitted_by.username,
+                'file': ev.file.url if ev.file else None,
+                'description': ev.description,
+                'created_at': ev.created_at.strftime('%b %d, %Y %I:%M %p'),
+                'is_initial': ev.is_initial
+            })
+        
+        dispute_data = {
+            'id': dispute.id,
+            'post_title': dispute.post.title,
+            'initiated_by': dispute.initiated_by.username,
+            'other_party': dispute.other_party.username if dispute.other_party else None,
+            'reason': dispute.reason,
+            'status': dispute.status,
+            'created_at': dispute.created_at.strftime('%b %d, %Y'),
+            'is_resolved': dispute.is_resolved,
+            'resolved_at': dispute.resolved_at.strftime('%b %d, %Y %I:%M %p') if dispute.resolved_at else None,
+            'resolution': dispute.resolution,
+            'admin_notes': dispute.admin_notes,
         }
-    </script>
-</body>
-</html>
+        
+        return JsonResponse({
+            'success': True,
+            'dispute': dispute_data,
+            'messages': messages_data,
+            'evidence': evidence_data
+        })
+        
+    except Exception as e:
+        logger.error(f"Error getting dispute chat: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@csrf_exempt
+@login_required
+def send_dispute_message(request, dispute_id):
+    """Send message in dispute chat with multiple images"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+    
+    try:
+        dispute = get_object_or_404(TaskDispute, id=dispute_id)
+        
+        # Check if user is involved in the dispute or is admin
+        if (request.user != dispute.initiated_by and 
+            request.user != dispute.other_party and
+            not request.user.profile.role in ['admin', 'superadmin']):
+            return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+        
+        # Check if dispute is resolved
+        if dispute.is_resolved:
+            return JsonResponse({'success': False, 'error': 'Dispute is already resolved'})
+        
+        message_text = request.POST.get('message', '').strip()
+        if not message_text:
+            return JsonResponse({'success': False, 'error': 'Message is required'})
+        
+        # Create the message
+        message = DisputeMessage.objects.create(
+            dispute=dispute,
+            sender=request.user,
+            message=message_text
+        )
+        
+        # Handle multiple image uploads
+        image_count = 0
+        for key in request.FILES:
+            if key.startswith('image_'):
+                image_file = request.FILES[key]
+                if image_file.size > 5 * 1024 * 1024:  # 5MB limit
+                    continue
+                
+                # For simplicity, we'll store the first image with the message
+                # For multiple images, you might want to create separate evidence records
+                if image_count == 0:  # Only attach first image to message
+                    message.image = image_file
+                    message.save()
+                
+                # Also create evidence record for all images
+                DisputeEvidence.objects.create(
+                    dispute=dispute,
+                    submitted_by=request.user,
+                    file=image_file,
+                    description=f"Chat evidence - {message_text[:50]}...",
+                    is_initial=False
+                )
+                image_count += 1
+        
+        # Update dispute status if it was pending and admin is responding
+        if dispute.status == 'pending' and request.user.profile.role in ['admin', 'superadmin']:
+            dispute.status = 'under_review'
+            dispute.save()
+        
+        # Notify other party
+        other_party = dispute.other_party if request.user != dispute.other_party else dispute.initiated_by
+        if other_party:
+            Notification.objects.create(
+                user=other_party,
+                message=f"New message in dispute for task '{dispute.post.title}'",
+                post=dispute.post
+            )
+        
+        return JsonResponse({
+            'success': True,
+            'message': {
+                'id': message.id,
+                'sender': message.sender.username,
+                'sender_id': message.sender.id,
+                'message': message.message,
+                'image': message.image.url if message.image else None,
+                'created_at': message.created_at.strftime('%b %d, %Y %I:%M %p'),
+                'is_own_message': True,
+                'is_admin': request.user.profile.role in ['admin', 'superadmin'] if hasattr(request.user, 'profile') else False
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error sending dispute message: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@admin_required
+@csrf_exempt
+def resolve_dispute_api(request, dispute_id):
+    """Admin resolves a dispute"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid method'}, status=405)
+    
+    try:
+        dispute = get_object_or_404(TaskDispute, id=dispute_id)
+        
+        data = json.loads(request.body)
+        decision = data.get('decision')
+        resolution = data.get('resolution', '').strip()
+        admin_notes = data.get('admin_notes', '')
+        
+        if not decision or not resolution:
+            return JsonResponse({'success': False, 'error': 'Decision and resolution are required'})
+        
+        # Update dispute
+        dispute.status = 'resolved'
+        dispute.resolved_by = request.user
+        dispute.resolved_at = timezone.now()
+        dispute.resolution = resolution
+        dispute.admin_notes = admin_notes
+        dispute.admin_decision = decision
+        dispute.save()
+        
+        # Update post status based on decision
+        if decision == 'completed':
+            dispute.post.task_status = 'completed'
+            dispute.post.completed_at = timezone.now()
+            notification_msg = "Task marked as completed. Payment released to worker."
+        elif decision == 'cancelled':
+            dispute.post.task_status = 'cancelled'
+            notification_msg = "Task cancelled. Refund processed for owner."
+        elif decision == 'refunded':
+            dispute.post.task_status = 'cancelled'
+            notification_msg = "Full refund issued to owner."
+        elif decision == 'dismissed':
+            # Return to previous status
+            if dispute.post.task_status == 'under_review':
+                dispute.post.task_status = 'in_progress'
+            notification_msg = "Dispute dismissed. Task returned to previous status."
+        
+        dispute.post.save()
+        
+        # Create notifications for both parties
+        Notification.objects.create(
+            user=dispute.initiated_by,
+            message=f"Dispute for task '{dispute.post.title}' has been resolved: {resolution}",
+            post=dispute.post
+        )
+        
+        if dispute.other_party:
+            Notification.objects.create(
+                user=dispute.other_party,
+                message=f"Dispute for task '{dispute.post.title}' has been resolved: {resolution}",
+                post=dispute.post
+            )
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'Dispute resolved successfully',
+            'resolution': resolution
+        })
+        
+    except Exception as e:
+        logger.error(f"Error resolving dispute: {e}")
+        return JsonResponse({'success': False, 'error': f'Internal server error: {str(e)}'})
+
+@login_required
+def check_dispute_status(request, post_id):
+    """Check if a dispute exists for a post"""
+    try:
+        post = get_object_or_404(Post, id=post_id)
+        
+        # Check if user is involved in the post
+        if request.user not in [post.user, post.assigned_to]:
+            return JsonResponse({'success': False, 'error': 'Not authorized'})
+        
+        dispute = TaskDispute.objects.filter(
+            post=post,
+            status__in=['pending', 'under_review']
+        ).first()
+        
+        if dispute:
+            return JsonResponse({
+                'success': True,
+                'has_dispute': True,
+                'dispute_id': dispute.id,
+                'status': dispute.status,
+                'is_resolved': dispute.is_resolved
+            })
+        else:
+            return JsonResponse({
+                'success': True,
+                'has_dispute': False
+            })
+            
+    except Exception as e:
+        logger.error(f"Error checking dispute status: {e}")
+        return JsonResponse({'success': False, 'error': str(e)})
+
+@login_required
+def dispute_detail(request, dispute_id):
+    """View dispute details for both users and admins"""
+    dispute = get_object_or_404(TaskDispute, id=dispute_id)
+    
+    # Check authorization
+    if (request.user != dispute.initiated_by and 
+        request.user != dispute.other_party and
+        not request.user.profile.role in ['admin', 'superadmin']):
+        messages.error(request, "You don't have permission to view this dispute.")
+        return redirect('myposts')
+    
+    # Get related data
+    messages = DisputeMessage.objects.filter(dispute=dispute).select_related('sender').order_by('created_at')
+    evidence = DisputeEvidence.objects.filter(dispute=dispute).select_related('submitted_by')
+    
+    context = {
+        'dispute': dispute,
+        'messages': messages,
+        'evidence': evidence,
+        'is_admin': request.user.profile.role in ['admin', 'superadmin'] if hasattr(request.user, 'profile') else False
+    }
+    
+    return render(request, 'dispute_detail.html', context)
+
+@admin_required
+def admin_disputes(request):
+    """Admin view to see all disputes"""
+    status_filter = request.GET.get('status', 'all')
+    
+    disputes = TaskDispute.objects.select_related(
+        'post', 'initiated_by', 'other_party', 'resolved_by'
+    ).all().order_by('-created_at')
+    
+    if status_filter != 'all':
+        disputes = disputes.filter(status=status_filter)
+    
+    # Statistics
+    total_disputes = disputes.count()
+    pending_disputes = disputes.filter(status='pending').count()
+    under_review_disputes = disputes.filter(status='under_review').count()
+    resolved_disputes = disputes.filter(status='resolved').count()
+    dismissed_disputes = disputes.filter(status='dismissed').count()
+    
+    context = {
+        'disputes': disputes,
+        'total_disputes': total_disputes,
+        'pending_disputes': pending_disputes,
+        'under_review_disputes': under_review_disputes,
+        'resolved_disputes': resolved_disputes,
+        'dismissed_disputes': dismissed_disputes,
+        'current_status': status_filter,
+        'page_title': 'Task Disputes'
+    }
+    
+    return render(request, 'admin/disputes.html', context)
